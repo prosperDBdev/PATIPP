@@ -47,14 +47,18 @@ Concretely:
 ## Commands
 
 ```bash
-docker compose -f infra/docker-compose.yml up -d      # postgres
-cd backend  && ./mvnw spring-boot:run                 # api on :8080
+docker compose -f infra/docker-compose.yml --env-file infra/.env up -d db   # postgres
+set -a && . ./infra/.env && set +a                      # load secrets first
+cd backend  && ./mvnw spring-boot:run                 # api on :8081
 cd backend  && ./mvnw test                            # backend tests
 cd frontend && npm run dev                            # web on :3000
-cd frontend && npm run build && npm run test          # frontend
+cd frontend && npm run build && npm run lint          # frontend
 ```
 
 ## Current status
 
-Architecture approved: **pending.** Implementation: **not started.**
-Next: Phase 0 (scaffolding) then Phase 1 (foundation).
+Architecture approved. Phases 0 and 1 complete and verified.
+Next: **Phase 2 — Question Engine** (see docs/ROADMAP.md).
+
+Running: Postgres in Docker, API on :8081, web on :3000.
+(8080 is taken by another local project, so PATIPP uses 8081.)

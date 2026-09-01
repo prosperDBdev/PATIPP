@@ -2,7 +2,8 @@
 
 **P**ersonalized **A**daptive **T**est & **I**nterview **P**reparation **P**latform
 
-Status: **PROPOSAL — not yet implemented.** Review and approve before Phase 1 begins.
+Status: **approved.** Phases 0 and 1 are implemented and verified; Phases 2-10 remain a proposal.
+Where implementation revised a decision, the revision is noted inline.
 
 ---
 
@@ -125,13 +126,13 @@ have it just work.
 
 ```
 +------------------------------------------------------------------+
-|  Next.js 15 (App Router) - TypeScript - Tailwind - PWA           |
+|  Next.js 16 (App Router) - TypeScript - Tailwind - PWA           |
 |  Server Components for reads - Route Handlers proxy auth          |
 |  Dexie/IndexedDB mirror + Workbox SW + outbox sync queue          |
 +-------------------------------+----------------------------------+
                                 | REST/JSON, JWT bearer
 +-------------------------------v----------------------------------+
-|  Spring Boot 3.4 - Java 21 - MODULAR MONOLITH                    |
+|  Spring Boot 4.1 - Java 21 - MODULAR MONOLITH                    |
 |                                                                   |
 |  web           -> controllers, DTOs, validation, error mapping    |
 |  application   -> use-case services, transactions, orchestration  |
@@ -403,11 +404,11 @@ right and has nothing to do with whether the platform works.
 |---|---|---|
 | Backend build | **Maven + Wrapper** | Spring's default; the wrapper needs no global install, and you currently have neither Maven nor Gradle |
 | Java | **21 LTS** | Already installed; records, sealed interfaces and pattern matching make the domain model genuinely cleaner |
-| Spring Boot | **3.4.x** | Current, Java 21 native |
+| Spring Boot | **4.1.1** | Current release. Note the Boot 4 differences we hit: `spring-boot-starter-webmvc` (not `-web`), a dedicated `-flyway` starter, per-module test starters instead of one `spring-boot-starter-test`, Jackson 3 (`tools.jackson`) at runtime, and `@AutoConfigureMockMvc` now in `org.springframework.boot.webmvc.test.autoconfigure` |
 | Migrations | **Flyway** | Explicit reviewable SQL; `ddl-auto: validate` always, never `update` |
 | Question content | **Hybrid columns + jsonb** | Extensible without DDL, still queryable and indexable |
 | Auth | **JWT + rotating refresh cookie** | Per your spec; upgradeable to OAuth later with no model change |
-| Frontend | **Next.js 15 App Router + TS + Tailwind** | Per your spec |
+| Frontend | **Next.js 16 App Router + TS + Tailwind** | Per your spec |
 | Charts | **Recharts** | Lightweight, idiomatic React API, sufficient for these charts |
 | Offline store | **Dexie (IndexedDB)** | Structured and queryable; far better than localStorage for question packs |
 | Testing | **JUnit 5 + Testcontainers + Vitest + Playwright** | Real Postgres in tests; Playwright for the exam-runner flows that actually matter |

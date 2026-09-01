@@ -6,11 +6,15 @@ exactly how you check it by hand.
 
 Effort estimates assume focused sessions, not calendar time.
 
+**Progress: Phase 0 complete. Phase 1 complete (54 backend tests + 37 end-to-end checks green).**
+
 ---
 
 ## Phase 0 — Scaffolding (½ session)
 
 Not in your original list, but Phase 1 is much cleaner if this exists first.
+
+**Status: COMPLETE.**
 
 **Build:** repo skeleton, `backend/` with Maven Wrapper committed (you have no global Maven,
 the wrapper solves it), `frontend/` via `create-next-app`, `infra/docker-compose.yml` with
@@ -19,15 +23,22 @@ Postgres 16, `.env.example`, `.gitignore`, `CLAUDE.md`, `git init` + first commi
 **Done when:** `docker compose up -d db` gives a healthy Postgres; `./mvnw test` and
 `npm run build` both pass on empty projects.
 
-**You verify:** `curl localhost:8080/actuator/health` returns `{"status":"UP"}`.
+**You verify:** `curl localhost:8081/actuator/health` returns `{"status":"UP"}`. (8081, because 8080 was already taken by another local project.)
 
 ---
 
 ## Phase 1 — Foundation (2–3 sessions) · MVP
 
+**Status: COMPLETE.** 54 backend tests and 37 end-to-end API checks pass; frontend builds and lints clean.
+
 **Build**
 - Flyway `V1__baseline.sql`: users, refresh_tokens, preparation_types, preparation_spaces,
-  subjects, topics — plus the reserved-but-unused tables so later phases add data, not DDL.
+  subjects, topics. `V2` seeds the six system preparation types.
+
+  > Revised during implementation. This originally said V1 would also create the
+  > reserved-but-unused tables for later phases. That was wrong: fifteen tables nothing can
+  > exercise yet invites schema drift, and Flyway exists precisely so Phase 2 can ship a
+  > `V3`. Each phase now brings its own migration.
 - Spring Security + JWT: register, login, refresh (rotating cookie), logout, `/me`.
 - Preparation space CRUD; seed the six system preparation types with their blueprints.
 - Subject and topic CRUD, topics as a tree.
