@@ -1,0 +1,29 @@
+name: patipp
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: patipp-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-patipp}
+      POSTGRES_USER: ${POSTGRES_USER:-patipp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in infra/.env}
+      # Deterministic collation so ORDER BY does not shift between machines.
+      POSTGRES_INITDB_ARGS: "--locale=C --encoding=UTF8"
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # Depends-on with condition: service_healthy relies on this, so the API
+      # never starts against a database that is still initialising.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-patipp} -d ${POSTGRES_DB:-patipp}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+volumes:
+  pgdata:
+    name: patipp-pgdata

@@ -1,0 +1,52 @@
+# --- secrets: never commit ---
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# --- java / maven ---
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.properties.bak
+
+# --- node / next ---
+node_modules/
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+.npm
+.eslintcache
+
+# --- ide ---
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/*
+!.vscode/extensions.json
+.settings/
+.project
+.classpath
+nbproject/private/
+
+# --- os ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- logs / local data ---
+*.log
+npm-debug.log*
+yarn-error.log*
+logs/
+pgdata/
+coverage/
+playwright-report/
+test-results/
