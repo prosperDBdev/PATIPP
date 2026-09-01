@@ -11,8 +11,6 @@
 --     database level, not merely unlikely at the service level.
 -- =============================================================================
 
-CREATE EXTENSION IF NOT EXISTS citext;
-
 -- Sets updated_at on every UPDATE so the JVM clock is never the source of truth.
 CREATE OR REPLACE FUNCTION set_updated_at() RETURNS trigger AS $$
 BEGIN
@@ -28,8 +26,10 @@ $$ LANGUAGE plpgsql;
 
 CREATE TABLE users (
     id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- citext: an account can never be duplicated by letter case alone.
-    email           citext      NOT NULL,
+    -- Normalised to lower case by the application before it is ever written, so a
+    -- plain unique index is enough and no citext extension is required. The
+    -- lowercase CHECK below is what makes that normalisation non-optional.
+    email           text        NOT NULL,
     password_hash   text        NOT NULL,
     display_name    text        NOT NULL,
     timezone        text        NOT NULL DEFAULT 'UTC',
@@ -40,6 +40,7 @@ CREATE TABLE users (
 
     CONSTRAINT users_email_unique       UNIQUE (email),
     CONSTRAINT users_email_shape        CHECK (email ~ '^[^@[:space:]]+@[^@[:space:]]+[.][^@[:space:]]+$'),
+    CONSTRAINT users_email_lowercase    CHECK (email = lower(email)),
     CONSTRAINT users_display_name_len   CHECK (char_length(display_name) BETWEEN 1 AND 80),
     CONSTRAINT users_timezone_len       CHECK (char_length(timezone) BETWEEN 1 AND 64)
 );
@@ -55,7 +56,7 @@ CREATE TRIGGER users_set_updated_at
 CREATE TABLE refresh_tokens (
     id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id         uuid        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    token_hash      char(64)    NOT NULL,
+    token_hash      varchar(64) NOT NULL,
     issued_at       timestamptz NOT NULL DEFAULT now(),
     expires_at      timestamptz NOT NULL,
     revoked_at      timestamptz,

@@ -1,0 +1,34 @@
+# Test-only overrides, layered on top of application.yml because a profile-specific file
+# is additive. A plain application.yml here would shadow the main one and silently take
+# Flyway and JPA configuration with it.
+patipp:
+  jwt:
+    # Test-only signing key. Not a secret: it signs nothing outside this test run, and
+    # pinning it keeps token assertions reproducible.
+    secret: dGVzdC1vbmx5LXNpZ25pbmcta2V5LWZvci1wYXRpcHAtaW50ZWdyYXRpb24tdGVzdHM=
+    access-ttl-minutes: 15
+    refresh-ttl-days: 30
+    issuer: patipp-test
+    secure-cookie: false
+  cors:
+    allowed-origins: http://localhost:3000
+
+spring:
+  jpa:
+    hibernate:
+      # Same as production: Flyway owns the schema and Hibernate only checks it. This is
+      # what makes an entity/migration mismatch fail in CI rather than at startup in prod.
+      ddl-auto: validate
+    properties:
+      hibernate:
+        # Surfaces accidental N+1 access as a failure instead of a slow endpoint nobody notices.
+        query:
+          fail_on_pagination_over_collection_fetch: true
+
+logging:
+  level:
+    root: WARN
+    com.patipp: INFO
+    org.flywaydb: WARN
+    org.testcontainers: WARN
+    com.github.dockerjava: WARN

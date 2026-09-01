@@ -71,3 +71,11 @@ patipp:
   cors:
     # Exact origins only. Wildcards are invalid when credentials are sent.
     allowed-origins: ${PATIPP_CORS_ORIGINS:http://localhost:3000}
+
+  jwt:
+    secret: ${PATIPP_JWT_SECRET}
+    access-ttl-minutes: ${PATIPP_JWT_ACCESS_TTL_MINUTES:15}
+    refresh-ttl-days: ${PATIPP_JWT_REFRESH_TTL_DAYS:30}
+    issuer: patipp
+    # Local development runs on plain HTTP. Production MUST set this to true.
+    secure-cookie: ${PATIPP_SECURE_COOKIE:false}
