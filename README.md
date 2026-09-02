@@ -37,7 +37,7 @@ docker compose -f infra/docker-compose.yml --env-file infra/.env up -d db
 set -a && . ./infra/.env && set +a
 cd backend && ./mvnw spring-boot:run
 
-# 4. Start the web app on :3000
+# 4. Start the web app on :3001
 cd frontend && npm install && npm run dev
 ```
 

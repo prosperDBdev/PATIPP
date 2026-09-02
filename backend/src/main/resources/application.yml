@@ -70,7 +70,7 @@ logging:
 patipp:
   cors:
     # Exact origins only. Wildcards are invalid when credentials are sent.
-    allowed-origins: ${PATIPP_CORS_ORIGINS:http://localhost:3000}
+    allowed-origins: ${PATIPP_CORS_ORIGINS:http://localhost:3001}
 
   jwt:
     secret: ${PATIPP_JWT_SECRET}

@@ -51,7 +51,7 @@ docker compose -f infra/docker-compose.yml --env-file infra/.env up -d db   # po
 set -a && . ./infra/.env && set +a                      # load secrets first
 cd backend  && ./mvnw spring-boot:run                 # api on :8081
 cd backend  && ./mvnw test                            # backend tests
-cd frontend && npm run dev                            # web on :3000
+cd frontend && npm run dev                            # web on :3001
 cd frontend && npm run build && npm run lint          # frontend
 ```
 
@@ -60,5 +60,6 @@ cd frontend && npm run build && npm run lint          # frontend
 Architecture approved. Phases 0 and 1 complete and verified.
 Next: **Phase 2 — Question Engine** (see docs/ROADMAP.md).
 
-Running: Postgres in Docker, API on :8081, web on :3000.
-(8080 is taken by another local project, so PATIPP uses 8081.)
+Running: Postgres in Docker, API on :8081, web on :3001.
+**Ports are fixed: API 8081, web 3001.** Never 8080 or 3000 - those are left for
+other local projects. The web port must also appear in `PATIPP_CORS_ORIGINS`.
