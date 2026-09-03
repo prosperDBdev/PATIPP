@@ -1,6 +1,7 @@
 package com.patipp.auth.domain;
 
 import com.patipp.common.id.UuidV7;
+import com.patipp.common.jpa.AssignedIdEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -18,7 +19,7 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "refresh_tokens")
-public class RefreshToken {
+public class RefreshToken extends AssignedIdEntity<UUID> {
 
     @Id
     @Column(name = "id", nullable = false, updatable = false)
@@ -67,6 +68,12 @@ public class RefreshToken {
     }
 
     public UUID id() {
+        return id;
+    }
+
+    /** Required by Persistable so Spring Data can tell an insert from an update. */
+    @Override
+    public UUID getId() {
         return id;
     }
 

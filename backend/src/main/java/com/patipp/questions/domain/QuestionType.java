@@ -1,0 +1,53 @@
+package com.patipp.questions.domain;
+
+/**
+ * The question formats the platform understands.
+ *
+ * <p>Values are persisted as varchar with a CHECK constraint rather than a Postgres enum,
+ * so adding a format later is a migration that alters a constraint rather than one that
+ * rewrites a type used by several tables.
+ *
+ * <p>Only the first five are implemented in Phase 2. The rest are declared because
+ * preparation-type blueprints already reference them, and a blueprint naming a format the
+ * code has not reached yet must be readable rather than an error.
+ */
+public enum QuestionType {
+
+    MCQ(true),
+    MULTI_SELECT(true),
+    TRUE_FALSE(true),
+    SHORT_ANSWER(true),
+    FLASHCARD(true),
+
+    LONG_ANSWER(false),
+    CODING(false),
+    DEBUGGING(false),
+    OUTPUT_PREDICTION(false),
+    SCENARIO(false),
+    BEHAVIORAL(false);
+
+    private final boolean implemented;
+
+    QuestionType(boolean implemented) {
+        this.implemented = implemented;
+    }
+
+    /** True when this phase can validate, store and evaluate the format. */
+    public boolean isImplemented() {
+        return implemented;
+    }
+
+    /** Default authoring estimate, refined per question and later by real response times. */
+    public int defaultEstimatedSeconds() {
+        return switch (this) {
+            case TRUE_FALSE, FLASHCARD -> 20;
+            case MCQ -> 60;
+            case MULTI_SELECT -> 90;
+            case SHORT_ANSWER -> 90;
+            case OUTPUT_PREDICTION -> 120;
+            case LONG_ANSWER, SCENARIO, BEHAVIORAL -> 240;
+            case DEBUGGING -> 600;
+            case CODING -> 1200;
+        };
+    }
+}

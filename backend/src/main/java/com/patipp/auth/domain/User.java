@@ -1,6 +1,7 @@
 package com.patipp.auth.domain;
 
 import com.patipp.common.id.UuidV7;
+import com.patipp.common.jpa.AssignedIdEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -15,7 +16,7 @@ import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "users")
-public class User {
+public class User extends AssignedIdEntity<UUID> {
 
     @Id
     @Column(name = "id", nullable = false, updatable = false)
@@ -79,6 +80,12 @@ public class User {
     }
 
     public UUID id() {
+        return id;
+    }
+
+    /** Required by Persistable so Spring Data can tell an insert from an update. */
+    @Override
+    public UUID getId() {
         return id;
     }
 

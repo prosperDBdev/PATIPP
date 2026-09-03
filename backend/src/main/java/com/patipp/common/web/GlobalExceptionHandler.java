@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -30,8 +32,16 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
  * a stack trace. Everything else is an internal fault: it is logged at ERROR with its
  * stack trace and returned as a bare 500 carrying only the correlation id, so no
  * implementation detail ever reaches the client.
+ *
+ * <p><b>Ordered last on purpose.</b> Spring resolves an exception by walking advice beans in
+ * order and taking the best match within the first one that matches at all. This class
+ * handles {@link Exception}, so without an explicit order it can be consulted first, match
+ * everything, and turn a module's carefully typed domain failure into a bare 500 - which is
+ * exactly what happened before this annotation existed. Lowest precedence means
+ * module-specific advices always get first refusal.
  */
 @RestControllerAdvice
+@Order(Ordered.LOWEST_PRECEDENCE)
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);

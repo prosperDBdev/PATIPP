@@ -1,6 +1,7 @@
 package com.patipp.curriculum.domain;
 
 import com.patipp.common.id.UuidV7;
+import com.patipp.common.jpa.AssignedIdEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -19,7 +20,7 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "topics")
-public class Topic {
+public class Topic extends AssignedIdEntity<UUID> {
 
     public static final int MAX_DEPTH = 2;
     public static final String PATH_SEPARATOR = " / ";
@@ -86,6 +87,12 @@ public class Topic {
     }
 
     public UUID id() {
+        return id;
+    }
+
+    /** Required by Persistable so Spring Data can tell an insert from an update. */
+    @Override
+    public UUID getId() {
         return id;
     }
 

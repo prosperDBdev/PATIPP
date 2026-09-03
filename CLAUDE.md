@@ -38,6 +38,9 @@ Concretely:
   string. `.env` is git-ignored; `.env.example` documents every key.
 - Flyway migrations only. `spring.jpa.hibernate.ddl-auto=validate`, never `update`.
 - `varchar` + check constraint for vocabularies, never Postgres `ENUM`.
+- **Never `char(n)` in a migration — always `varchar(n)`.** Postgres reports `char` as
+  `bpchar`, Hibernate maps a `String` field to `varchar`, and `ddl-auto=validate` refuses to
+  start. This has already cost two debugging cycles (V1 `token_hash`, V3 `content_hash`).
 - Soft delete (`archived_at`) for anything an attempt can reference.
 - `question_attempts` is append-only and immutable.
 - `adaptive` and `scheduling` stay pure: no Spring, no JPA, no web types. Enforced by

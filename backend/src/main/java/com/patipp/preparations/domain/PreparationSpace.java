@@ -1,6 +1,7 @@
 package com.patipp.preparations.domain;
 
 import com.patipp.common.id.UuidV7;
+import com.patipp.common.jpa.AssignedIdEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -26,7 +27,7 @@ import org.hibernate.type.SqlTypes;
  */
 @Entity
 @Table(name = "preparation_spaces")
-public class PreparationSpace {
+public class PreparationSpace extends AssignedIdEntity<UUID> {
 
     public static final String STATUS_ACTIVE = "ACTIVE";
     public static final String STATUS_PAUSED = "PAUSED";
@@ -97,6 +98,12 @@ public class PreparationSpace {
     }
 
     public UUID id() {
+        return id;
+    }
+
+    /** Required by Persistable so Spring Data can tell an insert from an update. */
+    @Override
+    public UUID getId() {
         return id;
     }
 
