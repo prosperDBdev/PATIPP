@@ -102,3 +102,95 @@ export interface ProblemDetail {
   correlationId?: string;
   errors?: { field: string; message: string }[];
 }
+
+/* ------------------------------------------------------------------ questions */
+
+export type QuestionTypeKey =
+  | "MCQ"
+  | "MULTI_SELECT"
+  | "TRUE_FALSE"
+  | "SHORT_ANSWER"
+  | "FLASHCARD";
+
+export type DifficultyKey = "EASY" | "MEDIUM" | "HARD" | "EXPERT";
+export type QuestionStatusKey = "DRAFT" | "ACTIVE" | "ARCHIVED";
+
+export interface QuestionOption {
+  id: string;
+  text: string;
+  correct: boolean;
+}
+
+/**
+ * The format-specific body. Untyped on purpose: the server owns the rules and returns
+ * precise field errors, so mirroring that validation here would give two sources of truth
+ * that drift apart.
+ */
+export type QuestionPayload = Record<string, unknown>;
+
+export interface QuestionSummary {
+  id: string;
+  subjectId: string;
+  topicId: string | null;
+  type: QuestionTypeKey;
+  difficulty: DifficultyKey;
+  status: QuestionStatusKey;
+  tags: string[];
+  stem: string;
+  estimatedSeconds: number;
+  createdAt: string;
+}
+
+export interface Question extends Omit<QuestionSummary, "stem"> {
+  source: string;
+  version: number;
+  stem: string;
+  explanation: string | null;
+  hints: string[];
+  payload: QuestionPayload;
+  updatedAt: string;
+}
+
+export interface QuestionPage {
+  items: QuestionSummary[];
+  page: number;
+  size: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+export interface VersionSummary {
+  id: string;
+  version: number;
+  stem: string;
+  createdAt: string;
+  current: boolean;
+}
+
+/* ------------------------------------------------------------------ import */
+
+export type ImportOutcome = "VALID" | "IMPORTED" | "DUPLICATE" | "INVALID";
+
+export interface FieldProblem {
+  field: string;
+  message: string;
+}
+
+export interface ImportRow {
+  line: number;
+  outcome: ImportOutcome;
+  stem: string;
+  type: string;
+  problems: FieldProblem[];
+  questionId: string | null;
+}
+
+export interface ImportReport {
+  dryRun: boolean;
+  totalRows: number;
+  valid: number;
+  duplicates: number;
+  invalid: number;
+  imported: number;
+  rows: ImportRow[];
+}

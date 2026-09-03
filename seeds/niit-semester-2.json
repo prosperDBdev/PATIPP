@@ -1,0 +1,542 @@
+{
+  "space": "NIIT Semester 2 Exams",
+  "preparationType": "ACADEMIC_EXAM",
+  "note": "Starter pack. Import through Questions > Import with format JSON. Subjects and topics are matched by name, so create HTML, CSS, JavaScript, React and React Native first.",
+  "count": 60,
+  "questions": [
+    {
+      "type": "MCQ",
+      "difficulty": "EASY",
+      "subject": "HTML",
+      "stem": "Which element correctly marks up the main heading of a page?",
+      "explanation": "There should be exactly one h1 per page describing its primary subject. Screen readers and search engines both use it to understand what the page is about.",
+      "tags": ["semantics", "headings"],
+      "payload": {"options": [{"id": "a", "text": "<head>", "correct": false}, {"id": "b", "text": "<h1>", "correct": true}, {"id": "c", "text": "<header>", "correct": false}, {"id": "d", "text": "<title>", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "EASY",
+      "subject": "HTML",
+      "stem": "What is the purpose of the alt attribute on an img element?",
+      "explanation": "It describes the image for people using screen readers and is shown if the image fails to load. Decorative images should use alt=\"\" so assistive technology skips them.",
+      "tags": ["accessibility", "images"],
+      "payload": {"options": [{"id": "a", "text": "It sets a tooltip on hover", "correct": false}, {"id": "b", "text": "It provides a text alternative for the image", "correct": true}, {"id": "c", "text": "It specifies the image dimensions", "correct": false}, {"id": "d", "text": "It sets a fallback image URL", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "TRUE_FALSE",
+      "difficulty": "EASY",
+      "subject": "HTML",
+      "stem": "A <div> carries semantic meaning about its contents.",
+      "explanation": "A div is a generic container with no semantic meaning. Use header, nav, main, article, section, aside or footer when the content has a role.",
+      "tags": ["semantics"],
+      "payload": {"answer": false}
+    },
+    {
+      "type": "MULTI_SELECT",
+      "difficulty": "MEDIUM",
+      "subject": "HTML",
+      "stem": "Which of these are semantic HTML5 elements?",
+      "explanation": "article, nav and figure describe the role of their content. div and span are deliberately generic.",
+      "tags": ["semantics"],
+      "payload": {"options": [{"id": "a", "text": "<article>", "correct": true}, {"id": "b", "text": "<div>", "correct": false}, {"id": "c", "text": "<nav>", "correct": true}, {"id": "d", "text": "<span>", "correct": false}, {"id": "e", "text": "<figure>", "correct": true}], "partialCredit": true, "shuffle": true}
+    },
+    {
+      "type": "SHORT_ANSWER",
+      "difficulty": "MEDIUM",
+      "subject": "HTML",
+      "stem": "Which attribute connects a <label> to its form control?",
+      "explanation": "label's for attribute must match the input's id. This makes clicking the label focus the control, and tells screen readers what the field is.",
+      "tags": ["forms", "accessibility"],
+      "payload": {"acceptedAnswers": ["for", "for attribute", "htmlFor"], "matchMode": "NORMALIZED"}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "MEDIUM",
+      "subject": "HTML",
+      "stem": "Where should a <script> tag normally be placed for best page-load performance?",
+      "explanation": "Scripts block HTML parsing. Putting them at the end of body, or using defer in the head, lets the page render first.",
+      "tags": ["performance", "scripts"],
+      "payload": {"options": [{"id": "a", "text": "At the very top of <head>", "correct": false}, {"id": "b", "text": "Just before the closing </body> tag, or in <head> with defer", "correct": true}, {"id": "c", "text": "Inside the first <div>", "correct": false}, {"id": "d", "text": "Anywhere; placement makes no difference", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "MEDIUM",
+      "subject": "HTML",
+      "stem": "What does the required attribute do on an input?",
+      "explanation": "It makes the browser block form submission and show a validation message when the field is empty. It is not a substitute for server-side validation.",
+      "tags": ["forms", "validation"],
+      "payload": {"options": [{"id": "a", "text": "Marks the field with an asterisk", "correct": false}, {"id": "b", "text": "Prevents submission while the field is empty", "correct": true}, {"id": "c", "text": "Sends the field to the server first", "correct": false}, {"id": "d", "text": "Disables the field until filled", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "TRUE_FALSE",
+      "difficulty": "MEDIUM",
+      "subject": "HTML",
+      "stem": "The <!DOCTYPE html> declaration is an HTML tag.",
+      "explanation": "It is a document type declaration, not an element. It tells the browser to use standards mode rather than quirks mode.",
+      "tags": ["document"],
+      "payload": {"answer": false}
+    },
+    {
+      "type": "FLASHCARD",
+      "difficulty": "EASY",
+      "subject": "HTML",
+      "stem": "Block vs inline elements",
+      "payload": {"front": "What is the difference between a block-level and an inline element?", "back": "A block-level element starts on a new line and takes the full width available (div, p, h1). An inline element flows within a line and takes only the width it needs (span, a, strong)."}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "HARD",
+      "subject": "HTML",
+      "stem": "Which input type gives the best mobile keyboard for an email field?",
+      "explanation": "type=\"email\" shows a keyboard with @ and . readily available, and enables built-in format validation.",
+      "tags": ["forms", "mobile"],
+      "payload": {"options": [{"id": "a", "text": "type=\"text\"", "correct": false}, {"id": "b", "text": "type=\"email\"", "correct": true}, {"id": "c", "text": "type=\"string\"", "correct": false}, {"id": "d", "text": "type=\"mail\"", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "SHORT_ANSWER",
+      "difficulty": "HARD",
+      "subject": "HTML",
+      "stem": "Which attribute stores custom data on an HTML element, readable from JavaScript via the dataset property?",
+      "explanation": "Any attribute beginning data- is a custom data attribute. data-user-id becomes element.dataset.userId.",
+      "tags": ["attributes", "javascript"],
+      "payload": {"acceptedAnswers": ["data-", "data attribute", "data-* attribute", "custom data attribute"], "matchMode": "NORMALIZED"}
+    },
+    {
+      "type": "TRUE_FALSE",
+      "difficulty": "HARD",
+      "subject": "HTML",
+      "stem": "An element's id may appear more than once in a document as long as the elements are of different types.",
+      "explanation": "An id must be unique across the whole document regardless of element type. Use a class when several elements share a purpose.",
+      "tags": ["attributes"],
+      "payload": {"answer": false}
+    },
+
+    {
+      "type": "MCQ",
+      "difficulty": "EASY",
+      "subject": "CSS",
+      "stem": "Which CSS property controls the space inside an element, between its content and its border?",
+      "explanation": "Padding is inside the border; margin is outside it. Confusing the two is behind a large share of layout bugs.",
+      "tags": ["box-model"],
+      "payload": {"options": [{"id": "a", "text": "margin", "correct": false}, {"id": "b", "text": "padding", "correct": true}, {"id": "c", "text": "border-spacing", "correct": false}, {"id": "d", "text": "gap", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "EASY",
+      "subject": "CSS",
+      "stem": "Which selector targets elements with the class \"card\"?",
+      "explanation": "A leading dot selects by class. A hash selects by id, and a bare word selects by element name.",
+      "tags": ["selectors"],
+      "payload": {"options": [{"id": "a", "text": "#card", "correct": false}, {"id": "b", "text": ".card", "correct": true}, {"id": "c", "text": "card", "correct": false}, {"id": "d", "text": "*card", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "SHORT_ANSWER",
+      "difficulty": "MEDIUM",
+      "subject": "CSS",
+      "stem": "Which box-sizing value makes width include padding and border?",
+      "explanation": "border-box means the width you set is the final rendered width. Most stylesheets apply it globally because it makes layouts predictable.",
+      "tags": ["box-model"],
+      "payload": {"acceptedAnswers": ["border-box", "border box"], "matchMode": "NORMALIZED"}
+    },
+    {
+      "type": "MULTI_SELECT",
+      "difficulty": "MEDIUM",
+      "subject": "CSS",
+      "stem": "Which of these create a new stacking context?",
+      "explanation": "position with a z-index, opacity below 1, and transform all create stacking contexts. This is why a z-index sometimes appears to be ignored.",
+      "tags": ["layout", "z-index"],
+      "payload": {"options": [{"id": "a", "text": "position: relative with z-index: 1", "correct": true}, {"id": "b", "text": "opacity: 0.9", "correct": true}, {"id": "c", "text": "color: red", "correct": false}, {"id": "d", "text": "transform: translateX(10px)", "correct": true}, {"id": "e", "text": "font-weight: bold", "correct": false}], "partialCredit": true, "shuffle": true}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "MEDIUM",
+      "subject": "CSS",
+      "stem": "In Flexbox, which property aligns items along the main axis?",
+      "explanation": "justify-content works along the main axis; align-items works along the cross axis. Which is which depends on flex-direction.",
+      "tags": ["flexbox"],
+      "payload": {"options": [{"id": "a", "text": "align-items", "correct": false}, {"id": "b", "text": "justify-content", "correct": true}, {"id": "c", "text": "align-content", "correct": false}, {"id": "d", "text": "place-items", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "TRUE_FALSE",
+      "difficulty": "MEDIUM",
+      "subject": "CSS",
+      "stem": "An inline element's vertical margin affects the height of the line it sits on.",
+      "explanation": "Vertical margins and padding on a non-replaced inline element do not affect line height; only horizontal ones apply. Use inline-block or block if you need vertical spacing.",
+      "tags": ["box-model"],
+      "payload": {"answer": false}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "HARD",
+      "subject": "CSS",
+      "stem": "Which selector has the highest specificity?",
+      "explanation": "Specificity is counted as inline, then ids, then classes and attributes and pseudo-classes, then elements. One id beats any number of classes.",
+      "tags": ["specificity"],
+      "payload": {"options": [{"id": "a", "text": "#nav .item a", "correct": true}, {"id": "b", "text": ".header .nav .item .link", "correct": false}, {"id": "c", "text": "ul li a:hover", "correct": false}, {"id": "d", "text": "a[href^=\"https\"]", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "SHORT_ANSWER",
+      "difficulty": "MEDIUM",
+      "subject": "CSS",
+      "stem": "Which CSS at-rule applies styles only at certain viewport sizes?",
+      "explanation": "A media query wraps rules that should apply only when its condition holds, such as a minimum width.",
+      "tags": ["responsive"],
+      "payload": {"acceptedAnswers": ["@media", "media query", "media"], "matchMode": "NORMALIZED"}
+    },
+    {
+      "type": "FLASHCARD",
+      "difficulty": "MEDIUM",
+      "subject": "CSS",
+      "stem": "Grid vs Flexbox",
+      "payload": {"front": "When would you choose CSS Grid over Flexbox?", "back": "Grid is two-dimensional: use it when you are laying out rows and columns together, such as a page shell. Flexbox is one-dimensional: use it for a single row or column, such as a toolbar."}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "HARD",
+      "subject": "CSS",
+      "stem": "What does position: sticky do?",
+      "explanation": "It behaves as relative until the element reaches a given offset in its scroll container, then behaves as fixed within its parent. It needs a top, bottom, left or right value to have any effect.",
+      "tags": ["layout", "position"],
+      "payload": {"options": [{"id": "a", "text": "Pins the element to the viewport permanently", "correct": false}, {"id": "b", "text": "Acts relative until a scroll offset is reached, then fixed within its parent", "correct": true}, {"id": "c", "text": "Removes the element from the document flow immediately", "correct": false}, {"id": "d", "text": "Sticks the element to the bottom of the page", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "TRUE_FALSE",
+      "difficulty": "HARD",
+      "subject": "CSS",
+      "stem": "Animating the transform property is generally cheaper than animating top and left.",
+      "explanation": "transform and opacity can be handled by the compositor without triggering layout or paint. Animating top or left forces layout on every frame.",
+      "tags": ["performance", "animation"],
+      "payload": {"answer": true}
+    },
+    {
+      "type": "SHORT_ANSWER",
+      "difficulty": "EASY",
+      "subject": "CSS",
+      "stem": "Which property arranges an element's children into rows and columns at the same time?",
+      "explanation": "display: grid. Flexbox handles one axis at a time; Grid handles both, which is what a page shell usually needs.",
+      "tags": ["grid", "layout"],
+      "payload": {"acceptedAnswers": ["display grid", "grid", "display: grid"], "matchMode": "NORMALIZED"}
+    },
+
+    {
+      "type": "MCQ",
+      "difficulty": "EASY",
+      "subject": "JavaScript",
+      "stem": "Which keyword declares a variable that cannot be reassigned?",
+      "explanation": "const prevents reassignment of the binding. It does not freeze the value: the contents of a const object can still be mutated.",
+      "tags": ["variables", "scope"],
+      "payload": {"options": [{"id": "a", "text": "var", "correct": false}, {"id": "b", "text": "let", "correct": false}, {"id": "c", "text": "const", "correct": true}, {"id": "d", "text": "static", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "TRUE_FALSE",
+      "difficulty": "EASY",
+      "subject": "JavaScript",
+      "stem": "let and const are block scoped.",
+      "explanation": "Both are scoped to the nearest block. var is function scoped, which is why it leaks out of if and for blocks.",
+      "tags": ["scope"],
+      "payload": {"answer": true}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "EASY",
+      "subject": "JavaScript",
+      "stem": "What does === compare that == does not?",
+      "explanation": "=== compares type as well as value. == coerces types first, so \"1\" == 1 is true but \"1\" === 1 is false.",
+      "tags": ["operators", "coercion"],
+      "payload": {"options": [{"id": "a", "text": "Nothing; they are identical", "correct": false}, {"id": "b", "text": "It compares type as well as value", "correct": true}, {"id": "c", "text": "It compares object references only", "correct": false}, {"id": "d", "text": "It compares only primitives", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "SHORT_ANSWER",
+      "difficulty": "MEDIUM",
+      "subject": "JavaScript",
+      "stem": "What is the name for a function that retains access to variables from the scope in which it was defined, even after that scope has returned?",
+      "explanation": "A closure. It is what makes private state, callbacks and module patterns work.",
+      "tags": ["closures", "functions"],
+      "payload": {"acceptedAnswers": ["closure", "a closure"], "matchMode": "NORMALIZED"}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "MEDIUM",
+      "subject": "JavaScript",
+      "stem": "What does Array.prototype.map return?",
+      "explanation": "map returns a new array of the same length containing the result of the callback for each element. The original array is untouched.",
+      "tags": ["arrays", "functional"],
+      "payload": {"options": [{"id": "a", "text": "The original array, modified in place", "correct": false}, {"id": "b", "text": "A new array with the callback applied to each element", "correct": true}, {"id": "c", "text": "A single accumulated value", "correct": false}, {"id": "d", "text": "The number of elements processed", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "MULTI_SELECT",
+      "difficulty": "MEDIUM",
+      "subject": "JavaScript",
+      "stem": "Which values are falsy in JavaScript?",
+      "explanation": "The falsy values are false, 0, -0, 0n, \"\", null, undefined and NaN. Everything else, including [] and {}, is truthy.",
+      "tags": ["coercion", "basics"],
+      "payload": {"options": [{"id": "a", "text": "0", "correct": true}, {"id": "b", "text": "\"\" (empty string)", "correct": true}, {"id": "c", "text": "[] (empty array)", "correct": false}, {"id": "d", "text": "null", "correct": true}, {"id": "e", "text": "\"0\" (string zero)", "correct": false}], "partialCredit": true, "shuffle": true}
+    },
+    {
+      "type": "SHORT_ANSWER",
+      "difficulty": "MEDIUM",
+      "subject": "JavaScript",
+      "stem": "What mechanism takes callbacks from the task queue and pushes them onto the call stack when it is empty?",
+      "explanation": "The event loop. It is why JavaScript can be single-threaded and still handle asynchronous work.",
+      "tags": ["async", "event-loop"],
+      "payload": {"acceptedAnswers": ["event loop", "the event loop"], "matchMode": "NORMALIZED"}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "MEDIUM",
+      "subject": "JavaScript",
+      "stem": "How does an arrow function treat `this`?",
+      "explanation": "An arrow function has no `this` of its own; it uses the `this` of the enclosing scope. This is why arrow functions are convenient in callbacks but wrong as object methods.",
+      "tags": ["functions", "this"],
+      "payload": {"options": [{"id": "a", "text": "It binds `this` to the global object", "correct": false}, {"id": "b", "text": "It inherits `this` from the enclosing lexical scope", "correct": true}, {"id": "c", "text": "It binds `this` to the calling object", "correct": false}, {"id": "d", "text": "`this` is always undefined", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "TRUE_FALSE",
+      "difficulty": "MEDIUM",
+      "subject": "JavaScript",
+      "stem": "A Promise that has already settled can change its state later.",
+      "explanation": "A promise settles exactly once, to fulfilled or rejected, and is immutable from then on.",
+      "tags": ["async", "promises"],
+      "payload": {"answer": false}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "HARD",
+      "subject": "JavaScript",
+      "stem": "Which runs first: a promise callback or a setTimeout callback scheduled with 0 delay?",
+      "explanation": "Promise callbacks go on the microtask queue, which is drained completely after the current task and before the next macrotask. setTimeout schedules a macrotask, so it always runs later.",
+      "tags": ["async", "event-loop"],
+      "payload": {"options": [{"id": "a", "text": "The setTimeout callback", "correct": false}, {"id": "b", "text": "The promise callback, because microtasks drain first", "correct": true}, {"id": "c", "text": "Whichever was scheduled first", "correct": false}, {"id": "d", "text": "The order is not defined", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "HARD",
+      "subject": "JavaScript",
+      "stem": "What is the difference between null and undefined?",
+      "explanation": "undefined means a variable has been declared but not assigned, or a property does not exist. null is an explicit assignment meaning \"no value\".",
+      "tags": ["basics", "types"],
+      "payload": {"options": [{"id": "a", "text": "They are identical", "correct": false}, {"id": "b", "text": "undefined is the absence of an assigned value; null is an explicit empty value", "correct": true}, {"id": "c", "text": "null is a number and undefined is an object", "correct": false}, {"id": "d", "text": "undefined can be assigned but null cannot", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "FLASHCARD",
+      "difficulty": "HARD",
+      "subject": "JavaScript",
+      "stem": "Hoisting",
+      "payload": {"front": "What is hoisting, and how does it differ between var and let?", "back": "Declarations are processed before code runs. A var is hoisted and initialised to undefined, so reading it early gives undefined. A let is hoisted but not initialised, so reading it before its declaration throws a ReferenceError - the temporal dead zone."}
+    },
+
+    {
+      "type": "MCQ",
+      "difficulty": "EASY",
+      "subject": "React",
+      "stem": "What does the useState hook return?",
+      "explanation": "It returns an array of two items: the current value and a setter function. Array destructuring is what gives you the familiar const [count, setCount] pattern.",
+      "tags": ["hooks", "state"],
+      "payload": {"options": [{"id": "a", "text": "The current state value only", "correct": false}, {"id": "b", "text": "An array containing the current value and a setter function", "correct": true}, {"id": "c", "text": "An object with get and set methods", "correct": false}, {"id": "d", "text": "A promise resolving to the state", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "TRUE_FALSE",
+      "difficulty": "EASY",
+      "subject": "React",
+      "stem": "Props are mutable inside the component that receives them.",
+      "explanation": "Props are read-only. A component must not modify its own props; to change data, the owner updates its state and passes new props down.",
+      "tags": ["props", "basics"],
+      "payload": {"answer": false}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "EASY",
+      "subject": "React",
+      "stem": "Why does React need a key prop on list items?",
+      "explanation": "Keys let React match elements between renders so it can move, keep or remove them correctly. Using an array index as a key causes bugs whenever the list is reordered or filtered.",
+      "tags": ["lists", "reconciliation"],
+      "payload": {"options": [{"id": "a", "text": "To style each item uniquely", "correct": false}, {"id": "b", "text": "To identify which items changed, were added or removed between renders", "correct": true}, {"id": "c", "text": "To sort the list automatically", "correct": false}, {"id": "d", "text": "It is optional and has no effect", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "SHORT_ANSWER",
+      "difficulty": "MEDIUM",
+      "subject": "React",
+      "stem": "Which hook runs a side effect after render, and can clean up after itself by returning a function?",
+      "explanation": "useEffect. The returned function runs before the next effect and on unmount, which is where you remove listeners and cancel requests.",
+      "tags": ["hooks", "effects"],
+      "payload": {"acceptedAnswers": ["useEffect", "use effect"], "matchMode": "NORMALIZED"}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "MEDIUM",
+      "subject": "React",
+      "stem": "What happens if you omit the dependency array from useEffect entirely?",
+      "explanation": "With no dependency array the effect runs after every render. An empty array runs it once after mount; a populated array runs it whenever a listed value changes.",
+      "tags": ["hooks", "effects"],
+      "payload": {"options": [{"id": "a", "text": "It runs only once after mount", "correct": false}, {"id": "b", "text": "It runs after every render", "correct": true}, {"id": "c", "text": "It never runs", "correct": false}, {"id": "d", "text": "It runs only on unmount", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "MULTI_SELECT",
+      "difficulty": "MEDIUM",
+      "subject": "React",
+      "stem": "Which of these are rules of hooks?",
+      "explanation": "Hooks must be called at the top level of a function component or another hook, in the same order every render. React tracks them by call order, which is why conditionals break them.",
+      "tags": ["hooks", "rules"],
+      "payload": {"options": [{"id": "a", "text": "Do not call hooks inside conditionals or loops", "correct": true}, {"id": "b", "text": "Only call hooks from components or custom hooks", "correct": true}, {"id": "c", "text": "Hooks must be called in a useEffect", "correct": false}, {"id": "d", "text": "Custom hook names should start with \"use\"", "correct": true}, {"id": "e", "text": "A component may use at most five hooks", "correct": false}], "partialCredit": true, "shuffle": true}
+    },
+    {
+      "type": "TRUE_FALSE",
+      "difficulty": "MEDIUM",
+      "subject": "React",
+      "stem": "Calling a state setter immediately updates the state variable on the following line.",
+      "explanation": "State updates are scheduled, not immediate. The variable holds the value from the current render until React re-renders with the new one.",
+      "tags": ["state", "rendering"],
+      "payload": {"answer": false}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "MEDIUM",
+      "subject": "React",
+      "stem": "What problem does the Context API solve?",
+      "explanation": "It lets a value be read by any descendant without passing it through every intermediate component. That threading of props through uninterested components is called prop drilling.",
+      "tags": ["context", "state"],
+      "payload": {"options": [{"id": "a", "text": "It makes network requests faster", "correct": false}, {"id": "b", "text": "It avoids passing props through components that do not use them", "correct": true}, {"id": "c", "text": "It replaces the need for state entirely", "correct": false}, {"id": "d", "text": "It handles routing", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "HARD",
+      "subject": "React",
+      "stem": "When is useMemo genuinely worth adding?",
+      "explanation": "Memoisation has its own cost. It pays off for genuinely expensive computation, or when a referentially stable value is needed as a dependency elsewhere. Applied everywhere it adds noise and can be slower.",
+      "tags": ["performance", "hooks"],
+      "payload": {"options": [{"id": "a", "text": "On every computed value, as a default", "correct": false}, {"id": "b", "text": "For expensive computation, or to keep a reference stable for a dependency array", "correct": true}, {"id": "c", "text": "Only inside class components", "correct": false}, {"id": "d", "text": "To replace useState", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "SHORT_ANSWER",
+      "difficulty": "HARD",
+      "subject": "React",
+      "stem": "Which hook gives you a mutable value that persists across renders without causing a re-render when it changes?",
+      "explanation": "useRef. Its .current can be written freely, which makes it right for DOM nodes, timers and any value you need to remember but not render.",
+      "tags": ["hooks", "refs"],
+      "payload": {"acceptedAnswers": ["useRef", "use ref"], "matchMode": "NORMALIZED"}
+    },
+    {
+      "type": "FLASHCARD",
+      "difficulty": "HARD",
+      "subject": "React",
+      "stem": "Controlled vs uncontrolled components",
+      "payload": {"front": "What is the difference between a controlled and an uncontrolled component?", "back": "A controlled component's value comes from React state and changes only through an onChange handler, so React is the single source of truth. An uncontrolled component keeps its value in the DOM and is read with a ref when needed."}
+    },
+    {
+      "type": "TRUE_FALSE",
+      "difficulty": "MEDIUM",
+      "subject": "React",
+      "stem": "A component re-renders whenever its parent re-renders, even if its own props are unchanged.",
+      "explanation": "By default, yes: React re-renders the whole subtree. Wrapping the child in React.memo skips the re-render when its props are shallowly equal.",
+      "tags": ["rendering", "performance"],
+      "payload": {"answer": true}
+    },
+
+    {
+      "type": "MCQ",
+      "difficulty": "EASY",
+      "subject": "React Native",
+      "stem": "Which component is the React Native equivalent of a <div>?",
+      "explanation": "View is the basic layout container. There is no HTML in React Native; every primitive maps to a native view.",
+      "tags": ["components", "basics"],
+      "payload": {"options": [{"id": "a", "text": "<Div>", "correct": false}, {"id": "b", "text": "<View>", "correct": true}, {"id": "c", "text": "<Container>", "correct": false}, {"id": "d", "text": "<Box>", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "TRUE_FALSE",
+      "difficulty": "EASY",
+      "subject": "React Native",
+      "stem": "Text must be wrapped in a <Text> component; it cannot be placed directly inside a <View>.",
+      "explanation": "Unlike the web, React Native requires all strings to be inside a Text component. Bare text inside a View throws an error.",
+      "tags": ["components", "text"],
+      "payload": {"answer": true}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "EASY",
+      "subject": "React Native",
+      "stem": "What is the default flexDirection in React Native?",
+      "explanation": "React Native defaults to column, whereas CSS on the web defaults to row. This single difference explains a great many surprising layouts.",
+      "tags": ["layout", "flexbox"],
+      "payload": {"options": [{"id": "a", "text": "row", "correct": false}, {"id": "b", "text": "column", "correct": true}, {"id": "c", "text": "row-reverse", "correct": false}, {"id": "d", "text": "inherit", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "MEDIUM",
+      "subject": "React Native",
+      "stem": "Why is FlatList preferred over mapping an array inside a ScrollView for long lists?",
+      "explanation": "FlatList renders only what is near the viewport and recycles rows as you scroll. A ScrollView renders every child up front, which is fine for a short list and ruinous for a long one.",
+      "tags": ["lists", "performance"],
+      "payload": {"options": [{"id": "a", "text": "It applies styling automatically", "correct": false}, {"id": "b", "text": "It renders items lazily and recycles them, keeping memory flat", "correct": true}, {"id": "c", "text": "It is the only component that can scroll", "correct": false}, {"id": "d", "text": "It sorts the data for you", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "SHORT_ANSWER",
+      "difficulty": "MEDIUM",
+      "subject": "React Native",
+      "stem": "Which API creates optimised style objects, used instead of plain CSS?",
+      "explanation": "StyleSheet.create. Styles are written as JavaScript objects in camelCase, and the API allows React Native to send them across the bridge efficiently.",
+      "tags": ["styling"],
+      "payload": {"acceptedAnswers": ["StyleSheet.create", "StyleSheet", "stylesheet create"], "matchMode": "NORMALIZED"}
+    },
+    {
+      "type": "MULTI_SELECT",
+      "difficulty": "MEDIUM",
+      "subject": "React Native",
+      "stem": "Which of these are core React Native components?",
+      "explanation": "View, Text, Image and ScrollView are core primitives. There is no Div or Paragraph; React Native has no HTML.",
+      "tags": ["components"],
+      "payload": {"options": [{"id": "a", "text": "View", "correct": true}, {"id": "b", "text": "Text", "correct": true}, {"id": "c", "text": "Div", "correct": false}, {"id": "d", "text": "Image", "correct": true}, {"id": "e", "text": "Paragraph", "correct": false}], "partialCredit": true, "shuffle": true}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "MEDIUM",
+      "subject": "React Native",
+      "stem": "What is SafeAreaView for?",
+      "explanation": "It insets content away from notches, status bars and home indicators, so nothing important sits underneath the hardware.",
+      "tags": ["layout", "ios"],
+      "payload": {"options": [{"id": "a", "text": "Encrypting sensitive data on screen", "correct": false}, {"id": "b", "text": "Keeping content clear of notches, status bars and home indicators", "correct": true}, {"id": "c", "text": "Catching rendering errors", "correct": false}, {"id": "d", "text": "Restricting which users can view a screen", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "TRUE_FALSE",
+      "difficulty": "MEDIUM",
+      "subject": "React Native",
+      "stem": "React Native styles support units such as px and em.",
+      "explanation": "Numeric style values are unitless and expressed in density-independent pixels. Percentages are supported as strings for some properties.",
+      "tags": ["styling"],
+      "payload": {"answer": false}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "HARD",
+      "subject": "React Native",
+      "stem": "In React Navigation, what is a Stack Navigator best suited to?",
+      "explanation": "A stack pushes and pops screens, giving the forward-and-back history a detail flow needs. Tabs and drawers are for switching between parallel sections.",
+      "tags": ["navigation"],
+      "payload": {"options": [{"id": "a", "text": "Switching between parallel top-level sections", "correct": false}, {"id": "b", "text": "Pushing and popping screens so users can go forward and back", "correct": true}, {"id": "c", "text": "Showing a slide-out side menu", "correct": false}, {"id": "d", "text": "Rendering a long scrolling list", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "SHORT_ANSWER",
+      "difficulty": "HARD",
+      "subject": "React Native",
+      "stem": "Which component adjusts layout so the on-screen keyboard does not cover the input being typed into?",
+      "explanation": "KeyboardAvoidingView. Its behavior prop usually needs to differ between iOS and Android to feel right on both.",
+      "tags": ["forms", "keyboard"],
+      "payload": {"acceptedAnswers": ["KeyboardAvoidingView", "keyboard avoiding view"], "matchMode": "NORMALIZED"}
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "HARD",
+      "subject": "React Native",
+      "stem": "What is the purpose of the useNativeDriver option in the Animated API?",
+      "explanation": "It sends the animation to the native side so it runs off the JavaScript thread. The animation then stays smooth even when JavaScript is busy, but only transform and opacity are supported.",
+      "tags": ["animation", "performance"],
+      "payload": {"options": [{"id": "a", "text": "It enables animations on physical devices only", "correct": false}, {"id": "b", "text": "It runs the animation on the native thread, so it survives a busy JS thread", "correct": true}, {"id": "c", "text": "It installs the native animation library", "correct": false}, {"id": "d", "text": "It converts CSS animations to native ones", "correct": false}], "shuffle": true}
+    },
+    {
+      "type": "FLASHCARD",
+      "difficulty": "HARD",
+      "subject": "React Native",
+      "stem": "Platform-specific code",
+      "payload": {"front": "What are two ways to write platform-specific code in React Native?", "back": "Use the Platform module - Platform.OS === 'ios' or Platform.select({ ios, android }) - for small differences inline. For larger differences, use platform file extensions: Button.ios.js and Button.android.js are resolved automatically by the bundler."}
+    }
+  ]
+}

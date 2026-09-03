@@ -77,5 +77,6 @@ key, token or connection string belongs in source.
 |---|---|
 | 0 — Scaffolding | complete |
 | 1 — Foundation (auth, spaces, curriculum) | complete |
-| 2 — Question engine | next |
-| 3–10 | see [docs/ROADMAP.md](docs/ROADMAP.md) |
+| 2 — Question engine (bank, import, export) | complete |
+| 3 — Practice sessions | next |
+| 4–10 | see [docs/ROADMAP.md](docs/ROADMAP.md) |

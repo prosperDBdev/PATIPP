@@ -6,7 +6,8 @@ exactly how you check it by hand.
 
 Effort estimates assume focused sessions, not calendar time.
 
-**Progress: Phase 0 complete. Phase 1 complete (54 backend tests + 37 end-to-end checks green).**
+**Progress: Phases 0, 1 and 2 complete.** 117 backend tests plus 77 end-to-end API
+checks green; frontend builds and lints clean.
 
 ---
 
@@ -65,20 +66,31 @@ bleed-through.
 
 ## Phase 2 — Question Engine (2–3 sessions) · MVP
 
+**Status: COMPLETE.**
+
 **Build**
 - `questions` + `question_versions` + `question_stats`, versioning on edit.
-- Sealed `QuestionContent` hierarchy + per-type JSON Schema validation at the edge.
+- Sealed `QuestionContent` hierarchy, validated per type at the edge.
 - Types now: MCQ, MULTI_SELECT, TRUE_FALSE, SHORT_ANSWER, FLASHCARD.
   (LONG_ANSWER/SCENARIO/CODING arrive with the phases that use them.)
-- `AnswerEvaluator` registry with the evaluator per type.
+- ~~`AnswerEvaluator` registry with the evaluator per type.~~
+
+  > Revised during implementation. Evaluation lives **on the sealed content type** instead of
+  > in a runtime registry. Preparation types need a registry because new ones arrive as data
+  > and must work without a deploy; question formats are the opposite — a closed set known at
+  > compile time. Sealing gives exhaustive switches, so adding a format and forgetting to
+  > evaluate it fails the build rather than failing during an exam. Validation, by contrast,
+  > is hand-written per format rather than JSON Schema, so the errors name the actual problem
+  > ("exactly one option must be marked correct, but 2 are") instead of a schema path.
 - Question CRUD, search, filter by topic/difficulty/type/tag, bulk archive.
 - Import: JSON and CSV, **dry-run first** — parse, validate, report errors and duplicates
   by `content_hash`, then commit only on confirmation.
 - Export to JSON (so your bank is never trapped in this app).
 - Frontend: question list with filters, type-aware editor, import wizard with a preview
   table.
-- Seed pack: ~60 real HTML/CSS/JS/React/React Native questions in `seeds/` so every later
-  phase has something honest to test against.
+- Seed pack: 60 real HTML/CSS/JavaScript/React/React Native questions in
+  `seeds/niit-semester-2.json`, 12 per subject, verified to import cleanly. Every later
+  phase now has honest material to test against.
 
 **Exit criteria:** round-trip test — export a space's bank, wipe it, re-import, assert
 identity. Importing a malformed CSV changes nothing in the database.

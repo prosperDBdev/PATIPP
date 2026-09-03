@@ -2,6 +2,14 @@ spring:
   application:
     name: patipp-api
 
+  autoconfigure:
+    exclude:
+      # Without this, Spring Security creates an in-memory user and logs a generated
+      # password at startup. Nothing can authenticate with it - basic and form login are
+      # both disabled and every request goes through the JWT filter - but an unused
+      # credential in the logs is noise that reads like a real one.
+      - org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
+
   datasource:
     url: ${PATIPP_DB_URL:jdbc:postgresql://localhost:5432/patipp}
     username: ${PATIPP_DB_USER:patipp}

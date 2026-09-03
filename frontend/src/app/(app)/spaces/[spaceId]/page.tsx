@@ -142,14 +142,43 @@ export default function SpaceOverviewPage() {
         )}
       </section>
 
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-text">Question bank</h2>
+          <Link
+            href={`/spaces/${spaceId}/questions`}
+            className="text-sm font-medium text-accent hover:underline"
+          >
+            Manage questions
+          </Link>
+        </div>
+        <Card className="flex flex-wrap items-center gap-3 p-4">
+          <p className="flex-1 text-sm text-text-muted">
+            Write questions by hand, or import a CSV or JSON file you already have. Import
+            checks the whole file and shows you what it would do before writing anything.
+          </p>
+          <Link
+            href={`/spaces/${spaceId}/questions/import`}
+            className="inline-flex h-9 items-center rounded-md border border-border bg-surface px-3 text-[13px] font-medium text-text transition-colors hover:border-border-strong"
+          >
+            Import
+          </Link>
+          <Link
+            href={`/spaces/${spaceId}/questions/new`}
+            className="inline-flex h-9 items-center rounded-md bg-accent px-3 text-[13px] font-medium text-accent-fg transition-colors hover:bg-accent-hover"
+          >
+            New question
+          </Link>
+        </Card>
+      </section>
+
       {/* An honest placeholder beats a fake dashboard: nothing here claims data it does not have. */}
       <section className="flex flex-col gap-3">
         <h2 className="text-base font-semibold text-text">Study</h2>
         <Card className="flex flex-col gap-2 p-6">
           <p className="text-sm text-text-muted">
-            Practice, exams, flashcards and readiness arrive in Phases 3 to 7. This space is
-            ready for them: its questions, attempts and progress will all be scoped to it and
-            kept separate from your other spaces.
+            Practice sessions, exams, flashcards and readiness arrive in Phases 3 to 7. The
+            question bank is the material they will draw on.
           </p>
         </Card>
       </section>

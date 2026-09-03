@@ -60,8 +60,8 @@ cd frontend && npm run build && npm run lint          # frontend
 
 ## Current status
 
-Architecture approved. Phases 0 and 1 complete and verified.
-Next: **Phase 2 — Question Engine** (see docs/ROADMAP.md).
+Architecture approved. Phases 0, 1 and 2 complete and verified.
+Next: **Phase 3 — Practice Sessions** (see docs/ROADMAP.md).
 
 Running: Postgres in Docker, API on :8081, web on :3001.
 **Ports are fixed: API 8081, web 3001.** Never 8080 or 3000 - those are left for
