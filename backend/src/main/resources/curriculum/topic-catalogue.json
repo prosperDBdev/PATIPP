@@ -1,0 +1,242 @@
+{
+  "_comment": [
+    "Curated starter topics, proposed when a subject is created.",
+    "",
+    "Deliberately short: six to ten topics each. A subject broken into thirty pieces looks",
+    "thorough and is miserable to work through, and it makes per-topic mastery meaningless",
+    "because no single topic ever accumulates enough attempts to be measured.",
+    "",
+    "These are suggestions. The user accepts, deselects or ignores them; nothing is added",
+    "without a click. Phase 8 adds AI generation for subjects that are not listed here."
+  ],
+  "subjects": [
+    {
+      "name": "HTML",
+      "aliases": ["html5", "hyper text markup language", "hypertext markup language"],
+      "topics": [
+        { "name": "Document structure", "description": "doctype, head, body, metadata" },
+        { "name": "Semantic elements", "description": "header, nav, main, article, section, footer" },
+        { "name": "Text and links", "description": "headings, paragraphs, lists, anchors" },
+        { "name": "Images and media", "description": "img, picture, video, audio, alt text" },
+        { "name": "Forms and inputs", "description": "input types, labels, validation" },
+        { "name": "Tables", "description": "thead, tbody, scope, captions" },
+        { "name": "Accessibility", "description": "ARIA, landmarks, keyboard support" },
+        { "name": "Attributes and data", "description": "global attributes, data-* attributes" }
+      ]
+    },
+    {
+      "name": "CSS",
+      "aliases": ["css3", "cascading style sheets", "styling"],
+      "topics": [
+        { "name": "Selectors and specificity", "description": "combinators, pseudo-classes, the cascade" },
+        { "name": "Box model", "description": "margin, border, padding, box-sizing" },
+        { "name": "Flexbox", "description": "one-dimensional layout, alignment, ordering" },
+        { "name": "Grid", "description": "two-dimensional layout, tracks, areas" },
+        { "name": "Positioning", "description": "static, relative, absolute, fixed, sticky" },
+        { "name": "Typography and colour", "description": "fonts, units, colour formats" },
+        { "name": "Responsive design", "description": "media queries, fluid units, mobile first" },
+        { "name": "Transitions and animation", "description": "transition, keyframes, performance" }
+      ]
+    },
+    {
+      "name": "JavaScript",
+      "aliases": ["js", "ecmascript", "es6", "javascript basics", "vanilla javascript"],
+      "topics": [
+        { "name": "Variables and scope", "description": "var, let, const, hoisting, the temporal dead zone" },
+        { "name": "Types and coercion", "description": "primitives, truthiness, == against ===" },
+        { "name": "Functions and closures", "description": "declarations, arrow functions, this, closures" },
+        { "name": "Arrays and objects", "description": "map, filter, reduce, destructuring, spread" },
+        { "name": "Asynchronous JavaScript", "description": "callbacks, promises, async and await" },
+        { "name": "The event loop", "description": "call stack, task and microtask queues" },
+        { "name": "DOM and events", "description": "querying, updating, bubbling, delegation" },
+        { "name": "Modules and tooling", "description": "import and export, bundlers" },
+        { "name": "Error handling", "description": "try and catch, throwing, rejected promises" }
+      ]
+    },
+    {
+      "name": "React",
+      "aliases": ["reactjs", "react.js", "react fundamentals"],
+      "topics": [
+        { "name": "Components and JSX", "description": "function components, composition, rendering" },
+        { "name": "Props", "description": "passing data down, children, default values" },
+        { "name": "State", "description": "useState, updater functions, lifting state up" },
+        { "name": "Hooks", "description": "useEffect, useRef, useMemo, custom hooks, the rules" },
+        { "name": "Lists and keys", "description": "rendering collections, reconciliation" },
+        { "name": "Forms", "description": "controlled and uncontrolled components" },
+        { "name": "Context and state management", "description": "Context API, avoiding prop drilling" },
+        { "name": "Performance", "description": "memo, re-render behaviour, when to optimise" }
+      ]
+    },
+    {
+      "name": "React Native",
+      "aliases": ["reactnative", "react-native", "rn", "mobile react"],
+      "topics": [
+        { "name": "Core components", "description": "View, Text, Image, ScrollView" },
+        { "name": "Styling", "description": "StyleSheet, unitless values, no CSS" },
+        { "name": "Layout with Flexbox", "description": "column by default, alignment" },
+        { "name": "Lists", "description": "FlatList, SectionList, virtualisation" },
+        { "name": "Navigation", "description": "stack, tab and drawer navigators" },
+        { "name": "Forms and keyboard", "description": "TextInput, KeyboardAvoidingView" },
+        { "name": "Platform differences", "description": "Platform module, .ios and .android files" },
+        { "name": "Animation and performance", "description": "Animated, useNativeDriver" }
+      ]
+    },
+    {
+      "name": "TypeScript",
+      "aliases": ["ts", "type script"],
+      "topics": [
+        { "name": "Basic types", "description": "primitives, arrays, tuples, any against unknown" },
+        { "name": "Interfaces and type aliases", "description": "shapes, extension, when to use which" },
+        { "name": "Unions and narrowing", "description": "discriminated unions, type guards" },
+        { "name": "Generics", "description": "generic functions, constraints" },
+        { "name": "Utility types", "description": "Partial, Pick, Omit, Record" },
+        { "name": "Typing React", "description": "props, hooks, events" },
+        { "name": "Configuration", "description": "tsconfig, strict mode" }
+      ]
+    },
+    {
+      "name": "Java",
+      "aliases": ["core java", "java se", "java programming"],
+      "topics": [
+        { "name": "Syntax and types", "description": "primitives, wrappers, control flow" },
+        { "name": "Object-oriented programming", "description": "classes, inheritance, polymorphism, interfaces" },
+        { "name": "Collections", "description": "List, Set, Map, choosing an implementation" },
+        { "name": "Generics", "description": "type parameters, bounded types, erasure" },
+        { "name": "Exceptions", "description": "checked against unchecked, try-with-resources" },
+        { "name": "Streams and lambdas", "description": "functional interfaces, stream pipelines" },
+        { "name": "Concurrency", "description": "threads, executors, synchronisation" },
+        { "name": "Memory and the JVM", "description": "heap, stack, garbage collection" }
+      ]
+    },
+    {
+      "name": "Spring Boot",
+      "aliases": ["springboot", "spring", "spring framework"],
+      "topics": [
+        { "name": "Dependency injection", "description": "beans, constructor injection, scopes" },
+        { "name": "Auto-configuration", "description": "starters, conditional configuration" },
+        { "name": "REST controllers", "description": "mapping, request and response bodies, validation" },
+        { "name": "Data access", "description": "Spring Data JPA, repositories, transactions" },
+        { "name": "Configuration and profiles", "description": "properties, environment, profiles" },
+        { "name": "Security", "description": "filter chain, authentication, authorisation" },
+        { "name": "Testing", "description": "slice tests, integration tests, Testcontainers" },
+        { "name": "Error handling", "description": "controller advice, problem details" }
+      ]
+    },
+    {
+      "name": "SQL",
+      "aliases": ["postgresql", "postgres", "mysql", "databases", "database", "rdbms"],
+      "topics": [
+        { "name": "Queries and filtering", "description": "SELECT, WHERE, ORDER BY, LIMIT" },
+        { "name": "Joins", "description": "inner, left, right, self joins" },
+        { "name": "Aggregation", "description": "GROUP BY, HAVING, aggregate functions" },
+        { "name": "Schema design", "description": "keys, relationships, normalisation" },
+        { "name": "Constraints", "description": "primary and foreign keys, unique, check" },
+        { "name": "Indexes and performance", "description": "when an index helps, reading a query plan" },
+        { "name": "Transactions", "description": "ACID, isolation levels" },
+        { "name": "Subqueries and CTEs", "description": "nested queries, WITH clauses" }
+      ]
+    },
+    {
+      "name": "REST APIs",
+      "aliases": ["rest", "restful apis", "api design", "web services"],
+      "topics": [
+        { "name": "Resources and URLs", "description": "naming, nesting, collections" },
+        { "name": "HTTP methods", "description": "GET, POST, PUT, PATCH, DELETE, idempotency" },
+        { "name": "Status codes", "description": "2xx, 4xx, 5xx and what each means" },
+        { "name": "Request and response design", "description": "payloads, content negotiation" },
+        { "name": "Authentication", "description": "tokens, sessions, API keys" },
+        { "name": "Versioning and evolution", "description": "breaking changes, deprecation" },
+        { "name": "Error handling", "description": "consistent error shapes, problem details" }
+      ]
+    },
+    {
+      "name": "Docker",
+      "aliases": ["containers", "containerisation", "containerization"],
+      "topics": [
+        { "name": "Images and containers", "description": "the difference, lifecycle" },
+        { "name": "Dockerfile", "description": "layers, caching, multi-stage builds" },
+        { "name": "Volumes and data", "description": "persistence, bind mounts" },
+        { "name": "Networking", "description": "ports, container-to-container communication" },
+        { "name": "Docker Compose", "description": "multi-service local environments" },
+        { "name": "Image size and security", "description": "base images, non-root users" }
+      ]
+    },
+    {
+      "name": "AWS",
+      "aliases": ["amazon web services", "aws certification", "cloud"],
+      "topics": [
+        { "name": "IAM", "description": "users, roles, policies, least privilege" },
+        { "name": "EC2", "description": "instances, AMIs, security groups" },
+        { "name": "S3", "description": "buckets, storage classes, access control" },
+        { "name": "VPC and networking", "description": "subnets, route tables, gateways" },
+        { "name": "Databases", "description": "RDS, DynamoDB, when to use which" },
+        { "name": "Lambda and serverless", "description": "functions, triggers, limits" },
+        { "name": "Monitoring and cost", "description": "CloudWatch, billing, tagging" }
+      ]
+    },
+    {
+      "name": "Git",
+      "aliases": ["version control", "github", "source control"],
+      "topics": [
+        { "name": "Commits and history", "description": "staging, committing, reading a log" },
+        { "name": "Branching and merging", "description": "branches, merges, fast-forward" },
+        { "name": "Rebasing", "description": "rewriting history, when not to" },
+        { "name": "Remotes", "description": "fetch, pull, push, tracking branches" },
+        { "name": "Conflicts", "description": "resolving, avoiding" },
+        { "name": "Undoing things", "description": "revert, reset, restore, reflog" }
+      ]
+    },
+    {
+      "name": "Python",
+      "aliases": ["python3", "py"],
+      "topics": [
+        { "name": "Syntax and types", "description": "variables, control flow, comprehensions" },
+        { "name": "Data structures", "description": "list, dict, set, tuple" },
+        { "name": "Functions", "description": "arguments, closures, decorators" },
+        { "name": "Object-oriented Python", "description": "classes, inheritance, dunder methods" },
+        { "name": "Modules and packages", "description": "imports, virtual environments" },
+        { "name": "Error handling", "description": "exceptions, context managers" },
+        { "name": "Standard library", "description": "collections, itertools, pathlib" }
+      ]
+    },
+    {
+      "name": "Data Structures and Algorithms",
+      "aliases": ["dsa", "algorithms", "data structures", "coding interview"],
+      "topics": [
+        { "name": "Complexity analysis", "description": "big O, time against space" },
+        { "name": "Arrays and strings", "description": "two pointers, sliding window" },
+        { "name": "Hash maps and sets", "description": "lookup patterns, frequency counting" },
+        { "name": "Linked lists", "description": "traversal, reversal, cycle detection" },
+        { "name": "Stacks and queues", "description": "monotonic stacks, BFS queues" },
+        { "name": "Trees and graphs", "description": "traversal, BFS, DFS, shortest paths" },
+        { "name": "Sorting and searching", "description": "binary search, common sorts" },
+        { "name": "Recursion and dynamic programming", "description": "memoisation, tabulation" }
+      ]
+    },
+    {
+      "name": "System Design",
+      "aliases": ["systems design", "architecture", "distributed systems"],
+      "topics": [
+        { "name": "Requirements and estimation", "description": "functional, non-functional, back-of-envelope" },
+        { "name": "Scaling", "description": "vertical against horizontal, load balancing" },
+        { "name": "Caching", "description": "strategies, invalidation, CDNs" },
+        { "name": "Databases at scale", "description": "replication, sharding, SQL against NoSQL" },
+        { "name": "Messaging", "description": "queues, event-driven design" },
+        { "name": "Consistency and availability", "description": "CAP, trade-offs" },
+        { "name": "Reliability", "description": "failure modes, monitoring, rate limiting" }
+      ]
+    },
+    {
+      "name": "Behavioural Interview",
+      "aliases": ["behavioral interview", "behavioural", "hr interview", "soft skills"],
+      "topics": [
+        { "name": "Telling your story", "description": "background, motivation, career narrative" },
+        { "name": "Conflict and disagreement", "description": "handling friction constructively" },
+        { "name": "Failure and learning", "description": "owning mistakes, what changed after" },
+        { "name": "Teamwork and influence", "description": "collaboration, persuading without authority" },
+        { "name": "Ownership and initiative", "description": "going beyond the brief" },
+        { "name": "Questions for them", "description": "what to ask, and why it matters" }
+      ]
+    }
+  ]
+}

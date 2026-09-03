@@ -1,9 +1,11 @@
 package com.patipp.curriculum.api;
 
+import com.patipp.curriculum.api.CurriculumDtos.BulkTopicRequest;
 import com.patipp.curriculum.api.CurriculumDtos.CreateSubjectRequest;
 import com.patipp.curriculum.api.CurriculumDtos.CreateTopicRequest;
 import com.patipp.curriculum.api.CurriculumDtos.SubjectResponse;
 import com.patipp.curriculum.api.CurriculumDtos.TopicResponse;
+import com.patipp.curriculum.api.CurriculumDtos.TopicSuggestions;
 import com.patipp.curriculum.api.CurriculumDtos.UpdateSubjectRequest;
 import com.patipp.curriculum.api.CurriculumDtos.UpdateTopicRequest;
 import com.patipp.curriculum.internal.CurriculumService;
@@ -64,6 +66,28 @@ public class CurriculumController {
                                                @PathVariable UUID subjectId) {
         curriculumService.archiveSubject(spaceId, subjectId);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Starter topics proposed for a subject.
+     *
+     * <p>Suggestions only: nothing is created until the caller accepts a chosen subset
+     * through the bulk endpoint below. A subject the catalogue does not recognise returns
+     * {@code matched: false} and an empty list, which is an ordinary answer rather than an
+     * error - the user then types their own topics as before.
+     */
+    @GetMapping("/subjects/{subjectId}/topic-suggestions")
+    public TopicSuggestions topicSuggestions(@PathVariable UUID spaceId,
+                                             @PathVariable UUID subjectId) {
+        return curriculumService.suggestTopics(spaceId, subjectId);
+    }
+
+    /** Accepts several suggested topics at once. Names already present are skipped. */
+    @PostMapping("/topics/bulk")
+    @ResponseStatus(HttpStatus.CREATED)
+    public List<TopicResponse> createTopics(@PathVariable UUID spaceId,
+                                            @Valid @RequestBody BulkTopicRequest request) {
+        return curriculumService.createTopics(spaceId, request);
     }
 
     @PostMapping("/topics")

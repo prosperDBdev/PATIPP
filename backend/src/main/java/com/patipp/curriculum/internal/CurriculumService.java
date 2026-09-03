@@ -3,10 +3,13 @@ package com.patipp.curriculum.internal;
 import com.patipp.common.error.BadRequestException;
 import com.patipp.common.error.ConflictException;
 import com.patipp.common.error.NotFoundException;
+import com.patipp.curriculum.api.CurriculumDtos.BulkTopicRequest;
 import com.patipp.curriculum.api.CurriculumDtos.CreateSubjectRequest;
 import com.patipp.curriculum.api.CurriculumDtos.CreateTopicRequest;
 import com.patipp.curriculum.api.CurriculumDtos.SubjectResponse;
+import com.patipp.curriculum.api.CurriculumDtos.SuggestedTopic;
 import com.patipp.curriculum.api.CurriculumDtos.TopicResponse;
+import com.patipp.curriculum.api.CurriculumDtos.TopicSuggestions;
 import com.patipp.curriculum.api.CurriculumDtos.UpdateSubjectRequest;
 import com.patipp.curriculum.api.CurriculumDtos.UpdateTopicRequest;
 import com.patipp.curriculum.domain.Subject;
@@ -20,7 +23,11 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,16 +42,21 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class CurriculumService {
 
+    private static final int MAX_BULK_TOPICS = 30;
+
     private final SubjectRepository subjects;
     private final TopicRepository topics;
     private final SpaceAccessGuard accessGuard;
+    private final TopicCatalogue catalogue;
     private final Clock clock;
 
     public CurriculumService(SubjectRepository subjects, TopicRepository topics,
-                             SpaceAccessGuard accessGuard, Clock clock) {
+                             SpaceAccessGuard accessGuard, TopicCatalogue catalogue,
+                             Clock clock) {
         this.subjects = subjects;
         this.topics = topics;
         this.accessGuard = accessGuard;
+        this.catalogue = catalogue;
         this.clock = clock;
     }
 
@@ -129,6 +141,85 @@ public class CurriculumService {
         var now = clock.instant();
         topics.findLiveInSubject(spaceId, subjectId).forEach(topic -> topic.archive(now));
         subject.archive(now);
+    }
+
+    // ---------------------------------------------------------------- suggestions
+
+    /**
+     * Proposes starter topics for a subject, drawn from the shipped catalogue.
+     *
+     * <p>Topics the subject already has are removed, so everything returned is addable and
+     * the list shrinks as the user accepts from it. An unmatched subject returns
+     * {@code matched = false} with an empty list rather than an error: not knowing about
+     * "Advanced Ceramics" is an expected outcome, not a failure.
+     */
+    @Transactional(readOnly = true)
+    public TopicSuggestions suggestTopics(UUID spaceId, UUID subjectId) {
+        accessGuard.requireOwned(spaceId);
+        Subject subject = requireSubject(spaceId, subjectId);
+
+        Optional<TopicCatalogue.Entry> entry = catalogue.find(subject.name());
+        if (entry.isEmpty()) {
+            return new TopicSuggestions(false, null, "CATALOGUE", List.of());
+        }
+
+        Set<String> existing = topics.findLiveInSubject(spaceId, subjectId).stream()
+                .map(topic -> topic.name().strip().toLowerCase(Locale.ROOT))
+                .collect(Collectors.toSet());
+
+        List<SuggestedTopic> remaining = entry.get().topics().stream()
+                .filter(suggestion -> !existing.contains(
+                        suggestion.name().strip().toLowerCase(Locale.ROOT)))
+                .toList();
+
+        return new TopicSuggestions(true, entry.get().canonicalName(), "CATALOGUE", remaining);
+    }
+
+    /**
+     * Creates several top-level topics in one request.
+     *
+     * <p>Exists so accepting eight suggestions is one round trip rather than eight, and so
+     * the whole set lands or none of it does. Names that already exist are skipped rather
+     * than rejected: the user asked for these topics to be present, and a conflict on one of
+     * them is not a reason to refuse the other seven.
+     */
+    @Transactional
+    public List<TopicResponse> createTopics(UUID spaceId, BulkTopicRequest request) {
+        accessGuard.requireWritable(spaceId);
+        Subject subject = requireSubject(spaceId, request.subjectId());
+
+        if (request.names() == null || request.names().isEmpty()) {
+            throw new BadRequestException("topic.names_required", "No topic names were supplied.");
+        }
+        if (request.names().size() > MAX_BULK_TOPICS) {
+            throw new BadRequestException("topic.too_many",
+                    "At most " + MAX_BULK_TOPICS + " topics can be added at once.");
+        }
+
+        Set<String> taken = topics.findLiveInSubject(spaceId, subject.id()).stream()
+                .filter(topic -> topic.parentTopicId() == null)
+                .map(topic -> topic.name().strip().toLowerCase(Locale.ROOT))
+                .collect(Collectors.toCollection(java.util.HashSet::new));
+
+        short position = (short) (topics.maxSiblingPosition(subject.id(), null) + 1);
+        List<TopicResponse> created = new ArrayList<>();
+
+        for (String rawName : request.names()) {
+            if (rawName == null || rawName.isBlank()) {
+                continue;
+            }
+            String name = rawName.strip();
+            // Guards against duplicates already present and against the same name appearing
+            // twice in one request.
+            if (!taken.add(name.toLowerCase(Locale.ROOT))) {
+                continue;
+            }
+
+            Topic topic = Topic.create(spaceId, subject.id(), null, name, null, position++, null);
+            created.add(toTopicResponse(topics.save(topic), List.of()));
+        }
+
+        return created;
     }
 
     // ---------------------------------------------------------------- topics

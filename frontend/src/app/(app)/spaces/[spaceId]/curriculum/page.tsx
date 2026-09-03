@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, Button, Card, EmptyState, Input, Spinner } from "@/components/ui";
+import { TopicSuggestionsPanel } from "@/components/curriculum/topic-suggestions";
 import { api, ApiError } from "@/lib/api/client";
 import type { Space, Subject, Topic } from "@/lib/api/types";
 
@@ -194,6 +195,17 @@ function SubjectSection({
           Archive
         </Button>
       </div>
+
+      {/* Only offered while the subject is empty. Once there are topics, the user has
+          clearly decided how to break it down and a suggestion panel becomes clutter. */}
+      {subject.topics.length === 0 && (
+        <TopicSuggestionsPanel
+          spaceId={spaceId}
+          subjectId={subject.id}
+          subjectName={subject.name}
+          onAdded={onChanged}
+        />
+      )}
 
       <div className="flex flex-col gap-1 px-4 py-3">
         {subject.topics.length === 0 ? (

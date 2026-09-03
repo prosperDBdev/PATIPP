@@ -194,3 +194,23 @@ export interface ImportReport {
   imported: number;
   rows: ImportRow[];
 }
+
+/* ------------------------------------------------------------------ topic suggestions */
+
+export interface SuggestedTopic {
+  name: string;
+  description: string | null;
+}
+
+/**
+ * @param matched       false when the catalogue does not know this subject — an ordinary
+ *                      outcome, not an error. The user types their own topics as before.
+ * @param matchedSubject the catalogue's spelling, which differs from what the user typed
+ *                       when they used an alias like "js" or "react-native"
+ */
+export interface TopicSuggestions {
+  matched: boolean;
+  matchedSubject: string | null;
+  source: string;
+  topics: SuggestedTopic[];
+}

@@ -3,6 +3,7 @@ package com.patipp.curriculum.api;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
@@ -61,6 +62,31 @@ public final class CurriculumDtos {
             @Size(max = 2000) String description,
             Short position,
             @DecimalMin("0.0") @DecimalMax("1000.0") BigDecimal weight) {
+    }
+
+    /**
+     * A proposed topic, not yet created. Suggestions the subject already has are filtered
+     * out before they reach the client, so everything returned is genuinely addable.
+     */
+    public record SuggestedTopic(String name, String description) {
+    }
+
+    /**
+     * @param matchedSubject the catalogue name that was matched, which may differ from what
+     *                       the user typed if they used an alias like "js" or "react-native"
+     * @param topics         suggestions that are not already present in the subject
+     */
+    public record TopicSuggestions(
+            boolean matched,
+            String matchedSubject,
+            String source,
+            List<SuggestedTopic> topics) {
+    }
+
+    /** Accepts a chosen subset of suggestions in one request. */
+    public record BulkTopicRequest(
+            @NotNull UUID subjectId,
+            List<@Size(min = 1, max = 120) String> names) {
     }
 
     public record TopicResponse(
