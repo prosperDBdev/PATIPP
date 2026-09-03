@@ -1,4 +1,4 @@
-package com.patipp.preparations.internal;
+package com.patipp.preparations.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

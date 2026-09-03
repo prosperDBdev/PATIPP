@@ -1,4 +1,4 @@
-package com.patipp.preparations.internal;
+package com.patipp.preparations.api;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;

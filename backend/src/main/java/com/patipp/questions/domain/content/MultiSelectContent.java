@@ -1,6 +1,8 @@
 package com.patipp.questions.domain.content;
 
 import com.patipp.questions.domain.QuestionType;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -54,6 +56,32 @@ public record MultiSelectContent(List<Option> options, boolean partialCredit, bo
         payload.put("partialCredit", partialCredit);
         payload.put("shuffle", shuffle);
         return payload;
+    }
+
+    /**
+     * Options without their correctness, plus how many are right.
+     *
+     * <p>The count is genuinely part of the question - "choose three" is a different task
+     * from "choose the right ones" - and revealing it gives nothing away about which.
+     */
+    @Override
+    public Map<String, Object> presentation() {
+        List<Map<String, Object>> visible = new ArrayList<>();
+        for (Option option : options) {
+            visible.add(Map.of("id", option.id(), "text", option.text()));
+        }
+        if (shuffle) {
+            Collections.shuffle(visible);
+        }
+        return Map.of(
+                "options", visible,
+                "correctCount", correctOptionIds().size(),
+                "partialCredit", partialCredit);
+    }
+
+    @Override
+    public Map<String, Object> correctAnswer() {
+        return Map.of("optionIds", List.copyOf(correctOptionIds()));
     }
 
     public Set<String> correctOptionIds() {

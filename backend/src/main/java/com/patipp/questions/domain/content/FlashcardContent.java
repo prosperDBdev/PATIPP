@@ -50,6 +50,23 @@ public record FlashcardContent(String front, String back, String mnemonic)
     }
 
     /**
+     * Both sides, because a flashcard is self-graded.
+     *
+     * <p>Withholding the back would be pointless: the learner has to see it to decide how
+     * well they recalled it. The reveal is a flip in the interface, not a secret - there is
+     * nothing to cheat at when you are marking yourself.
+     */
+    @Override
+    public Map<String, Object> presentation() {
+        return toPayload();
+    }
+
+    @Override
+    public Map<String, Object> correctAnswer() {
+        return Map.of("back", back);
+    }
+
+    /**
      * Self-graded, so there is nothing to mark against.
      *
      * <p>Anything but "Again" counts as correct for accuracy, while the exact grade is what

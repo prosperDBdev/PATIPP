@@ -27,6 +27,25 @@ public sealed interface QuestionContent
     Map<String, Object> toPayload();
 
     /**
+     * What is safe to send to a learner who has not answered yet.
+     *
+     * <p>Separate from {@link #toPayload()} because the payload contains the answer key.
+     * Sending the whole thing and hiding it in the interface would put the answers in the
+     * browser, where anyone curious enough to open developer tools can read them - and the
+     * person most likely to do that is the one whose own study results it corrupts.
+     *
+     * <p>Each format decides for itself, which is the point of the method living here: a new
+     * format cannot be added without answering the question "what may they see first?"
+     */
+    Map<String, Object> presentation();
+
+    /**
+     * The answer key, for after the answer is in. Shown in immediate feedback for practice,
+     * and in the summary for modes that defer it.
+     */
+    Map<String, Object> correctAnswer();
+
+    /**
      * Grades one submission.
      *
      * <p>An answer of the wrong shape for this format scores zero rather than throwing: it

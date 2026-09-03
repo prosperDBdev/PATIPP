@@ -79,6 +79,24 @@ public record ShortAnswerContent(
         return payload;
     }
 
+    /**
+     * The match mode only. The accepted answers are the answer key and stay on the server.
+     *
+     * <p>Telling the learner how strictly they will be judged is fair and changes how they
+     * phrase things; telling them what to write is not a question any more.
+     */
+    @Override
+    public Map<String, Object> presentation() {
+        return Map.of("matchMode", matchMode.name());
+    }
+
+    @Override
+    public Map<String, Object> correctAnswer() {
+        return matchMode == MatchMode.KEYWORDS
+                ? Map.of("requiredKeywords", requiredKeywords)
+                : Map.of("acceptedAnswers", acceptedAnswers);
+    }
+
     @Override
     public EvaluationResult evaluate(Answer answer) {
         if (!(answer instanceof Answer.Text text)) {

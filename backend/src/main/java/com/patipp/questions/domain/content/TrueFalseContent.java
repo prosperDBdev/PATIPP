@@ -26,6 +26,17 @@ public record TrueFalseContent(boolean answer) implements QuestionContent {
         return payload;
     }
 
+    /** Nothing to show: the statement is the stem, and the two choices are always the same. */
+    @Override
+    public Map<String, Object> presentation() {
+        return Map.of();
+    }
+
+    @Override
+    public Map<String, Object> correctAnswer() {
+        return Map.of("value", answer);
+    }
+
     @Override
     public EvaluationResult evaluate(Answer submitted) {
         if (!(submitted instanceof Answer.Bool bool)) {

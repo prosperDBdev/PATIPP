@@ -8,6 +8,7 @@ import com.patipp.preparations.api.PreparationDtos.CreateSpaceRequest;
 import com.patipp.preparations.api.PreparationDtos.PreparationTypeResponse;
 import com.patipp.preparations.api.PreparationDtos.SpaceResponse;
 import com.patipp.preparations.api.PreparationDtos.UpdateSpaceRequest;
+import com.patipp.preparations.api.BlueprintMerger;
 import com.patipp.preparations.api.SpaceAccessGuard;
 import com.patipp.preparations.domain.PreparationSpace;
 import com.patipp.preparations.domain.PreparationSpaceRepository;

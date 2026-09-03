@@ -1,6 +1,8 @@
 package com.patipp.questions.domain.content;
 
 import com.patipp.questions.domain.QuestionType;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +47,30 @@ public record McqContent(List<Option> options, boolean shuffle) implements Quest
         payload.put("options", Option.toMaps(options));
         payload.put("shuffle", shuffle);
         return payload;
+    }
+
+    /**
+     * Options with the {@code correct} flag stripped, shuffled when the author asked for it.
+     *
+     * <p>Shuffling here rather than in the browser means the order the learner sees is the
+     * order the server chose, and no amount of inspecting the page reveals which option was
+     * originally first.
+     */
+    @Override
+    public Map<String, Object> presentation() {
+        List<Map<String, Object>> visible = new ArrayList<>();
+        for (Option option : options) {
+            visible.add(Map.of("id", option.id(), "text", option.text()));
+        }
+        if (shuffle) {
+            Collections.shuffle(visible);
+        }
+        return Map.of("options", visible);
+    }
+
+    @Override
+    public Map<String, Object> correctAnswer() {
+        return Map.of("optionIds", List.of(correctOptionId()));
     }
 
     public String correctOptionId() {

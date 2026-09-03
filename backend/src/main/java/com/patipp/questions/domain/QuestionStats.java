@@ -106,4 +106,23 @@ public class QuestionStats extends com.patipp.common.jpa.AssignedIdEntity<UUID> 
             this.eloRating = BigDecimal.valueOf(difficulty.seedRating());
         }
     }
+
+    /**
+     * Folds one answer into the running aggregates.
+     *
+     * <p>The mean response time is maintained incrementally rather than recomputed, so this
+     * stays a single row update however many attempts accumulate. The Elo rating is left
+     * alone here: moving it needs the learner's ability as well, which is Phase 5's job.
+     */
+    public void recordAnswer(boolean correct, Integer responseTimeMs) {
+        this.timesServed++;
+        if (correct) {
+            this.timesCorrect++;
+        }
+        if (responseTimeMs != null && responseTimeMs >= 0) {
+            this.avgResponseMs = avgResponseMs == null
+                    ? responseTimeMs
+                    : (int) Math.round(avgResponseMs + (responseTimeMs - avgResponseMs) / (double) timesServed);
+        }
+    }
 }
