@@ -51,4 +51,3 @@ coverage/
 playwright-report/
 test-results/
 
-# Generated overview PDF is committed deliberately as a shareable artefact.
