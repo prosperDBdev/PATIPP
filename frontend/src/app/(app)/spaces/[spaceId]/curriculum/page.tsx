@@ -196,8 +196,8 @@ function SubjectSection({
         </Button>
       </div>
 
-      {/* Only offered while the subject is empty. Once there are topics, the user has
-          clearly decided how to break it down and a suggestion panel becomes clutter. */}
+      {/* Open by default while the subject is empty; a quiet button once it has topics, so
+          the offer stays available without sitting on top of a curriculum already decided. */}
       {subject.topics.length === 0 && (
         <TopicSuggestionsPanel
           spaceId={spaceId}
@@ -238,6 +238,18 @@ function SubjectSection({
           </Button>
         </form>
       </div>
+
+      {/* Sibling of the padded block, not nested inside it, so the panel controls its own
+          spacing in both modes rather than inheriting a container's. */}
+      {subject.topics.length > 0 && (
+        <TopicSuggestionsPanel
+          spaceId={spaceId}
+          subjectId={subject.id}
+          subjectName={subject.name}
+          collapsed
+          onAdded={onChanged}
+        />
+      )}
     </Card>
   );
 }

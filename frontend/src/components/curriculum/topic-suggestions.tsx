@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Alert, Button, Spinner, cn } from "@/components/ui";
 import { api, ApiError } from "@/lib/api/client";
 import type { SuggestedTopic, TopicSuggestions as Suggestions } from "@/lib/api/types";
@@ -12,49 +12,64 @@ import type { SuggestedTopic, TopicSuggestions as Suggestions } from "@/lib/api/
  * the user's curriculum and every mastery and readiness number is computed per topic - so a
  * list they did not actually choose would quietly distort their own results.
  *
- * <p>Renders nothing at all when the catalogue has no match, or once every suggestion has been
- * taken. An empty panel saying "no suggestions" would be worse than no panel.
+ * <p>Two modes. An empty subject opens the panel straight away, because there is nothing to
+ * get in the way of. A subject that already has topics shows a "Suggest more" button instead
+ * and fetches only when asked - the user has already decided how to break that subject down,
+ * so the offer should be available without being in the way.
  */
 export function TopicSuggestionsPanel({
   spaceId,
   subjectId,
   subjectName,
+  collapsed = false,
   onAdded,
 }: {
   spaceId: string;
   subjectId: string;
   subjectName: string;
+  /** Start as a button rather than an open panel. Used once a subject has topics. */
+  collapsed?: boolean;
   onAdded: () => Promise<void>;
 }) {
+  const [open, setOpen] = useState(!collapsed);
   const [suggestions, setSuggestions] = useState<Suggestions | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [dismissed, setDismissed] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const loaded = await api<Suggestions>(
+        `/api/v1/spaces/${spaceId}/subjects/${subjectId}/topic-suggestions`,
+      );
+      setSuggestions(loaded);
+      // Everything checked by default: the common case is "yes, all of those".
+      setSelected(new Set(loaded.topics.map((topic) => topic.name)));
+    } catch {
+      // A failed lookup must not break the editor. Manual entry still works, so the panel
+      // simply reports that it has nothing rather than throwing the page away.
+      setSuggestions({ matched: false, matchedSubject: null, source: "", topics: [] });
+    } finally {
+      setLoading(false);
+    }
+  }, [spaceId, subjectId]);
+
   useEffect(() => {
+    // Collapsed panels fetch on demand, so a page with eight subjects does not fire eight
+    // requests nobody asked for.
+    if (!open || suggestions !== null) return;
+
     let cancelled = false;
-
     (async () => {
-      try {
-        const loaded = await api<Suggestions>(
-          `/api/v1/spaces/${spaceId}/subjects/${subjectId}/topic-suggestions`,
-        );
-        if (cancelled) return;
-        setSuggestions(loaded);
-        // Everything checked by default: the common case is "yes, all of those".
-        setSelected(new Set(loaded.topics.map((topic) => topic.name)));
-      } catch {
-        // A failed suggestion lookup must not break the editor. Manual entry still works,
-        // so the panel simply does not appear.
-        if (!cancelled) setSuggestions({ matched: false, matchedSubject: null, source: "", topics: [] });
-      }
+      if (!cancelled) await load();
     })();
-
     return () => {
       cancelled = true;
     };
-  }, [spaceId, subjectId]);
+  }, [open, suggestions, load]);
 
   async function addSelected() {
     setBusy(true);
@@ -74,7 +89,25 @@ export function TopicSuggestionsPanel({
 
   if (dismissed) return null;
 
-  if (suggestions === null) {
+  // ---------------------------------------------------------------- collapsed
+
+  if (!open) {
+    return (
+      <div className="px-4 pb-3">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="text-xs font-medium text-accent hover:underline"
+        >
+          + Suggest more topics
+        </button>
+      </div>
+    );
+  }
+
+  // ---------------------------------------------------------------- loading
+
+  if (loading || suggestions === null) {
     return (
       <div className="flex items-center gap-2 px-4 py-3 text-xs text-text-faint">
         <Spinner className="size-3.5" />
@@ -83,12 +116,37 @@ export function TopicSuggestionsPanel({
     );
   }
 
+  // ---------------------------------------------------------------- nothing to offer
+
   if (!suggestions.matched || suggestions.topics.length === 0) {
-    return null;
+    // An automatically opened panel with nothing in it is worse than no panel, so it hides.
+    // A panel the user deliberately opened owes them an answer.
+    if (!collapsed) return null;
+
+    return (
+      <div className="flex items-center gap-3 px-4 pb-3 text-xs text-text-faint">
+        <span>
+          {suggestions.matched
+            ? `Every suggested topic for ${suggestions.matchedSubject} has been added.`
+            : `No starter topics for “${subjectName}” yet — add your own below.`}
+        </span>
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          className="font-medium text-accent hover:underline"
+        >
+          Hide
+        </button>
+      </div>
+    );
   }
 
+  // ---------------------------------------------------------------- suggestions
+
+  const allSelected = selected.size === suggestions.topics.length;
+
   return (
-    <div className="flex flex-col gap-3 border-b border-border bg-accent-soft/40 px-4 py-3">
+    <div className="flex flex-col gap-3 border-y border-border bg-accent-soft/40 px-4 py-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-[13px] text-text">
           <span className="font-medium">Suggested topics</span>{" "}
@@ -105,14 +163,12 @@ export function TopicSuggestionsPanel({
           type="button"
           onClick={() =>
             setSelected(
-              selected.size === suggestions.topics.length
-                ? new Set()
-                : new Set(suggestions.topics.map((topic) => topic.name)),
+              allSelected ? new Set() : new Set(suggestions.topics.map((topic) => topic.name)),
             )
           }
           className="text-xs font-medium text-accent hover:underline"
         >
-          {selected.size === suggestions.topics.length ? "Deselect all" : "Select all"}
+          {allSelected ? "Deselect all" : "Select all"}
         </button>
       </div>
 
