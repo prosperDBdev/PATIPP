@@ -172,14 +172,19 @@ export default function SpaceOverviewPage() {
         </Card>
       </section>
 
-      {/* An honest placeholder beats a fake dashboard: nothing here claims data it does not have. */}
       <section className="flex flex-col gap-3">
         <h2 className="text-base font-semibold text-text">Study</h2>
-        <Card className="flex flex-col gap-2 p-6">
-          <p className="text-sm text-text-muted">
-            Practice sessions, exams, flashcards and readiness arrive in Phases 3 to 7. The
-            question bank is the material they will draw on.
+        <Card className="flex flex-wrap items-center gap-3 p-4">
+          <p className="flex-1 text-sm text-text-muted">
+            Practice is untimed, and explains the answer as soon as you commit to one.
+            Timed mocks, flashcard review and readiness follow in Phases 4 to 7.
           </p>
+          <Link
+            href={`/spaces/${spaceId}/practice`}
+            className="inline-flex h-9 items-center rounded-md bg-accent px-3 text-[13px] font-medium text-accent-fg transition-colors hover:bg-accent-hover"
+          >
+            Start practising
+          </Link>
         </Card>
       </section>
     </div>

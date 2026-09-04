@@ -214,3 +214,107 @@ export interface TopicSuggestions {
   source: string;
   topics: SuggestedTopic[];
 }
+
+/* ------------------------------------------------------------------ sessions */
+
+export type SessionModeKey = "PRACTICE" | "EXAM" | "INTERVIEW" | "FLASHCARD_REVIEW" | "DRILL";
+export type SessionStatusKey = "IN_PROGRESS" | "SUBMITTED" | "ABANDONED" | "EXPIRED";
+
+/**
+ * The question as served. `presentation` is deliberately not the stored payload: the answer
+ * key stays on the server, so there is nothing here to read out of the page.
+ */
+export interface ServedItem {
+  position: number;
+  questionId: string;
+  type: QuestionTypeKey;
+  difficulty: DifficultyKey;
+  subjectId: string;
+  topicId: string | null;
+  estimatedSeconds: number;
+  stem: string;
+  hints: string[];
+  presentation: Record<string, unknown>;
+}
+
+export interface SessionResponse {
+  id: string;
+  mode: SessionModeKey;
+  status: SessionStatusKey;
+  startedAt: string;
+  deadlineAt: string | null;
+  submittedAt: string | null;
+  totalItems: number;
+  answeredCount: number;
+  correctCount: number;
+  activeMs: number;
+  immediateFeedback: boolean;
+  currentItem: ServedItem | null;
+}
+
+export interface AnswerResult {
+  position: number;
+  correct: boolean;
+  score: number;
+  note: string | null;
+  explanation: string | null;
+  correctAnswer: Record<string, unknown> | null;
+  answeredCount: number;
+  totalItems: number;
+  sessionComplete: boolean;
+  nextItem: ServedItem | null;
+}
+
+export interface ReviewItem {
+  position: number;
+  questionId: string;
+  type: QuestionTypeKey;
+  difficulty: DifficultyKey;
+  stem: string;
+  correct: boolean;
+  score: number;
+  note: string | null;
+  explanation: string | null;
+  yourAnswer: Record<string, unknown> | null;
+  correctAnswer: Record<string, unknown> | null;
+  timeSpentMs: number;
+  selectionReason: Record<string, unknown>;
+}
+
+export interface SessionSummary {
+  id: string;
+  mode: SessionModeKey;
+  status: SessionStatusKey;
+  startedAt: string;
+  submittedAt: string | null;
+  activeMs: number;
+  totalItems: number;
+  answeredCount: number;
+  correctCount: number;
+  score: number | null;
+  breakdown: Record<string, unknown> | null;
+  items: ReviewItem[];
+}
+
+export interface SessionListEntry {
+  id: string;
+  mode: SessionModeKey;
+  status: SessionStatusKey;
+  startedAt: string;
+  submittedAt: string | null;
+  totalItems: number;
+  answeredCount: number;
+  correctCount: number;
+  score: number | null;
+}
+
+export interface SessionAvailability {
+  availableQuestions: number;
+  suggestedLength: number;
+}
+
+/** An option as shown to the learner: no correctness flag. */
+export interface PresentedOption {
+  id: string;
+  text: string;
+}
