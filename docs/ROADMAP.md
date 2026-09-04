@@ -6,7 +6,7 @@ exactly how you check it by hand.
 
 Effort estimates assume focused sessions, not calendar time.
 
-**Progress: Phases 0, 1 and 2 complete.** 117 backend tests plus 77 end-to-end API
+**Progress: Phases 0 to 3 complete.** 145 backend tests plus 122 end-to-end API
 checks green; frontend builds and lints clean.
 
 ---
@@ -103,6 +103,8 @@ version 1 is retained.
 
 ## Phase 3 — Practice Sessions (2 sessions) · MVP
 
+**Status: COMPLETE.** 145 backend tests and 45 end-to-end checks pass.
+
 **Build**
 - `study_sessions` + `session_items` + `question_attempts`.
 - `SessionModeHandler` registry; `PRACTICE` handler only.
@@ -111,7 +113,13 @@ version 1 is retained.
   explanation, complete session, summary.
 - Attempt history per question; per-question stats update.
 - Frontend: session runner with the chrome that every later mode reuses — progress bar,
-  keyboard shortcuts (1–9 select, Enter submit, N next, M mark), feedback panel.
+  keyboard shortcuts, feedback panel.
+
+  > Partially revised. `1`–`9` select an option and `Enter` submits then advances, so a whole
+  > session runs without the mouse. `M` for mark-for-review is **not** implemented: practice
+  > moves forward one question at a time and has nothing to come back to. It belongs with the
+  > navigation grid in Phase 4, where marking actually means something. `N` is redundant —
+  > `Enter` already advances.
 
 **Exit criteria:** every question type submits, evaluates and scores correctly, including
 partial credit on multi-select. Attempts are immutable — an update attempt fails.

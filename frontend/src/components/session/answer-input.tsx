@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Textarea, cn } from "@/components/ui";
 import type { PresentedOption, ServedItem } from "@/lib/api/types";
 
@@ -45,24 +45,55 @@ function ChoiceInput({
   result,
   single,
 }: AnswerInputProps & { single: boolean }) {
-  const options = (item.presentation.options as PresentedOption[] | undefined) ?? [];
-  const correctCount = (item.presentation.correctCount as number | undefined) ?? undefined;
+  // Memoised because the `?? []` fallback would otherwise be a new array on every render,
+  // making the keyboard effect below tear down and re-subscribe each time.
+  const options = useMemo(
+    () => (item.presentation.options as PresentedOption[] | undefined) ?? [],
+    [item.presentation],
+  );
+  const correctCount = item.presentation.correctCount as number | undefined;
   // No reset effect: the runner gives this component a key of the question id, so React
   // unmounts and remounts it for each question and the state starts fresh by construction.
   const [selected, setSelected] = useState<string[]>([]);
 
   const correctIds = (result?.correctAnswer?.optionIds as string[] | undefined) ?? [];
 
-  function toggle(id: string) {
-    if (locked) return;
-    const next = single
-      ? [id]
-      : selected.includes(id)
-        ? selected.filter((value) => value !== id)
-        : [...selected, id];
-    setSelected(next);
-    onChange(next.length > 0 ? { optionIds: next } : null);
-  }
+  const toggle = useCallback(
+    (id: string) => {
+      if (locked) return;
+      setSelected((current) => {
+        const next = single
+          ? [id]
+          : current.includes(id)
+            ? current.filter((value) => value !== id)
+            : [...current, id];
+        onChange(next.length > 0 ? { optionIds: next } : null);
+        return next;
+      });
+    },
+    [locked, single, onChange],
+  );
+
+  // Number keys pick an option, matching the badge beside each one. Together with Enter to
+  // submit, a whole session can be worked through without reaching for the mouse — which is
+  // most of what makes thirty questions in a row bearable.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (locked || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLInputElement) {
+        return;
+      }
+
+      const index = Number(event.key) - 1;
+      if (Number.isInteger(index) && index >= 0 && index < options.length) {
+        event.preventDefault();
+        toggle(options[index].id);
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [locked, options, toggle]);
 
   return (
     <div className="flex flex-col gap-2">

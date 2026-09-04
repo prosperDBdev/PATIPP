@@ -60,8 +60,13 @@ cd frontend && npm run build && npm run lint          # frontend
 
 ## Current status
 
-Architecture approved. Phases 0, 1 and 2 complete and verified.
-Next: **Phase 3 — Practice Sessions** (see docs/ROADMAP.md).
+Architecture approved. Phases 0 to 3 complete and verified.
+Next: **Phase 4 — Exam Mode** (see docs/ROADMAP.md).
+
+Phase 4 adds a `SessionModeHandler`, not a new engine: a deadline, deferred
+feedback and blueprint-weighted selection. If it starts needing its own attempt
+log or scoring path, something has leaked into the shared engine that belongs in
+a handler.
 
 Running: Postgres in Docker, API on :8081, web on :3001.
 **Ports are fixed: API 8081, web 3001.** Never 8080 or 3000 - those are left for
