@@ -1,0 +1,248 @@
+{
+  "_readme": [
+    "A small HTML question set for trying out import and practice.",
+    "",
+    "How to use it:",
+    "  1. Open your space, go to Questions, then Import",
+    "  2. Choose JSON, click 'Choose a file' and pick this file",
+    "  3. Click 'Check the file' - nothing is written yet, you just see the report",
+    "  4. Click 'Import 15 questions'",
+    "  5. Go back to the space and click 'Start practising'",
+    "",
+    "It deliberately contains all five question formats, so practice shows you each",
+    "answer control in turn: multiple choice, multiple select, true/false, short",
+    "answer and a flashcard.",
+    "",
+    "The subject is matched by name, case-insensitively, so 'HTML' below finds your",
+    "'Html' subject. No topics are named, because your curriculum has none yet - add",
+    "some later and you can re-import a version that uses them."
+  ],
+  "space": "NIIT Semester 2 Exams",
+  "count": 15,
+  "questions": [
+    {
+      "type": "MCQ",
+      "difficulty": "EASY",
+      "subject": "HTML",
+      "stem": "Which element marks up the most important heading on a page?",
+      "explanation": "There should be one <h1> per page, describing what the page is about. <title> sets the browser tab text, <header> is a layout region, and <head> holds metadata rather than visible content.",
+      "tags": ["headings", "semantics"],
+      "estimatedSeconds": 30,
+      "payload": {
+        "options": [
+          { "id": "a", "text": "<head>", "correct": false },
+          { "id": "b", "text": "<h1>", "correct": true },
+          { "id": "c", "text": "<header>", "correct": false },
+          { "id": "d", "text": "<title>", "correct": false }
+        ],
+        "shuffle": true
+      }
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "EASY",
+      "subject": "HTML",
+      "stem": "What does the alt attribute on an <img> do?",
+      "explanation": "It gives a text alternative for people using a screen reader, and is displayed if the image fails to load. Purely decorative images should use alt=\"\" so assistive technology skips them entirely.",
+      "tags": ["images", "accessibility"],
+      "estimatedSeconds": 30,
+      "payload": {
+        "options": [
+          { "id": "a", "text": "Shows a tooltip when you hover the image", "correct": false },
+          { "id": "b", "text": "Describes the image for screen readers and when it fails to load", "correct": true },
+          { "id": "c", "text": "Sets the image width and height", "correct": false },
+          { "id": "d", "text": "Provides a backup image URL", "correct": false }
+        ],
+        "shuffle": true
+      }
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "MEDIUM",
+      "subject": "HTML",
+      "stem": "Which attribute connects a <label> to the form control it describes?",
+      "explanation": "The label's for attribute must match the input's id. This makes clicking the label focus the field, and tells a screen reader what the field is for. Wrapping the input inside the label works too.",
+      "tags": ["forms", "accessibility"],
+      "estimatedSeconds": 40,
+      "payload": {
+        "options": [
+          { "id": "a", "text": "name", "correct": false },
+          { "id": "b", "text": "for", "correct": true },
+          { "id": "c", "text": "id", "correct": false },
+          { "id": "d", "text": "target", "correct": false }
+        ],
+        "shuffle": true
+      }
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "MEDIUM",
+      "subject": "HTML",
+      "stem": "Where should a <script> tag usually go for the best page-load experience?",
+      "explanation": "Scripts block HTML parsing while they download and run. Putting them just before </body>, or in <head> with the defer attribute, lets the browser render the page first.",
+      "tags": ["scripts", "performance"],
+      "estimatedSeconds": 45,
+      "payload": {
+        "options": [
+          { "id": "a", "text": "At the very top of <head>, so it loads first", "correct": false },
+          { "id": "b", "text": "Just before </body>, or in <head> with defer", "correct": true },
+          { "id": "c", "text": "Inside the first <div> of the page", "correct": false },
+          { "id": "d", "text": "It makes no difference where it goes", "correct": false }
+        ],
+        "shuffle": true
+      }
+    },
+    {
+      "type": "MCQ",
+      "difficulty": "HARD",
+      "subject": "HTML",
+      "stem": "Which input type gives a mobile user the most helpful keyboard for entering an email address?",
+      "explanation": "type=\"email\" shows a keyboard with @ and . readily available, and turns on the browser's built-in format checking. There is no type=\"mail\" or type=\"string\".",
+      "tags": ["forms", "mobile"],
+      "estimatedSeconds": 40,
+      "payload": {
+        "options": [
+          { "id": "a", "text": "type=\"text\"", "correct": false },
+          { "id": "b", "text": "type=\"email\"", "correct": true },
+          { "id": "c", "text": "type=\"mail\"", "correct": false },
+          { "id": "d", "text": "type=\"string\"", "correct": false }
+        ],
+        "shuffle": true
+      }
+    },
+
+    {
+      "type": "MULTI_SELECT",
+      "difficulty": "MEDIUM",
+      "subject": "HTML",
+      "stem": "Which of these are semantic HTML5 elements?",
+      "explanation": "article, nav and figure all describe what their content is. div and span are deliberately generic containers with no meaning, which is exactly why they should be a last resort.",
+      "tags": ["semantics"],
+      "estimatedSeconds": 60,
+      "payload": {
+        "options": [
+          { "id": "a", "text": "<article>", "correct": true },
+          { "id": "b", "text": "<div>", "correct": false },
+          { "id": "c", "text": "<nav>", "correct": true },
+          { "id": "d", "text": "<span>", "correct": false },
+          { "id": "e", "text": "<figure>", "correct": true }
+        ],
+        "partialCredit": true,
+        "shuffle": true
+      }
+    },
+    {
+      "type": "MULTI_SELECT",
+      "difficulty": "MEDIUM",
+      "subject": "HTML",
+      "stem": "Which of these elements are self-closing (void) elements?",
+      "explanation": "img, br and input have no closing tag because they cannot contain content. p and div both wrap content and must be closed.",
+      "tags": ["elements", "syntax"],
+      "estimatedSeconds": 60,
+      "payload": {
+        "options": [
+          { "id": "a", "text": "<img>", "correct": true },
+          { "id": "b", "text": "<p>", "correct": false },
+          { "id": "c", "text": "<br>", "correct": true },
+          { "id": "d", "text": "<input>", "correct": true },
+          { "id": "e", "text": "<div>", "correct": false }
+        ],
+        "partialCredit": true,
+        "shuffle": true
+      }
+    },
+
+    {
+      "type": "TRUE_FALSE",
+      "difficulty": "EASY",
+      "subject": "HTML",
+      "stem": "A <div> tells the browser something about the meaning of its contents.",
+      "explanation": "False. A div is a generic container with no semantic meaning at all. Reach for header, nav, main, article, section, aside or footer when the content has an actual role.",
+      "tags": ["semantics"],
+      "estimatedSeconds": 25,
+      "payload": { "answer": false }
+    },
+    {
+      "type": "TRUE_FALSE",
+      "difficulty": "MEDIUM",
+      "subject": "HTML",
+      "stem": "<!DOCTYPE html> is an HTML element.",
+      "explanation": "False. It is a document type declaration, not a tag. Its job is to tell the browser to use standards mode rather than the old quirks mode.",
+      "tags": ["document"],
+      "estimatedSeconds": 25,
+      "payload": { "answer": false }
+    },
+    {
+      "type": "TRUE_FALSE",
+      "difficulty": "MEDIUM",
+      "subject": "HTML",
+      "stem": "An id must be unique within a single HTML document.",
+      "explanation": "True. Two elements may never share an id, even if they are different kinds of element. When several elements share a purpose, use a class instead.",
+      "tags": ["attributes"],
+      "estimatedSeconds": 25,
+      "payload": { "answer": true }
+    },
+    {
+      "type": "TRUE_FALSE",
+      "difficulty": "HARD",
+      "subject": "HTML",
+      "stem": "Client-side validation with the required attribute means you no longer need to validate on the server.",
+      "explanation": "False. Anyone can bypass the browser entirely and post directly to your server. Client-side validation is a convenience for honest users; server-side validation is the actual protection.",
+      "tags": ["forms", "validation", "security"],
+      "estimatedSeconds": 35,
+      "payload": { "answer": false }
+    },
+
+    {
+      "type": "SHORT_ANSWER",
+      "difficulty": "MEDIUM",
+      "subject": "HTML",
+      "stem": "Which attribute makes a form field compulsory, so the browser blocks submission while it is empty?",
+      "explanation": "The required attribute. The browser shows its own validation message and refuses to submit, though you still need to check the value on the server.",
+      "tags": ["forms", "validation"],
+      "estimatedSeconds": 35,
+      "payload": {
+        "acceptedAnswers": ["required", "the required attribute", "required attribute"],
+        "matchMode": "NORMALIZED"
+      }
+    },
+    {
+      "type": "SHORT_ANSWER",
+      "difficulty": "HARD",
+      "subject": "HTML",
+      "stem": "What prefix do you give a custom attribute so it is valid HTML and readable from JavaScript via the dataset property?",
+      "explanation": "Any attribute starting with data-. For example data-user-id becomes element.dataset.userId, with the hyphenated name converted to camelCase.",
+      "tags": ["attributes", "javascript"],
+      "estimatedSeconds": 45,
+      "payload": {
+        "acceptedAnswers": ["data-", "data", "data attribute", "data-* attribute"],
+        "matchMode": "NORMALIZED"
+      }
+    },
+
+    {
+      "type": "FLASHCARD",
+      "difficulty": "EASY",
+      "subject": "HTML",
+      "stem": "Block vs inline elements",
+      "tags": ["layout", "elements"],
+      "estimatedSeconds": 30,
+      "payload": {
+        "front": "What is the difference between a block-level element and an inline element?",
+        "back": "A block-level element starts on a new line and takes up the full width available — div, p, h1, section.\n\nAn inline element sits within a line of text and takes only as much width as its content — span, a, strong, em."
+      }
+    },
+    {
+      "type": "FLASHCARD",
+      "difficulty": "MEDIUM",
+      "subject": "HTML",
+      "stem": "The core page structure",
+      "tags": ["document", "structure"],
+      "estimatedSeconds": 30,
+      "payload": {
+        "front": "What are the four parts of a minimal HTML document, and what does each do?",
+        "back": "1. <!DOCTYPE html> — puts the browser in standards mode.\n2. <html> — the root element; carries the lang attribute.\n3. <head> — metadata the user does not see: title, charset, viewport, stylesheets.\n4. <body> — everything actually rendered on the page."
+      }
+    }
+  ]
+}
