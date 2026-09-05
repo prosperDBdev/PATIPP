@@ -60,7 +60,9 @@ public class QuestionAccess {
         Collections.shuffle(pool, new Random(seed));
 
         return toSelection(pool.subList(0, Math.min(limit, pool.size())),
-                Map.of("reason", "RANDOM", "seed", seed));
+                Map.of("reason", "RANDOM",
+                        "why", "Drawn at random from what matches your filters",
+                        "seed", seed));
     }
 
     /**
@@ -130,7 +132,9 @@ public class QuestionAccess {
         // Interleave, so the paper does not run subject by subject in blocks.
         Collections.shuffle(chosen, random);
 
-        return toSelection(chosen, Map.of("reason", "BLUEPRINT_WEIGHTED", "seed", seed));
+        return toSelection(chosen, Map.of("reason", "BLUEPRINT_WEIGHTED",
+                "why", "Sampled to match how the real paper is weighted",
+                "seed", seed));
     }
 
     private List<Question> candidatePool(UUID spaceId, SelectionFilters filters) {
@@ -150,6 +154,89 @@ public class QuestionAccess {
                     question.id(), question.currentVersion().id(), reason));
         }
         return selected;
+    }
+
+    /**
+     * Everything that matches the filters, with each question's measured difficulty.
+     *
+     * <p>The pool the adaptive engine scores. This module decides what is <em>eligible</em> -
+     * active, current, matching the filters - and stops there. Which of them a particular
+     * learner should see is not a question about content, and answering it here would put
+     * per-learner state inside the content module, which is the one thing the data model
+     * forbids outright.
+     */
+    @Transactional(readOnly = true)
+    public List<Candidate> candidatesFor(UUID spaceId, SelectionFilters filters) {
+        List<Question> pool = candidatePool(spaceId, filters);
+
+        Map<UUID, QuestionStats> ratings = new java.util.HashMap<>();
+        stats.findAllById(pool.stream().map(Question::id).toList())
+                .forEach(row -> ratings.put(row.questionId(), row));
+
+        List<Candidate> candidates = new ArrayList<>(pool.size());
+        for (Question question : pool) {
+            QuestionStats row = ratings.get(question.id());
+            candidates.add(new Candidate(
+                    question.id(),
+                    question.currentVersion().id(),
+                    question.subjectId(),
+                    question.topicId(),
+                    // Falls back to the authored prior if statistics are somehow missing, so
+                    // a question is never silently dropped from selection.
+                    row == null ? question.difficulty().seedRating() : row.eloRating().doubleValue(),
+                    question.difficulty().name(),
+                    question.estimatedSeconds()));
+        }
+        return candidates;
+    }
+
+    /**
+     * @param rating the measured difficulty, which diverges from {@code authoredDifficulty}
+     *               as real answers accumulate
+     */
+    public record Candidate(
+            UUID questionId,
+            UUID questionVersionId,
+            UUID subjectId,
+            UUID topicId,
+            double rating,
+            String authoredDifficulty,
+            int estimatedSeconds) {
+    }
+
+    /**
+     * How many active questions each subject and topic holds.
+     *
+     * <p>The denominator of coverage: "you have seen 6 of the 40 questions in this topic".
+     * Returned as counts rather than as fractions because the module that asks holds the
+     * numerator, and because this is a fact about the bank that changes when questions are
+     * added - a stored fraction would go quietly stale.
+     *
+     * <p>Deliberately not typed in the engine's vocabulary. {@code questions} owns content and
+     * must not learn what a learner model is.
+     */
+    @Transactional(readOnly = true)
+    public List<TopicCount> activeCountsByTopic(UUID spaceId) {
+        Map<List<UUID>, Integer> counts = new LinkedHashMap<>();
+
+        for (Question question : questions.findAllLiveInSpace(spaceId)) {
+            if (question.status() != QuestionStatus.ACTIVE || question.currentVersion() == null) {
+                continue;
+            }
+            // A list of two, one of which may be null, as the key: Map.of rejects nulls and
+            // untagged questions are a real bucket that has to be counted.
+            counts.merge(java.util.Arrays.asList(question.subjectId(), question.topicId()),
+                    1, Integer::sum);
+        }
+
+        return counts.entrySet().stream()
+                .map(entry -> new TopicCount(
+                        entry.getKey().get(0), entry.getKey().get(1), entry.getValue()))
+                .toList();
+    }
+
+    /** @param topicId null for the subject's questions that have no topic */
+    public record TopicCount(UUID subjectId, UUID topicId, int activeQuestions) {
     }
 
     /** How many active questions match these filters, for telling the user before they start. */
@@ -192,6 +279,43 @@ public class QuestionAccess {
     @Transactional
     public void recordAnswered(UUID questionId, boolean correct, Integer responseTimeMs) {
         stats.findById(questionId).ifPresent(row -> row.recordAnswer(correct, responseTimeMs));
+    }
+
+    /**
+     * The question's measured difficulty.
+     *
+     * <p>Seeded from the authored label and corrected by real responses, so this diverges from
+     * {@code question.difficulty()} over time - and when it does, this is the one that is
+     * right. The label was one person's guess; this is what actually happened.
+     */
+    @Transactional(readOnly = true)
+    public Optional<ItemRating> ratingOf(UUID questionId) {
+        return stats.findById(questionId)
+                .map(row -> new ItemRating(row.eloRating().doubleValue(), row.ratingCount()));
+    }
+
+    /**
+     * Puts every question in a space back to the prior its authored label implies.
+     *
+     * <p>Only for a rebuild from the attempt log, which must not start from ratings that
+     * already contain the history it is about to replay.
+     */
+    @Transactional
+    public void resetRatings(UUID spaceId) {
+        for (Question question : questions.findAllLiveInSpace(spaceId)) {
+            stats.findById(question.id())
+                    .ifPresent(row -> row.resetRating(question.difficulty()));
+        }
+    }
+
+    /** Stores a new measured difficulty. The learner side of the same update lives elsewhere. */
+    @Transactional
+    public void applyRating(UUID questionId, double newRating) {
+        stats.findById(questionId).ifPresent(row -> row.applyRating(newRating));
+    }
+
+    /** @param ratingCount how much evidence is behind it, which decides how far it may move */
+    public record ItemRating(double rating, int ratingCount) {
     }
 
     /**

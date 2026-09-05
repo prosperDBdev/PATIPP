@@ -165,6 +165,9 @@ let it auto-submit. Confirm the breakdown resembles the example in your requirem
 
 ## Phase 5 — Adaptive Engine (3 sessions) · MVP
 
+**Status: COMPLETE.** 203 backend tests (27 of them pure engine tests running in under half a
+second) and 32 end-to-end checks pass.
+
 **Build** — see [ADAPTIVE-ENGINE.md](ADAPTIVE-ENGINE.md) for every formula.
 - `com.patipp.adaptive`, pure, no Spring: `LearnerModel` builder, `AbilityEstimator`
   (Elo both sides), `QuestionSelector` (composite score + constraints + sampling).
@@ -177,13 +180,103 @@ let it auto-submit. Confirm the breakdown resembles the example in your requirem
 - "Give me something to practice" now actually adaptive.
 - Frontend: a "why this question?" affordance in practice mode.
 
+  > Revised during implementation, in five places.
+  >
+  > **1. Selection moved out of `questions`.** The note in `QuestionAccess` said Phase 5 would
+  > replace the body of `selectForSession`. Doing that would have made the content module
+  > depend on per-learner state, which the prime directive forbids outright. Instead
+  > `sessions.internal.AdaptiveSelection` is where the three modules meet: `questions` supplies
+  > an eligible pool, `learning` supplies the learner model, `adaptive` decides.
+  >
+  > **2. `weightsBySubject()` became `selectionStrategy()`.** Three selection strategies
+  > (random, blueprint-weighted, adaptive) cannot be expressed as booleans without allowing
+  > combinations that mean nothing. One question, one answer.
+  >
+  > **3. `topic_mastery` has a nullable `topic_id` beside a `subject_id`.** The data model
+  > specified `UNIQUE (user_id, space_id, topic_id)`, but untagged questions are real and
+  > would have accumulated nowhere — invisible to weakness detection. Two partial unique
+  > indexes, because Postgres does not treat two nulls as equal.
+  >
+  > **4. `DueScore` is present but inert.** It is 0.30 of the composite score and needs
+  > `learning_states`, which is Phase 6's table. Every item currently reads as "new" and
+  > scores identically, so the weight contributes nothing to the ordering rather than
+  > distorting it. Phase 6 turns retention on without rebalancing anything.
+  >
+  > **5. A bug the tests caught: unsatisfiable constraints must cost only themselves.** The
+  > first version relaxed every guardrail at once when a draw found nothing. A question bank
+  > with no easy questions in it therefore made the win-cadence rule unsatisfiable, which
+  > silently also switched off diversity and handed the learner ten questions on their worst
+  > topic — the exact outcome the diversity rule exists to prevent. Relaxation is now graded:
+  > win cadence first, then hard-run, then diversity last.
+
 **Exit criteria:** unit tests with synthetic learners — a learner strong in JS and weak in
 React Native must receive a majority of React Native items. `RebuildDerivedState` after a
 truncate reproduces identical state (this proves the three-layer separation holds).
 
+  > The first criterion was written before the diversity guardrail existed and the two
+  > contradict each other: no topic may exceed 40% of a session, so a "majority" is
+  > impossible by construction. The test asserts the weak topic takes its **full allowance**
+  > under the cap instead. The cap is the more defensible rule — twelve questions in a row on
+  > your worst subject is how someone stops opening the app.
+
 **You verify:** deliberately fail six React Hooks questions, then start a practice session
 and confirm Hooks dominates and the recommendation says to focus there. Check that difficulty
 drops after a bad run rather than piling on.
+
+---
+
+## Phase 5.5 — Coding Practice Without Execution (1–2 sessions) · MVP
+
+**Why it exists.** PATIPP's five formats drill concepts well — Big-O, "what is wrong with
+this snippet", OOP principles — but nothing here executes code, and a technical interview is
+mostly live coding and debugging. The temptation is to read that as "PATIPP needs a code
+sandbox". It does not, at least not yet. The real gap is narrower and cheaper to close:
+**hand-written practice happens outside PATIPP, so it never reaches the attempt log**, and
+therefore never moves your ability estimate, your weak-topic ranking or your readiness score.
+A readiness number computed only over the multiple-choice half of your preparation is
+confidently reporting on the part that matters least.
+
+So this phase does not make PATIPP an IDE. It makes the practice you do *in* an IDE
+countable, schedulable and reviewable — which is the thing an IDE will never do for you.
+
+**Build**
+- `CODING` question type. The problem is shown; the learner solves it by hand in their own
+  editor, narrating. PATIPP then reveals a reference solution and a **rubric** — handled the
+  empty input, stated the complexity, named the trade-off, thought aloud — and the learner
+  self-grades Again/Hard/Good/Easy against it.
+- `DEBUGGING`: a snippet with a defect. The answer has a shape — `{line, explanation}` — so
+  the line number is graded automatically and the reasoning is self-graded.
+- `OUTPUT_PREDICTION`: what does this print? Fully auto-gradable with no execution at all.
+- Import and authoring support for all three, and the payload editor entries to match.
+- Frontend: a rubric panel and a self-grade control (the flashcard Again/Hard/Good/Easy
+  buttons already exist and are the right control).
+
+**What this leans on that is already built.** `question_attempts.evaluated_by` has carried
+`CHECK IN ('AUTO', 'SELF', 'AI')` since V4, and the `CODING_TEST` blueprint seeded in V2
+already declares `allowedQuestionTypes: ["CODING", "DEBUGGING", "OUTPUT_PREDICTION", …]` with
+`targetSuccessRate: 0.70` — lower than the 0.78 default, because coding problems should bite
+harder. The types were named in data before any of them had an implementation. This phase is
+the extensibility mechanism being used for what it was designed for: three new members of the
+sealed `QuestionContent` hierarchy, no changes to the session engine, the adaptive engine or
+the schema.
+
+**Ordering.** Before Phase 6 on purpose. Phase 6 schedules reviews, and coding problems need
+to already be in the system by then so they get scheduled alongside everything else. A
+problem you solved once and never revisited is a problem you cannot still solve.
+
+**Explicitly not in scope: executing code.** A sandbox — Judge0, or containers of our own —
+is a real security surface (untrusted code, timeouts, resource limits) and would put a
+network dependency underneath a core feature, which contradicts the standing rule that the
+application must work without external APIs. If it is ever built it goes behind an interface,
+late, and everything above keeps working when it is switched off.
+
+**Exit criteria:** a self-graded coding attempt moves the same `topic_mastery` row, the same
+question Elo and the same readiness inputs as an MCQ. Output prediction grades automatically
+and is not self-gradable.
+
+**You verify:** import five coding problems, solve two by hand, self-grade honestly, and
+confirm they appear in the weak-topic ranking and the session history exactly as the
+multiple-choice questions do.
 
 ---
 

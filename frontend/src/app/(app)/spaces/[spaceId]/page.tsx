@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Alert, Badge, Card, Spinner } from "@/components/ui";
+import { FocusPanel } from "@/components/learning/focus-panel";
 import { api, ApiError } from "@/lib/api/client";
 import type { Space, Subject } from "@/lib/api/types";
 
@@ -174,10 +175,11 @@ export default function SpaceOverviewPage() {
 
       <section className="flex flex-col gap-3">
         <h2 className="text-base font-semibold text-text">Study</h2>
+        <FocusPanel spaceId={spaceId} />
         <Card className="flex flex-wrap items-center gap-3 p-4">
           <p className="flex-1 text-sm text-text-muted">
-            Practice is untimed, and explains the answer as soon as you commit to one.
-            Flashcard review and readiness follow in Phases 6 and 7.
+            Practice is untimed, adapts to what you are weak at, and explains the answer as
+            soon as you commit to one.
           </p>
           <Link
             href={`/spaces/${spaceId}/practice`}

@@ -241,7 +241,7 @@ class ExamModeIntegrationTest extends IntegrationTest {
                 .andExpect(jsonPath("$.correctAnswer").doesNotExist())
                 .andReturn();
 
-        assertThat(result.getResponse().getContentAsString()).doesNotContain("explanation");
+        assertThat(result.getResponse().getContentAsString()).doesNotContain("\"explanation\"");
 
         // Everything is revealed once the paper is submitted.
         mockMvc.perform(post(url("/" + sessionId + "/complete"))

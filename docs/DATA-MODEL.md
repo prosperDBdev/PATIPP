@@ -323,9 +323,23 @@ index serves the "what is due right now" query, which runs on every session star
 `accuracy` numeric, `decayed_accuracy` numeric (recency-weighted), `attempts`, `correct`,
 `avg_response_ms`, `coverage` numeric (fraction of the topic's questions ever seen),
 `mastery_level` varchar (`UNTOUCHED`/`WEAK`/`DEVELOPING`/`PROFICIENT`/`STRONG`),
-`last_practiced_at`, `updated_at`. `UNIQUE (user_id, preparation_space_id, topic_id)`
+`last_practiced_at`, `updated_at`.
 
-Updated incrementally on each attempt (cheap), fully recomputable on demand (correct).
+Revised in Phase 5: `topic_id` is **nullable**, with `subject_id NOT NULL` beside it, and the
+uniqueness is two partial indexes rather than one constraint — `WHERE topic_id IS NOT NULL`
+and `WHERE topic_id IS NULL`. Postgres does not treat two nulls as equal, so a single UNIQUE
+would have let the untagged bucket duplicate silently. Untagged questions are practised like
+any other and need somewhere to accumulate; without that bucket they are invisible to
+weakness detection.
+
+Also revised: `coverage` is **not stored**. It is computed at read time against the live
+question count, because adding ten questions to a topic genuinely reduces your coverage of it
+and a stored fraction would quietly claim otherwise. The recency-weighted accuracy is stored
+as a pair of running sums (`decayed_attempts`, `decayed_correct`, `decayed_at`) rather than as
+a percentage, so the decay can be applied incrementally and exactly.
+
+Updated incrementally on each attempt (cheap), fully recomputable on demand (correct) — and
+`MasteryRebuilder` plus its integration test prove the second claim rather than asserting it.
 
 ### `readiness_snapshots`
 `id`, `user_id`, `preparation_space_id`, `captured_on` date, `score` numeric(5,2),

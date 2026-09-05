@@ -41,6 +41,19 @@ public class PracticeModeHandler implements SessionModeHandler {
     }
 
     /**
+     * Practice is where adaptation belongs.
+     *
+     * <p>The point here is to work on what you are actually weak at, at a level that is
+     * difficult without being demoralising. That is the opposite of an exam, which must stay
+     * a fixed yardstick, and it is why the two modes select differently while sharing
+     * everything else.
+     */
+    @Override
+    public SelectionStrategy selectionStrategy() {
+        return SelectionStrategy.ADAPTIVE;
+    }
+
+    /**
      * Requested length wins, then the preparation type's {@code defaults.sessionLength}, then
      * ten. Reading the blueprint means an interview space proposes eight questions and an
      * exam space twenty without either number being written here.

@@ -7,6 +7,7 @@ import com.patipp.common.error.ConflictException;
 import com.patipp.common.error.NotFoundException;
 import com.patipp.common.security.CurrentUser;
 import com.patipp.curriculum.api.CurriculumLookup;
+import com.patipp.learning.api.LearningAccess;
 import com.patipp.preparations.api.BlueprintMerger;
 import com.patipp.preparations.api.SpaceAccessGuard;
 import com.patipp.preparations.domain.PreparationSpace;
@@ -73,6 +74,8 @@ public class SessionService {
     private final SessionModeRegistry modes;
     private final SpaceAccessGuard accessGuard;
     private final BlueprintMerger blueprintMerger;
+    private final AdaptiveSelection adaptiveSelection;
+    private final LearningAccess learning;
     private final CurriculumLookup curriculum;
     private final CurrentUser currentUser;
     private final Clock clock;
@@ -88,6 +91,8 @@ public class SessionService {
                           SessionModeRegistry modes,
                           SpaceAccessGuard accessGuard,
                           BlueprintMerger blueprintMerger,
+                          AdaptiveSelection adaptiveSelection,
+                          LearningAccess learning,
                           CurriculumLookup curriculum,
                           CurrentUser currentUser,
                           Clock clock) {
@@ -98,6 +103,8 @@ public class SessionService {
         this.modes = modes;
         this.accessGuard = accessGuard;
         this.blueprintMerger = blueprintMerger;
+        this.adaptiveSelection = adaptiveSelection;
+        this.learning = learning;
         this.curriculum = curriculum;
         this.currentUser = currentUser;
         this.clock = clock;
@@ -146,10 +153,13 @@ public class SessionService {
         config.put("seed", seed);
 
         SelectionFilters filters = filtersFrom(request);
-        List<QuestionAccess.SelectedQuestion> selected = handler.weightsBySubject()
-                ? questionAccess.selectWeighted(spaceId, filters, length, seed,
-                        curriculum.subjectWeights(spaceId))
-                : questionAccess.selectForSession(spaceId, filters, length, seed);
+        List<QuestionAccess.SelectedQuestion> selected = switch (handler.selectionStrategy()) {
+            case BLUEPRINT_WEIGHTED -> questionAccess.selectWeighted(spaceId, filters, length,
+                    seed, curriculum.subjectWeights(spaceId));
+            case ADAPTIVE -> adaptiveSelection.select(userId, spaceId, filters, length, seed,
+                    settings, request);
+            case RANDOM -> questionAccess.selectForSession(spaceId, filters, length, seed);
+        };
 
         if (selected.isEmpty()) {
             throw new BadRequestException("session.no_questions",
@@ -357,6 +367,14 @@ public class SessionService {
                     request.responseTimeMs());
         }
 
+        // Moves the learner's ability in this topic and the question's measured difficulty,
+        // together. Revisions included: changing your mind is evidence too, and the rebuild
+        // replays every attempt, so skipping some here would make the two paths disagree.
+        learning.recordAnswer(userId, spaceId, item.questionId(),
+                question.subjectId(), question.topicId(), question.difficulty(),
+                result.score(), result.correct(), request.responseTimeMs(),
+                priorAttempts, now);
+
         boolean complete = session.answeredCount() >= session.totalItems();
         boolean reveal = handler.revealsFeedbackImmediately(session);
 
@@ -474,7 +492,8 @@ public class SessionService {
                 question.estimatedSeconds(),
                 question.stem(),
                 question.hints(),
-                question.content().presentation());
+                question.content().presentation(),
+                item.selectionReason());
     }
 
     private SessionResponse toResponse(StudySession session, SessionModeHandler handler) {

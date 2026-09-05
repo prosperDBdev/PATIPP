@@ -235,6 +235,87 @@ export interface ServedItem {
   stem: string;
   hints: string[];
   presentation: Record<string, unknown>;
+  /**
+   * Why the engine chose this question. Recorded when the session was built, so it is the
+   * actual reason rather than one reconstructed afterwards.
+   */
+  selectionReason: SelectionReason;
+}
+
+/**
+ * @param reason machine key: WEAK_TOPIC, COVERAGE_GAP, DIFFICULTY_FIT, RECOVERY, DUE_REVIEW,
+ *               CALIBRATION, or RANDOM / BLUEPRINT_WEIGHTED for the non-adaptive modes
+ * @param why    the same thing in a sentence, safe to show — it explains the choice, never
+ *               the answer
+ */
+export interface SelectionReason {
+  reason?: string;
+  why?: string;
+  score?: number;
+  expectation?: number;
+  engine?: string;
+  components?: {
+    due?: number;
+    weakness?: number;
+    difficultyFit?: number;
+    coverageGap?: number;
+    freshness?: number;
+    expectation?: number;
+    targetRating?: number;
+    itemRating?: number;
+  };
+}
+
+/* ------------------------------------------------------------------ adaptive engine */
+
+export type MasteryLevelKey =
+  | "UNTOUCHED"
+  | "UNASSESSED"
+  | "WEAK"
+  | "DEVELOPING"
+  | "PROFICIENT"
+  | "STRONG";
+
+export interface Weakness {
+  subjectId: string;
+  subjectName: string;
+  topicId: string | null;
+  topicName: string | null;
+  score: number;
+  recentAccuracy: number;
+  attempts: number;
+  level: MasteryLevelKey;
+}
+
+/**
+ * @param needsAssessment topics touched too little to judge. Deliberately separate from
+ *                        `weakest`: "you have not measured this" is a different instruction
+ *                        from "you are bad at this", and merging them would rank a topic
+ *                        with two attempts beside one with sixty.
+ * @param note            present only while the engine is admitting it does not know yet
+ */
+export interface Focus {
+  weakest: Weakness[];
+  needsAssessment: Weakness[];
+  calibrating: boolean;
+  totalAttempts: number;
+  ability: number;
+  note: string | null;
+}
+
+export interface TopicMastery {
+  subjectId: string;
+  subjectName: string;
+  topicId: string | null;
+  topicName: string | null;
+  ability: number;
+  accuracy: number;
+  recentAccuracy: number;
+  attempts: number;
+  correct: number;
+  questionsSeen: number;
+  level: MasteryLevelKey;
+  lastPracticedAt: string | null;
 }
 
 /** How a question stands in the navigation grid. Never whether it was correct. */

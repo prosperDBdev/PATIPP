@@ -109,7 +109,7 @@ class ModuleBoundaryTest {
     void internalPackagesAreModulePrivate() {
         // Each module publishes its api package. internal is where a module is free to
         // change its mind without breaking anybody.
-        for (String module : new String[]{"auth", "preparations", "curriculum"}) {
+        for (String module : new String[]{"auth", "preparations", "curriculum", "learning"}) {
             ArchRule rule = noClasses()
                     .that().resideOutsideOfPackage(BASE + "." + module + "..")
                     .should().dependOnClassesThat().resideInAPackage(BASE + "." + module + ".internal..")

@@ -54,6 +54,21 @@ public interface QuestionAttemptRepository extends JpaRepository<QuestionAttempt
                                      @Param("spaceId") UUID spaceId,
                                      Pageable pageable);
 
+    /**
+     * Every attempt this learner has made in this space, oldest first.
+     *
+     * <p>Replay order, deliberately: this feeds both the learner model and the rebuild of
+     * derived state, and a rebuild that processed answers out of order would produce
+     * different numbers from the incremental path it is meant to reproduce.
+     */
+    @Query("""
+            select a from QuestionAttempt a
+            where a.userId = :userId and a.preparationSpaceId = :spaceId
+            order by a.createdAt asc, a.id asc
+            """)
+    List<QuestionAttempt> findAllForLearner(@Param("userId") UUID userId,
+                                            @Param("spaceId") UUID spaceId);
+
     @Query("""
             select count(a) from QuestionAttempt a
             where a.userId = :userId and a.preparationSpaceId = :spaceId

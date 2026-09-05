@@ -76,13 +76,14 @@ public interface SessionModeHandler {
     }
 
     /**
-     * Whether selection should follow the curriculum's subject weights.
+     * How this mode picks its questions.
      *
-     * <p>False for practice, which draws evenly from whatever matches the filters. True for
-     * exams: if React is thirty percent of the real paper, a mock that is ten percent React
-     * is not measuring what it claims to.
+     * <p>Practice adapts; an exam samples to the blueprint at authored difficulty; anything
+     * new starts out drawing at random, which is always defensible. Returning a strategy
+     * rather than answering a series of yes/no questions means a mode cannot accidentally
+     * claim to be two things at once.
      */
-    default boolean weightsBySubject() {
-        return false;
+    default SelectionStrategy selectionStrategy() {
+        return SelectionStrategy.RANDOM;
     }
 }

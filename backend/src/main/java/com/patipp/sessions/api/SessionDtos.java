@@ -66,7 +66,14 @@ public final class SessionDtos {
              * payload and hiding it in the UI would put the answer key in the browser, where
              * anyone can read it.
              */
-            Map<String, Object> presentation) {
+            Map<String, Object> presentation,
+            /**
+             * Why the engine chose this question, in terms the learner can be shown.
+             * Recorded when the session is built rather than reconstructed afterwards - a
+             * reason worked out after the fact is a guess. Contains nothing that gives the
+             * answer away.
+             */
+            Map<String, Object> selectionReason) {
     }
 
     public record SessionResponse(

@@ -256,7 +256,9 @@ class PracticeSessionIntegrationTest extends IntegrationTest {
         // put the answers in the page source.
         assertThat(Json.readInt(body, "currentItem.presentation.options.length()")).isEqualTo(3);
         assertThat(body).doesNotContain("\"correct\"");
-        assertThat(body).doesNotContain("explanation");
+        // The question's own explanation, specifically. The selection reason carries a "why"
+        // of its own, which explains the choice rather than the answer.
+        assertThat(body).doesNotContain("\"explanation\"");
     }
 
     @Test
@@ -425,7 +427,11 @@ class PracticeSessionIntegrationTest extends IntegrationTest {
         assertThat(Json.readInt(body, "breakdown.byDifficulty.MEDIUM.correct")).isEqualTo(1);
         // Everything is revealed in the review, including the explanation.
         assertThat(Json.readString(body, "items[0].explanation")).isNotBlank();
-        assertThat(Json.readString(body, "items[0].selectionReason.reason")).isEqualTo("RANDOM");
+        // CALIBRATION, not RANDOM: from Phase 5 practice selection is adaptive, and a space
+        // with almost no history spreads across the syllabus rather than pretending to know
+        // where the learner is weak. Either way the reason is recorded, which is the point.
+        assertThat(Json.readString(body, "items[0].selectionReason.reason"))
+                .isEqualTo("CALIBRATION");
     }
 
     @Test

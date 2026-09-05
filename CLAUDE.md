@@ -60,19 +60,30 @@ cd frontend && npm run build && npm run lint          # frontend
 
 ## Current status
 
-Architecture approved. Phases 0 to 4 complete and verified.
-Next: **Phase 5 — Adaptive Engine** (see docs/ROADMAP.md).
+Architecture approved. Phases 0 to 5 complete and verified.
+Next: **Phase 5.5 — Coding Practice Without Execution** (see docs/ROADMAP.md).
 
-Phase 4 came out as one `SessionModeHandler` and one table (`exam_templates`):
-a deadline, deferred feedback, free navigation, answer revision and
-blueprint-weighted selection, with no exam entity, no second attempt log and no
-parallel scoring path. Keep it that way. If a future mode seems to need its own
-engine, the assumption that forced it belongs in a handler.
+The adaptive engine lives in `com.patipp.adaptive` and is **pure** — no Spring,
+no JPA, no web types, enforced by ArchUnit. Its 27 unit tests run in under half a
+second against hand-built synthetic learners, and that speed is the point: the
+algorithm will be rewritten, and rewrites only get verified properly when
+verifying them is free. Wire it up in `learning.internal.AdaptiveEngineConfig`.
 
-Phase 5 replaces the body of `QuestionAccess.selectForSession` with the adaptive
-engine. No caller should have to change. Exams deliberately stay non-adaptive —
-a mock that got easier when you struggled could not be compared with the last
-one, which is the only thing a mock is for.
+Three rules that took work to get right and are easy to undo by accident:
+
+- **Selection never happens inside `questions`.** `sessions.internal.AdaptiveSelection`
+  is where the three modules meet. Putting it in `questions` would attach
+  per-learner state to the content module.
+- **`topic_mastery` is derived and must stay derived.** `MasteryRebuilder` replays
+  the attempt log and an integration test asserts it reproduces the incremental
+  state exactly. If that test ever fails, something became a source of truth that
+  should not be one.
+- **A constraint that cannot be met must cost only itself.** Relaxation in the
+  selector is graded, never all-at-once. The first version dropped every guardrail
+  together, so an unsatisfiable win-cadence silently disabled diversity too.
+
+Exams deliberately stay non-adaptive — a mock that got easier when you struggled
+could not be compared with the last one, which is the only thing a mock is for.
 
 Running: Postgres in Docker, API on :8081, web on :3001.
 **Ports are fixed: API 8081, web 3001.** Never 8080 or 3000 - those are left for

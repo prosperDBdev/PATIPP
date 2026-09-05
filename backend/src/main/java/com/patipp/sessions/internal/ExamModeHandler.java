@@ -82,8 +82,8 @@ public class ExamModeHandler implements SessionModeHandler {
     }
 
     @Override
-    public boolean weightsBySubject() {
-        return true;
+    public SelectionStrategy selectionStrategy() {
+        return SelectionStrategy.BLUEPRINT_WEIGHTED;
     }
 
     /**

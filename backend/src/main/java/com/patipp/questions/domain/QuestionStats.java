@@ -125,4 +125,23 @@ public class QuestionStats extends com.patipp.common.jpa.AssignedIdEntity<UUID> 
                     : (int) Math.round(avgResponseMs + (responseTimeMs - avgResponseMs) / (double) timesServed);
         }
     }
+
+    /**
+     * Stores a measured difficulty, computed by the adaptive engine.
+     *
+     * <p>The engine owns the arithmetic; this row owns the number. Keeping the formula out of
+     * the entity is what lets the estimator be replaced without touching the content layer,
+     * and what keeps the whole calculation unit-testable without a database.
+     */
+    public void applyRating(double newRating) {
+        this.eloRating = java.math.BigDecimal.valueOf(newRating)
+                .setScale(2, java.math.RoundingMode.HALF_UP);
+        this.ratingCount++;
+    }
+
+    /** Puts the rating back to its authored prior, for a rebuild from the attempt log. */
+    public void resetRating(Difficulty difficulty) {
+        this.eloRating = BigDecimal.valueOf(difficulty.seedRating());
+        this.ratingCount = 0;
+    }
 }

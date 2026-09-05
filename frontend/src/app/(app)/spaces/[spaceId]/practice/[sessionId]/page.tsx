@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Badge, Button, Card, Spinner, cn } from "@/components/ui";
 import { AnswerInput } from "@/components/session/answer-input";
+import { WhyThisQuestion } from "@/components/session/why-this-question";
 import { humanType, title } from "@/components/question/labels";
 import { api, ApiError } from "@/lib/api/client";
 import type { AnswerResult, ServedItem, SessionResponse } from "@/lib/api/types";
@@ -194,6 +195,8 @@ export default function SessionRunnerPage() {
           locked={Boolean(result)}
           result={result ? { correct: result.correct === true, correctAnswer: result.correctAnswer } : null}
         />
+
+        <WhyThisQuestion reason={item.selectionReason} />
 
         {item.hints.length > 0 && !result && (
           <details className="text-sm">

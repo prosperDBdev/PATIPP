@@ -1,6 +1,4 @@
-| 4 — Exam mode (timed papers, navigation grid, saved setups) | complete |
-| 5 — Adaptive engine | next |
-| 6–10 | see [docs/ROADMAP.md](docs/ROADMAP.md) |# PATIPP
+# PATIPP
 
 **P**ersonalized **A**daptive **T**est & **I**nterview **P**reparation **P**latform.
 
@@ -82,5 +80,6 @@ key, token or connection string belongs in source.
 | 2 — Question engine (bank, import, export) | complete |
 | 3 — Practice sessions (session engine, attempt log) | complete |
 | 4 — Exam mode (timed papers, navigation grid, saved setups) | complete |
-| 5 — Adaptive engine | next |
+| 5 — Adaptive engine (Elo, weakness detection, explainable selection) | complete |
+| 5.5 — Coding practice without execution | next |
 | 6–10 | see [docs/ROADMAP.md](docs/ROADMAP.md) |
