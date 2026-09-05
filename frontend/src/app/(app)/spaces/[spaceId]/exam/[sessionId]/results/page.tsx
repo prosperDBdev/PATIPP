@@ -3,12 +3,20 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Alert, Spinner } from "@/components/ui";
+import { Alert, Card, Spinner } from "@/components/ui";
 import { SessionResults } from "@/components/session/results";
 import { api, ApiError } from "@/lib/api/client";
 import type { SessionSummary } from "@/lib/api/types";
 
-export default function SessionSummaryPage() {
+/**
+ * The exam paper, marked.
+ *
+ * <p>Everything held back during the exam arrives here at once: the score, where the marks
+ * went by subject and difficulty, and the explanation for every question including the ones
+ * never reached. Withholding it during the paper and then not showing it afterwards would be
+ * the worst of both.
+ */
+export default function ExamResultsPage() {
   const { spaceId, sessionId } = useParams<{ spaceId: string; sessionId: string }>();
 
   const [summary, setSummary] = useState<SessionSummary | null>(null);
@@ -19,8 +27,8 @@ export default function SessionSummaryPage() {
 
     (async () => {
       try {
-        // POST rather than GET: arriving here is what finishes the session, and calling it
-        // again is safe.
+        // POST: arriving here is what submits the paper. Safe to call again, and a paper the
+        // deadline already ended comes back as EXPIRED rather than being re-marked.
         const loaded = await api<SessionSummary>(
           `/api/v1/spaces/${spaceId}/sessions/${sessionId}/complete`,
           { method: "POST" },
@@ -30,7 +38,7 @@ export default function SessionSummaryPage() {
         if (!cancelled) {
           setError(
             caught instanceof ApiError && caught.status === 404
-              ? "That session does not exist, or is not yours."
+              ? "That exam does not exist, or is not yours."
               : "Could not load the results.",
           );
         }
@@ -46,8 +54,8 @@ export default function SessionSummaryPage() {
     return (
       <div className="flex flex-col gap-4">
         <Alert>{error}</Alert>
-        <Link href={`/spaces/${spaceId}/practice`} className="text-sm text-accent hover:underline">
-          &larr; Back to practice
+        <Link href={`/spaces/${spaceId}/exam`} className="text-sm text-accent hover:underline">
+          &larr; Back to exam setup
         </Link>
       </div>
     );
@@ -61,30 +69,46 @@ export default function SessionSummaryPage() {
     );
   }
 
+  const unanswered = summary.totalItems - summary.answeredCount;
+
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
       <header className="flex flex-col gap-1.5">
         <Link href={`/spaces/${spaceId}`} className="text-sm text-text-muted hover:text-text">
           &larr; Back to space
         </Link>
-        <h1 className="text-2xl font-semibold tracking-tight text-text">Session results</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-text">Exam results</h1>
         <p className="text-sm text-text-muted">
-          {summary.answeredCount} of {summary.totalItems} answered
-          {summary.answeredCount < summary.totalItems && (
-            <> — the unanswered ones are not counted against you</>
-          )}
-          .
+          {summary.status === "EXPIRED"
+            ? "Time ran out, so the paper was submitted as it stood."
+            : "Submitted."}{" "}
+          {summary.answeredCount} of {summary.totalItems} answered.
         </p>
       </header>
+
+      {unanswered > 0 && (
+        <Card className="p-4 text-[13px] text-text-muted">
+          The score is out of what you answered, so {unanswered} unanswered question
+          {unanswered === 1 ? "" : "s"} did not count against you. In the real paper
+          {unanswered === 1 ? " it" : " they"} would have — running out of time is itself
+          something to work on.
+        </Card>
+      )}
 
       <SessionResults summary={summary} />
 
       <div className="flex flex-wrap gap-3">
         <Link
-          href={`/spaces/${spaceId}/practice`}
+          href={`/spaces/${spaceId}/exam`}
           className="inline-flex h-10 items-center rounded-md bg-accent px-4 text-sm font-medium text-accent-fg hover:bg-accent-hover"
         >
-          Practise again
+          Sit another
+        </Link>
+        <Link
+          href={`/spaces/${spaceId}/practice`}
+          className="inline-flex h-10 items-center rounded-md border border-border bg-surface px-4 text-sm font-medium text-text hover:border-border-strong"
+        >
+          Practise what you missed
         </Link>
         <Link
           href={`/spaces/${spaceId}`}

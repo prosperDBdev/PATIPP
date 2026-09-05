@@ -19,20 +19,26 @@ export interface AnswerInputProps {
   locked: boolean;
   /** Highlights correctness after submission. */
   result?: { correct: boolean; correctAnswer: Record<string, unknown> | null } | null;
+  /**
+   * What was previously answered, for a mode that lets you come back and change it. Read
+   * once when the control mounts (the runner keys it by question), never watched afterwards:
+   * the learner is editing it from that moment on.
+   */
+  initialAnswer?: Record<string, unknown> | null;
 }
 
-export function AnswerInput({ item, onChange, locked, result }: AnswerInputProps) {
-  switch (item.type) {
+export function AnswerInput(props: AnswerInputProps) {
+  switch (props.item.type) {
     case "MCQ":
-      return <ChoiceInput item={item} onChange={onChange} locked={locked} result={result} single />;
+      return <ChoiceInput {...props} single />;
     case "MULTI_SELECT":
-      return <ChoiceInput item={item} onChange={onChange} locked={locked} result={result} single={false} />;
+      return <ChoiceInput {...props} single={false} />;
     case "TRUE_FALSE":
-      return <TrueFalseInput onChange={onChange} locked={locked} result={result} />;
+      return <TrueFalseInput {...props} />;
     case "SHORT_ANSWER":
-      return <ShortAnswerInput onChange={onChange} locked={locked} />;
+      return <ShortAnswerInput {...props} />;
     case "FLASHCARD":
-      return <FlashcardInput item={item} onChange={onChange} locked={locked} />;
+      return <FlashcardInput {...props} />;
   }
 }
 
@@ -43,6 +49,7 @@ function ChoiceInput({
   onChange,
   locked,
   result,
+  initialAnswer,
   single,
 }: AnswerInputProps & { single: boolean }) {
   // Memoised because the `?? []` fallback would otherwise be a new array on every render,
@@ -53,8 +60,11 @@ function ChoiceInput({
   );
   const correctCount = item.presentation.correctCount as number | undefined;
   // No reset effect: the runner gives this component a key of the question id, so React
-  // unmounts and remounts it for each question and the state starts fresh by construction.
-  const [selected, setSelected] = useState<string[]>([]);
+  // unmounts and remounts it for each question and the state starts fresh by construction —
+  // or, on a question already answered in an exam, from what was put down last time.
+  const [selected, setSelected] = useState<string[]>(
+    () => (initialAnswer?.optionIds as string[] | undefined) ?? [],
+  );
 
   const correctIds = (result?.correctAnswer?.optionIds as string[] | undefined) ?? [];
 
@@ -159,8 +169,11 @@ function TrueFalseInput({
   onChange,
   locked,
   result,
+  initialAnswer,
 }: Omit<AnswerInputProps, "item">) {
-  const [value, setValue] = useState<boolean | null>(null);
+  const [value, setValue] = useState<boolean | null>(
+    () => (initialAnswer?.value as boolean | undefined) ?? null,
+  );
   const correct = result?.correctAnswer?.value as boolean | undefined;
 
   return (
@@ -200,8 +213,12 @@ function TrueFalseInput({
 
 /* ------------------------------------------------------------------ short answer */
 
-function ShortAnswerInput({ onChange, locked }: Omit<AnswerInputProps, "item" | "result">) {
-  const [text, setText] = useState("");
+function ShortAnswerInput({
+  onChange,
+  locked,
+  initialAnswer,
+}: Omit<AnswerInputProps, "item" | "result">) {
+  const [text, setText] = useState(() => String(initialAnswer?.text ?? ""));
 
   return (
     <Textarea

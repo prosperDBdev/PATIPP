@@ -177,13 +177,25 @@ export default function SpaceOverviewPage() {
         <Card className="flex flex-wrap items-center gap-3 p-4">
           <p className="flex-1 text-sm text-text-muted">
             Practice is untimed, and explains the answer as soon as you commit to one.
-            Timed mocks, flashcard review and readiness follow in Phases 4 to 7.
+            Flashcard review and readiness follow in Phases 6 and 7.
           </p>
           <Link
             href={`/spaces/${spaceId}/practice`}
             className="inline-flex h-9 items-center rounded-md bg-accent px-3 text-[13px] font-medium text-accent-fg transition-colors hover:bg-accent-hover"
           >
             Start practising
+          </Link>
+        </Card>
+        <Card className="flex flex-wrap items-center gap-3 p-4">
+          <p className="flex-1 text-sm text-text-muted">
+            A mock is timed, answered in any order, and marked only at the end — weighted
+            towards the subjects that carry the most marks.
+          </p>
+          <Link
+            href={`/spaces/${spaceId}/exam`}
+            className="inline-flex h-9 items-center rounded-md border border-border bg-surface px-3 text-[13px] font-medium text-text transition-colors hover:border-border-strong"
+          >
+            Sit a mock exam
           </Link>
         </Card>
       </section>

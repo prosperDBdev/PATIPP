@@ -30,7 +30,8 @@ public class PracticeModeHandler implements SessionModeHandler {
      * usefully in an exam, unhelpfully when you are trying to understand something.
      */
     @Override
-    public Instant deadlineFor(Map<String, Object> config, Instant startedAt) {
+    public Instant deadlineFor(Map<String, Object> config, Map<String, Object> effectiveSettings,
+                               Instant startedAt) {
         return null;
     }
 

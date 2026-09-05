@@ -237,6 +237,20 @@ export interface ServedItem {
   presentation: Record<string, unknown>;
 }
 
+/** How a question stands in the navigation grid. Never whether it was correct. */
+export type SessionItemStateKey =
+  | "UNSEEN"
+  | "VIEWED"
+  | "ANSWERED"
+  | "MARKED_FOR_REVIEW"
+  | "SKIPPED";
+
+export interface ItemSummary {
+  position: number;
+  state: SessionItemStateKey;
+  answered: boolean;
+}
+
 export interface SessionResponse {
   id: string;
   mode: SessionModeKey;
@@ -249,13 +263,23 @@ export interface SessionResponse {
   correctCount: number;
   activeMs: number;
   immediateFeedback: boolean;
+  /** True for exams: questions may be visited in any order and revisited. */
+  freeNavigation: boolean;
+  /**
+   * Milliseconds left, computed by the server from its own clock. Null when the session is
+   * untimed. The countdown on screen is drawn from this, but the server decides when time is
+   * actually up — a clock the browser owns is a clock the browser can change.
+   */
+  remainingMs: number | null;
+  items: ItemSummary[];
   currentItem: ServedItem | null;
 }
 
 export interface AnswerResult {
   position: number;
-  correct: boolean;
-  score: number;
+  /** Null when the mode defers feedback — an exam withholds the verdict, not just the reason. */
+  correct: boolean | null;
+  score: number | null;
   note: string | null;
   explanation: string | null;
   correctAnswer: Record<string, unknown> | null;
@@ -311,6 +335,20 @@ export interface SessionListEntry {
 export interface SessionAvailability {
   availableQuestions: number;
   suggestedLength: number;
+}
+
+/** A saved exam setup, so a mock you sit repeatedly is not rebuilt by hand each time. */
+export interface ExamTemplate {
+  id: string;
+  name: string;
+  length: number | null;
+  durationMinutes: number | null;
+  subjectIds: string[];
+  types: QuestionTypeKey[];
+  difficulties: DifficultyKey[];
+  timesUsed: number;
+  lastUsedAt: string | null;
+  createdAt: string;
 }
 
 /** An option as shown to the learner: no correctness flag. */

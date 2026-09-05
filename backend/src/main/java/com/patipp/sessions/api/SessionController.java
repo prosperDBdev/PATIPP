@@ -87,6 +87,25 @@ public class SessionController {
         return sessionService.answer(spaceId, sessionId, request);
     }
 
+    /**
+     * Serves the question at a position. Exams only; practice is answered in order.
+     */
+    @GetMapping("/{sessionId}/items/{position}")
+    public SessionDtos.ServedItem goTo(@PathVariable UUID spaceId,
+                                       @PathVariable UUID sessionId,
+                                       @PathVariable int position) {
+        return sessionService.goTo(spaceId, sessionId, position);
+    }
+
+    /** Flags a question to come back to, or clears the flag. Exams only. */
+    @PostMapping("/{sessionId}/items/{position}/mark")
+    public SessionResponse mark(@PathVariable UUID spaceId,
+                                @PathVariable UUID sessionId,
+                                @PathVariable int position,
+                                @RequestParam(defaultValue = "true") boolean marked) {
+        return sessionService.markForReview(spaceId, sessionId, position, marked);
+    }
+
     /** Finishes and scores the session. Safe to call more than once. */
     @PostMapping("/{sessionId}/complete")
     public SessionSummary complete(@PathVariable UUID spaceId, @PathVariable UUID sessionId) {

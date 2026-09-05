@@ -133,8 +133,19 @@ public class PreparationSpaceService {
         accessGuard.requireOwned(spaceId).archive(clock.instant());
     }
 
+    /**
+     * Refuses a target date that has definitely already passed.
+     *
+     * <p>The server's clock is UTC but the date the learner typed is in their own timezone, and
+     * the two disagree for part of every day: at 16:00 in Los Angeles it is already tomorrow in
+     * UTC, so "today" as the learner means it looks like yesterday here. Rather than reach into
+     * the user module for a timezone on every write, we allow a day of slack - the widest civil
+     * offset span is about 26 hours - so a date that is still today <em>somewhere</em> is never
+     * rejected. The cost is that yesterday slips through; the alternative cost is telling a
+     * learner their exam date is in the past when it is not.
+     */
     private void rejectPastTargetDate(LocalDate targetDate) {
-        if (targetDate != null && targetDate.isBefore(LocalDate.now(clock))) {
+        if (targetDate != null && targetDate.isBefore(LocalDate.now(clock).minusDays(1))) {
             throw new BadRequestException("space.target_date_past",
                     "The target date cannot be in the past.");
         }

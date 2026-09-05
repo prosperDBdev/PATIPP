@@ -131,6 +131,8 @@ summary and that history shows exactly 10 attempts with sensible response times.
 
 ## Phase 4 — Exam Mode (2 sessions) · MVP
 
+**Status: COMPLETE.** 163 backend tests and 38 end-to-end checks pass.
+
 **Build**
 - `EXAM` session handler: server-set `started_at` and `deadline_at`, deferred feedback,
   blueprint-weighted sampling, randomisation with a stored seed (so a session is
@@ -140,6 +142,18 @@ summary and that history shows exactly 10 attempts with sensible response times.
 - Results: total score, per-subject and per-topic breakdown, per-difficulty breakdown, time
   per question, all incorrect answers with explanations.
 - Exam templates saved per space ("50 questions / 60 minutes / all subjects").
+
+  > Added during implementation: **answers can be changed until the paper is submitted**,
+  > which free navigation and mark-for-review are close to pointless without. The attempt log
+  > stays append-only — a revision is a new attempt beside the old one, and only the latest
+  > per question counts towards the score and the breakdown. Practice still refuses a second
+  > answer, because it has already shown you the first. The whole difference is one more
+  > method on `SessionModeHandler` (`allowsAnswerRevision`), which is the test the design was
+  > meant to pass.
+  >
+  > Also added: the summary breakdown gained `bySubject`, keyed by **name** rather than id.
+  > Per-subject results were already in the requirement, and an id in a stored breakdown goes
+  > stale the moment a subject is renamed or removed.
 
 **Exit criteria:** a test that submits after the deadline gets rejected. Closing the browser
 mid-exam and reopening resumes with the correct remaining time computed server-side.

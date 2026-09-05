@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.patipp.support.IntegrationTest;
 import com.patipp.support.Json;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -217,15 +218,37 @@ class PreparationSpaceIntegrationTest extends IntegrationTest {
     void pastTargetDateIsRejected() throws Exception {
         TestUser user = registerUser("Past");
 
+        // Dated against UTC, because the server's clock is UTC, and far enough back to be past
+        // in every timezone. An earlier version of this test used the JVM's local yesterday and
+        // failed for an hour after midnight east of UTC, where local "yesterday" and UTC "today"
+        // are the same date.
         mockMvc.perform(post("/api/v1/spaces")
                         .header(HttpHeaders.AUTHORIZATION, user.bearer())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"preparationTypeId":"%s","name":"Yesterday","targetDate":"%s"}
+                                {"preparationTypeId":"%s","name":"Last week","targetDate":"%s"}
                                 """.formatted(typeIdFor(user, "GENERAL_TEST"),
-                                LocalDate.now().minusDays(1))))
+                                LocalDate.now(ZoneOffset.UTC).minusDays(3))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("space.target_date_past"));
+    }
+
+    @Test
+    @DisplayName("a date that is still today somewhere in the world is accepted")
+    void todayInAWesternTimezoneIsAccepted() throws Exception {
+        TestUser user = registerUser("Timezone");
+
+        // Someone in Los Angeles setting a target date of their own "today" sends a date that
+        // is already yesterday in UTC. Rejecting it would be wrong, so the guard allows a day
+        // of slack rather than reading the user's timezone on every write.
+        mockMvc.perform(post("/api/v1/spaces")
+                        .header(HttpHeaders.AUTHORIZATION, user.bearer())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"preparationTypeId":"%s","name":"Today out west","targetDate":"%s"}
+                                """.formatted(typeIdFor(user, "GENERAL_TEST"),
+                                LocalDate.now(ZoneOffset.UTC).minusDays(1))))
+                .andExpect(status().isCreated());
     }
 
     @Test

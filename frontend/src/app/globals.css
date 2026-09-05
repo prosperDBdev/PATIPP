@@ -28,6 +28,10 @@
   --success: #1a6042;
   --success-soft: #dfeee7;
   --warning: #8a5609;
+  /* Flagged-for-review in an exam. Deliberately not the accent: the accent already means
+     "where you are", and a flag means "come back here", so the two must not look alike. */
+  --flag: #4c4a9e;
+  --flag-soft: #e6e5f5;
   --danger: #97382b;
   --danger-soft: #f7e5e1;
   --ring: #8a5609;
@@ -49,6 +53,8 @@
   --success: #5cbca0;
   --success-soft: #122725;
   --warning: #dca149;
+  --flag: #9d9ae0;
+  --flag-soft: #1e1d38;
   --danger: #de8878;
   --danger-soft: #2b1815;
   --ring: #dca149;
@@ -70,6 +76,8 @@
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
   --color-warning: var(--warning);
+  --color-flag: var(--flag);
+  --color-flag-soft: var(--flag-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
 

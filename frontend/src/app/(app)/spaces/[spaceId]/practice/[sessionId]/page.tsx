@@ -192,7 +192,7 @@ export default function SessionRunnerPage() {
           item={item}
           onChange={setAnswer}
           locked={Boolean(result)}
-          result={result ? { correct: result.correct, correctAnswer: result.correctAnswer } : null}
+          result={result ? { correct: result.correct === true, correctAnswer: result.correctAnswer } : null}
         />
 
         {item.hints.length > 0 && !result && (
@@ -247,25 +247,31 @@ export default function SessionRunnerPage() {
 }
 
 function Feedback({ result }: { result: AnswerResult }) {
+  // Practice always reveals, so these are present. Defaulted anyway rather than asserted:
+  // the field is nullable because a deferring mode omits it, and a crash would be a poor
+  // way to find out a mode was misconfigured.
+  const correct = result.correct === true;
+  const score = result.score ?? 0;
+
   return (
     <Card
       className={cn(
         "flex flex-col gap-2 p-4",
-        result.correct ? "border-success/40 bg-success-soft" : "border-danger/40 bg-danger-soft",
+        correct ? "border-success/40 bg-success-soft" : "border-danger/40 bg-danger-soft",
       )}
     >
       <div className="flex items-center gap-2">
         <span
           className={cn(
             "text-sm font-semibold",
-            result.correct ? "text-success" : "text-danger",
+            correct ? "text-success" : "text-danger",
           )}
         >
-          {result.correct ? "Correct" : result.score > 0 ? "Partly right" : "Not quite"}
+          {correct ? "Correct" : score > 0 ? "Partly right" : "Not quite"}
         </span>
-        {result.score > 0 && result.score < 1 && (
+        {score > 0 && score < 1 && (
           <span className="font-mono text-xs text-text-muted tabular-nums">
-            {Math.round(result.score * 100)}%
+            {Math.round(score * 100)}%
           </span>
         )}
       </div>

@@ -6,6 +6,7 @@ import com.patipp.common.error.BadRequestException;
 import com.patipp.common.error.ConflictException;
 import com.patipp.common.error.NotFoundException;
 import com.patipp.common.security.CurrentUser;
+import com.patipp.curriculum.api.CurriculumLookup;
 import com.patipp.preparations.api.BlueprintMerger;
 import com.patipp.preparations.api.SpaceAccessGuard;
 import com.patipp.preparations.domain.PreparationSpace;
@@ -15,6 +16,7 @@ import com.patipp.questions.api.QuestionAccess.ServedQuestion;
 import com.patipp.questions.domain.content.Answer;
 import com.patipp.questions.domain.content.EvaluationResult;
 import com.patipp.sessions.api.SessionDtos.AnswerResult;
+import com.patipp.sessions.api.SessionDtos.ItemSummary;
 import com.patipp.sessions.api.SessionDtos.ReviewItem;
 import com.patipp.sessions.api.SessionDtos.ServedItem;
 import com.patipp.sessions.api.SessionDtos.SessionAvailability;
@@ -71,8 +73,13 @@ public class SessionService {
     private final SessionModeRegistry modes;
     private final SpaceAccessGuard accessGuard;
     private final BlueprintMerger blueprintMerger;
+    private final CurriculumLookup curriculum;
     private final CurrentUser currentUser;
     private final Clock clock;
+
+    // Seeds each session's selection. Seeded per session rather than per draw, so a session
+    // can be reproduced exactly from the seed stored in its config.
+    private final java.util.Random random = new java.util.Random();
 
     public SessionService(StudySessionRepository sessions,
                           SessionItemRepository items,
@@ -81,6 +88,7 @@ public class SessionService {
                           SessionModeRegistry modes,
                           SpaceAccessGuard accessGuard,
                           BlueprintMerger blueprintMerger,
+                          CurriculumLookup curriculum,
                           CurrentUser currentUser,
                           Clock clock) {
         this.sessions = sessions;
@@ -90,18 +98,25 @@ public class SessionService {
         this.modes = modes;
         this.accessGuard = accessGuard;
         this.blueprintMerger = blueprintMerger;
+        this.curriculum = curriculum;
         this.currentUser = currentUser;
         this.clock = clock;
     }
 
     // ------------------------------------------------------------------ starting
 
-    /** How many questions match these filters, so the user knows before committing. */
+    /**
+     * How many questions match these filters, so the user knows before committing.
+     *
+     * <p>The suggested length comes from the handler for the mode actually being asked about:
+     * an exam space proposes its {@code examLength} and a practice session its
+     * {@code sessionLength}, and neither number lives in this class.
+     */
     @Transactional(readOnly = true)
     public SessionAvailability availability(UUID spaceId, StartSessionRequest request) {
         PreparationSpace space = accessGuard.requireOwned(spaceId);
         int available = questionAccess.countAvailable(spaceId, filtersFrom(request));
-        int suggested = modes.require(SessionMode.PRACTICE)
+        int suggested = modes.require(parseMode(request.mode()))
                 .resolveLength(configFrom(request), effectiveSettings(space));
         return new SessionAvailability(available, Math.min(suggested, available));
     }
@@ -121,11 +136,20 @@ public class SessionService {
                     "You already have a session in progress. Finish or abandon it first.");
         });
 
+        Map<String, Object> settings = effectiveSettings(space);
         Map<String, Object> config = configFrom(request);
-        int length = handler.resolveLength(config, effectiveSettings(space));
+        int length = handler.resolveLength(config, settings);
 
-        List<QuestionAccess.SelectedQuestion> selected =
-                questionAccess.selectForSession(spaceId, filtersFrom(request), length);
+        // Stored so the exact paper can be reconstructed later. A mock you cannot reproduce
+        // is a mock you cannot investigate when a score looks wrong.
+        long seed = request.seed() == null ? random.nextLong() : request.seed();
+        config.put("seed", seed);
+
+        SelectionFilters filters = filtersFrom(request);
+        List<QuestionAccess.SelectedQuestion> selected = handler.weightsBySubject()
+                ? questionAccess.selectWeighted(spaceId, filters, length, seed,
+                        curriculum.subjectWeights(spaceId))
+                : questionAccess.selectForSession(spaceId, filters, length, seed);
 
         if (selected.isEmpty()) {
             throw new BadRequestException("session.no_questions",
@@ -134,7 +158,7 @@ public class SessionService {
 
         Instant now = clock.instant();
         StudySession session = StudySession.start(userId, spaceId, mode, config,
-                handler.deadlineFor(config, now));
+                handler.deadlineFor(config, settings, now));
         sessions.saveAndFlush(session);
 
         short position = 0;
@@ -177,6 +201,73 @@ public class SessionService {
                 .toList();
     }
 
+    // ------------------------------------------------------------------ navigation
+
+    /**
+     * Serves the question at a given position.
+     *
+     * <p>Only modes that allow free navigation accept this. Practice moves forward one
+     * question at a time, and letting it jump would mean answers arriving in an order its
+     * "next unanswered" logic does not expect - so it says no rather than half-supporting it.
+     */
+    @Transactional
+    public ServedItem goTo(UUID spaceId, UUID sessionId, int position) {
+        StudySession session = requireSession(spaceId, sessionId);
+        SessionModeHandler handler = modes.require(session.mode());
+
+        if (!handler.allowsFreeNavigation()) {
+            throw new BadRequestException("session.navigation_not_allowed",
+                    "This kind of session is answered in order.");
+        }
+        if (session.isFinished()) {
+            throw new ConflictException("session.finished", "That session is already finished.");
+        }
+
+        SessionItem item = requireItem(sessionId, position);
+        item.markViewed(clock.instant());
+
+        return questionAccess.load(spaceId, item.questionId())
+                .map(question -> toServedItem(item, question))
+                .orElseThrow(() -> new NotFoundException("question.not_found",
+                        "That question is no longer available."));
+    }
+
+    /**
+     * Flags a question to come back to, or clears the flag.
+     *
+     * <p>Marking is a real exam skill - park the hard one, bank the easy marks, return with
+     * whatever time is left - and rehearsing it is part of what a mock is for. An answered
+     * question cannot be marked, because there is nothing left to decide about it.
+     */
+    @Transactional
+    public SessionResponse markForReview(UUID spaceId, UUID sessionId, int position, boolean marked) {
+        StudySession session = requireSession(spaceId, sessionId);
+        SessionModeHandler handler = modes.require(session.mode());
+
+        if (!handler.allowsFreeNavigation()) {
+            throw new BadRequestException("session.navigation_not_allowed",
+                    "This kind of session has nothing to come back to.");
+        }
+        if (session.isFinished()) {
+            throw new ConflictException("session.finished", "That session is already finished.");
+        }
+
+        SessionItem item = requireItem(sessionId, position);
+        if (item.isAnswered()) {
+            throw new ConflictException("session.already_answered",
+                    "That question has already been answered.");
+        }
+        item.setMarkedForReview(marked, clock.instant());
+
+        return toResponse(session, handler);
+    }
+
+    private SessionItem requireItem(UUID sessionId, int position) {
+        return items.findAt(sessionId, (short) position)
+                .orElseThrow(() -> new NotFoundException("session.item_not_found",
+                        "There is no question at that position in this session."));
+    }
+
     // ------------------------------------------------------------------ answering
 
     /**
@@ -192,8 +283,20 @@ public class SessionService {
         SessionModeHandler handler = modes.require(session.mode());
 
         if (session.isFinished()) {
+            // requireSession has already expired it if the deadline passed, so this covers
+            // both "you submitted" and "time ran out" with one honest message.
             throw new ConflictException("session.finished",
-                    "That session has already been submitted.");
+                    session.status() == SessionStatus.EXPIRED
+                            ? "Time is up. That exam has been submitted automatically."
+                            : "That session has already been submitted.");
+        }
+
+        // Belt and braces alongside the lazy expiry above: an answer that arrives after the
+        // deadline is refused on its own merits, so no attempt can ever be recorded against
+        // time the learner did not have.
+        if (session.deadlineAt() != null && clock.instant().isAfter(session.deadlineAt())) {
+            throw new ConflictException("session.deadline_passed",
+                    "Time is up. That answer arrived after the deadline.");
         }
 
         short position = request.position().shortValue();
@@ -201,10 +304,11 @@ public class SessionService {
                 .orElseThrow(() -> new NotFoundException("session.item_not_found",
                         "There is no question at that position in this session."));
 
-        if (item.isAnswered()) {
-            // Practice moves forward only. Re-answering would either overwrite history or
-            // append a second attempt for the same slot; neither is what a double-submitted
-            // form means.
+        // Practice moves forward only, so a second answer there is a double-submitted form
+        // rather than a change of mind. An exam allows the change of mind: the earlier attempt
+        // stays in the log and a new one is appended beside it.
+        boolean revising = item.isAnswered();
+        if (revising && !handler.allowsAnswerRevision()) {
             throw new ConflictException("session.already_answered",
                     "That question has already been answered.");
         }
@@ -220,6 +324,13 @@ public class SessionService {
         UUID userId = currentUser.requireId();
         int priorAttempts = attempts.countPriorAttempts(userId, spaceId, item.questionId());
 
+        // Read before the item is repointed at the new attempt: the counters move by the
+        // difference between the old answer and the new one, so the old one has to be known.
+        boolean wasCorrect = revising && item.attemptId() != null
+                && attempts.findById(item.attemptId())
+                        .map(QuestionAttempt::isCorrect)
+                        .orElse(false);
+
         QuestionAttempt attempt = attempts.save(QuestionAttempt.record(
                 userId, spaceId, item.questionId(),
                 // The version served, not the current one. If the question was edited while
@@ -232,18 +343,30 @@ public class SessionService {
                 request.confidence() == null ? null : request.confidence().shortValue(),
                 priorAttempts + 1, request.clientAttemptId()));
 
-        item.markAnswered(attempt.id(), request.responseTimeMs() == null ? 0 : request.responseTimeMs());
-        session.recordAnswer(result.correct(),
-                request.responseTimeMs() == null ? 0 : request.responseTimeMs());
-        questionAccess.recordAnswered(item.questionId(), result.correct(), request.responseTimeMs());
+        int elapsedMs = request.responseTimeMs() == null ? 0 : request.responseTimeMs();
+        item.markAnswered(attempt.id(), elapsedMs);
+
+        if (revising) {
+            session.reviseAnswer(wasCorrect, result.correct(), elapsedMs);
+        } else {
+            session.recordAnswer(result.correct(), elapsedMs);
+            // Item statistics only, and only once per session: they measure how hard this
+            // question is for people in general, so one learner changing their mind must not
+            // count as a second person meeting it.
+            questionAccess.recordAnswered(item.questionId(), result.correct(),
+                    request.responseTimeMs());
+        }
 
         boolean complete = session.answeredCount() >= session.totalItems();
         boolean reveal = handler.revealsFeedbackImmediately(session);
 
         return new AnswerResult(
                 position,
-                result.correct(),
-                result.score(),
+                // Not just the explanation: the verdict itself is withheld while the paper is
+                // running, or the browser would hold the answer to every question you have
+                // already done.
+                reveal ? result.correct() : null,
+                reveal ? result.score() : null,
                 reveal ? result.note() : null,
                 reveal ? question.explanation() : null,
                 reveal ? question.content().correctAnswer() : null,
@@ -270,7 +393,7 @@ public class SessionService {
                     answered == 0 ? SessionStatus.ABANDONED : SessionStatus.SUBMITTED,
                     clock.instant(),
                     scoreOf(session),
-                    breakdownOf(sessionId));
+                    breakdownOf(spaceId, sessionId));
         }
 
         return summaryOf(spaceId, session);
@@ -288,16 +411,41 @@ public class SessionService {
             // The attempts already recorded still count. Abandoning discards the sitting,
             // never the answers, because those are evidence of what was practised.
             session.finish(SessionStatus.ABANDONED, clock.instant(), scoreOf(session),
-                    breakdownOf(sessionId));
+                    breakdownOf(spaceId, sessionId));
         }
     }
 
     // ------------------------------------------------------------------ internals
 
+    /**
+     * Loads the session and, if its deadline has passed, finishes it first.
+     *
+     * <p>Expiry is applied lazily on access rather than by a background job. A session whose
+     * time ran out is only observable through a request, so acting at that moment is both
+     * sufficient and honest: the score is computed from what was actually answered before the
+     * deadline, and no attempt recorded after it exists to be counted, because
+     * {@link #answer} refuses those outright.
+     */
     private StudySession requireSession(UUID spaceId, UUID sessionId) {
         accessGuard.requireOwned(spaceId);
-        return sessions.findOwned(sessionId, spaceId, currentUser.requireId())
+        StudySession session = sessions.findOwned(sessionId, spaceId, currentUser.requireId())
                 .orElseThrow(() -> new NotFoundException("session.not_found", "No such session."));
+
+        expireIfOverdue(session);
+        return session;
+    }
+
+    private void expireIfOverdue(StudySession session) {
+        if (session.isFinished() || session.deadlineAt() == null) {
+            return;
+        }
+        if (!clock.instant().isAfter(session.deadlineAt())) {
+            return;
+        }
+
+        log.info("Session {} passed its deadline; submitting automatically", session.id());
+        session.finish(SessionStatus.EXPIRED, session.deadlineAt(),
+                scoreOf(session), breakdownOf(session.preparationSpaceId(), session.id()));
     }
 
     private Optional<ServedItem> nextItem(StudySession session) {
@@ -332,6 +480,11 @@ public class SessionService {
     private SessionResponse toResponse(StudySession session, SessionModeHandler handler) {
         ServedItem current = session.isFinished() ? null : nextItem(session).orElse(null);
 
+        List<ItemSummary> grid = items.findForSession(session.id()).stream()
+                .map(item -> new ItemSummary(
+                        item.position(), item.state().name(), item.isAnswered()))
+                .toList();
+
         return new SessionResponse(
                 session.id(),
                 session.mode().name(),
@@ -344,7 +497,24 @@ public class SessionService {
                 session.correctCount(),
                 session.activeMs(),
                 handler.revealsFeedbackImmediately(session),
+                handler.allowsFreeNavigation(),
+                remainingMs(session),
+                grid,
                 current);
+    }
+
+    /**
+     * Time left, from the server's clock.
+     *
+     * <p>The browser counts down from this rather than from its own idea of the duration, so
+     * closing the tab and reopening it later resumes with the correct time remaining instead
+     * of quietly restarting the clock.
+     */
+    private Long remainingMs(StudySession session) {
+        if (session.deadlineAt() == null || session.isFinished()) {
+            return null;
+        }
+        return Math.max(0, session.deadlineAt().toEpochMilli() - clock.instant().toEpochMilli());
     }
 
     private SessionListEntry toListEntry(StudySession session) {
@@ -365,28 +535,53 @@ public class SessionService {
     }
 
     /**
-     * Per-topic and per-difficulty results, computed from the attempts of this session.
+     * Per-subject, per-topic and per-difficulty results, computed from the attempts of this
+     * session.
      *
      * <p>Derived from the log rather than accumulated as we go, so it stays correct if the
      * session was resumed, and so the same computation can be replayed in Phase 7.
+     *
+     * <p>Keyed by name rather than by id: this is stored on the session and read back long
+     * afterwards, and "JavaScript 4/9" is what tells you where the marks went. An id would
+     * force every reader to resolve it, and would go stale if the subject were later removed.
      */
-    private Map<String, Object> breakdownOf(UUID sessionId) {
-        List<QuestionAttempt> recorded = attempts.findForSession(sessionId);
+    private Map<String, Object> breakdownOf(UUID spaceId, UUID sessionId) {
+        // The latest attempt per question, not every attempt: an exam answer that was changed
+        // is two rows in the log but one answer on the paper, and the breakdown has to agree
+        // with the score.
+        Map<UUID, QuestionAttempt> latest = new LinkedHashMap<>();
+        attempts.findForSession(sessionId)
+                .forEach(attempt -> latest.put(attempt.questionId(), attempt));
+        List<QuestionAttempt> recorded = List.copyOf(latest.values());
+
+        Map<UUID, String> subjectNames = curriculum.subjectNames(spaceId);
+        Map<UUID, String> topicNames = curriculum.topicNames(spaceId);
 
         Map<String, int[]> byDifficulty = new LinkedHashMap<>();
+        Map<String, int[]> bySubject = new LinkedHashMap<>();
         Map<String, int[]> byTopic = new LinkedHashMap<>();
 
         for (QuestionAttempt attempt : recorded) {
             tally(byDifficulty, attempt.difficulty(), attempt.isCorrect());
-            tally(byTopic, attempt.topicId() == null ? "untagged" : attempt.topicId().toString(),
+            tally(bySubject, nameOf(subjectNames, attempt.subjectId(), "Unassigned"),
                     attempt.isCorrect());
+            tally(byTopic, nameOf(topicNames, attempt.topicId(), "Untagged"), attempt.isCorrect());
         }
 
         Map<String, Object> breakdown = new LinkedHashMap<>();
         breakdown.put("byDifficulty", percentages(byDifficulty));
+        breakdown.put("bySubject", percentages(bySubject));
         breakdown.put("byTopic", percentages(byTopic));
         breakdown.put("totalAnswered", recorded.size());
         return breakdown;
+    }
+
+    /** Falls back to the id, then to a placeholder, so a renamed or removed row still reports. */
+    private String nameOf(Map<UUID, String> names, UUID id, String whenAbsent) {
+        if (id == null) {
+            return whenAbsent;
+        }
+        return names.getOrDefault(id, id.toString());
     }
 
     private void tally(Map<String, int[]> target, String key, boolean correct) {
@@ -465,6 +660,9 @@ public class SessionService {
         Map<String, Object> config = new HashMap<>();
         if (request.length() != null) {
             config.put("length", request.length());
+        }
+        if (request.durationMinutes() != null) {
+            config.put("durationMinutes", request.durationMinutes());
         }
         if (request.subjectIds() != null && !request.subjectIds().isEmpty()) {
             config.put("subjectIds", request.subjectIds().stream().map(UUID::toString).toList());

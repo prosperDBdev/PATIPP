@@ -11,6 +11,7 @@ import com.patipp.questions.domain.content.QuestionContent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -42,32 +43,111 @@ public class QuestionAccess {
     }
 
     /**
-     * Chooses questions for a session.
+     * Chooses questions for a session, drawing evenly from whatever matches the filters.
      *
      * @param filters optional narrowing by subject, topic, type and difficulty
      * @param limit   how many to serve; fewer are returned when the bank cannot supply them,
      *                because a short session is better than an error
+     * @param seed    makes the draw reproducible, so an exam can be re-created exactly
      */
     @Transactional(readOnly = true)
-    public List<SelectedQuestion> selectForSession(UUID spaceId, SelectionFilters filters, int limit) {
-        List<Question> pool = questions.findAllLiveInSpace(spaceId).stream()
+    public List<SelectedQuestion> selectForSession(UUID spaceId, SelectionFilters filters,
+                                                   int limit, long seed) {
+        List<Question> pool = candidatePool(spaceId, filters);
+
+        // Deliberately not "the first N", which would serve the same questions every time and
+        // make a second session pointless.
+        Collections.shuffle(pool, new Random(seed));
+
+        return toSelection(pool.subList(0, Math.min(limit, pool.size())),
+                Map.of("reason", "RANDOM", "seed", seed));
+    }
+
+    /**
+     * Chooses questions in proportion to each subject's blueprint weighting.
+     *
+     * <p>If React is 30% of the paper, roughly 30% of the questions come from React. Quotas
+     * are allocated by weight, then any shortfall - a subject that simply has too few
+     * questions - is topped up from everything else rather than returning a short exam. A mock
+     * that silently drops to 12 questions because one subject is thin would misreport your
+     * readiness, which is the one thing it exists to measure.
+     *
+     * @param subjectWeights subject id to weight; an empty map falls back to an even draw
+     */
+    @Transactional(readOnly = true)
+    public List<SelectedQuestion> selectWeighted(UUID spaceId, SelectionFilters filters,
+                                                 int limit, long seed,
+                                                 Map<UUID, Double> subjectWeights) {
+        if (subjectWeights == null || subjectWeights.isEmpty()) {
+            return selectForSession(spaceId, filters, limit, seed);
+        }
+
+        List<Question> pool = candidatePool(spaceId, filters);
+        Random random = new Random(seed);
+
+        Map<UUID, List<Question>> bySubject = new LinkedHashMap<>();
+        for (Question question : pool) {
+            bySubject.computeIfAbsent(question.subjectId(), key -> new ArrayList<>()).add(question);
+        }
+        bySubject.values().forEach(list -> Collections.shuffle(list, random));
+
+        // Only subjects that actually have questions get a share of the weight; otherwise a
+        // heavily weighted but empty subject would swallow quota and shorten the exam.
+        double totalWeight = bySubject.keySet().stream()
+                .mapToDouble(id -> Math.max(0.0, subjectWeights.getOrDefault(id, 1.0)))
+                .sum();
+
+        List<Question> chosen = new ArrayList<>();
+        List<Question> leftovers = new ArrayList<>();
+
+        if (totalWeight > 0) {
+            for (Map.Entry<UUID, List<Question>> entry : bySubject.entrySet()) {
+                double weight = Math.max(0.0, subjectWeights.getOrDefault(entry.getKey(), 1.0));
+                int quota = (int) Math.round(limit * (weight / totalWeight));
+                List<Question> available = entry.getValue();
+
+                int take = Math.min(quota, available.size());
+                chosen.addAll(available.subList(0, take));
+                leftovers.addAll(available.subList(take, available.size()));
+            }
+        } else {
+            leftovers.addAll(pool);
+        }
+
+        // Rounding and thin subjects both leave gaps; fill them so the exam is the length
+        // that was asked for whenever the bank can supply it.
+        Collections.shuffle(leftovers, random);
+        for (Question question : leftovers) {
+            if (chosen.size() >= limit) {
+                break;
+            }
+            chosen.add(question);
+        }
+
+        if (chosen.size() > limit) {
+            chosen = new ArrayList<>(chosen.subList(0, limit));
+        }
+        // Interleave, so the paper does not run subject by subject in blocks.
+        Collections.shuffle(chosen, random);
+
+        return toSelection(chosen, Map.of("reason", "BLUEPRINT_WEIGHTED", "seed", seed));
+    }
+
+    private List<Question> candidatePool(UUID spaceId, SelectionFilters filters) {
+        return questions.findAllLiveInSpace(spaceId).stream()
                 .filter(question -> question.status() == QuestionStatus.ACTIVE)
                 .filter(question -> question.currentVersion() != null)
                 .filter(filters::matches)
                 .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+    }
 
-        // Phase 3 selection is a shuffle. It is deliberately not "the first N", which would
-        // serve the same questions every session and make practice useless after one run.
-        Collections.shuffle(pool, new Random());
-
+    private List<SelectedQuestion> toSelection(List<Question> chosen, Map<String, Object> reason) {
         List<SelectedQuestion> selected = new ArrayList<>();
-        for (Question question : pool.subList(0, Math.min(limit, pool.size()))) {
+        for (Question question : chosen) {
+            // The reason is recorded from the start so "why this question?" stays answerable.
+            // Phase 5 fills it with real reasoning; the field and the plumbing already exist.
             selected.add(new SelectedQuestion(
-                    question.id(),
-                    question.currentVersion().id(),
-                    // Recorded from the start so "why this question?" is answerable. Phase 5
-                    // replaces the contents; the field and the plumbing already exist.
-                    Map.of("reason", "RANDOM", "phase", 3)));
+                    question.id(), question.currentVersion().id(), reason));
         }
         return selected;
     }

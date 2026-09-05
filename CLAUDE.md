@@ -60,13 +60,19 @@ cd frontend && npm run build && npm run lint          # frontend
 
 ## Current status
 
-Architecture approved. Phases 0 to 3 complete and verified.
-Next: **Phase 4 — Exam Mode** (see docs/ROADMAP.md).
+Architecture approved. Phases 0 to 4 complete and verified.
+Next: **Phase 5 — Adaptive Engine** (see docs/ROADMAP.md).
 
-Phase 4 adds a `SessionModeHandler`, not a new engine: a deadline, deferred
-feedback and blueprint-weighted selection. If it starts needing its own attempt
-log or scoring path, something has leaked into the shared engine that belongs in
-a handler.
+Phase 4 came out as one `SessionModeHandler` and one table (`exam_templates`):
+a deadline, deferred feedback, free navigation, answer revision and
+blueprint-weighted selection, with no exam entity, no second attempt log and no
+parallel scoring path. Keep it that way. If a future mode seems to need its own
+engine, the assumption that forced it belongs in a handler.
+
+Phase 5 replaces the body of `QuestionAccess.selectForSession` with the adaptive
+engine. No caller should have to change. Exams deliberately stay non-adaptive —
+a mock that got easier when you struggled could not be compared with the last
+one, which is the only thing a mock is for.
 
 Running: Postgres in Docker, API on :8081, web on :3001.
 **Ports are fixed: API 8081, web 3001.** Never 8080 or 3000 - those are left for

@@ -197,6 +197,22 @@ public class StudySession extends AssignedIdEntity<UUID> {
         this.activeMs += Math.max(0, timeSpentMs);
     }
 
+    /**
+     * Replaces an answer already given for a question, in modes that allow it.
+     *
+     * <p>{@code answeredCount} does not move - the question was answered before and is
+     * answered now - but the correct tally does, in whichever direction the change went. The
+     * time is added rather than replaced, because the learner really did spend it.
+     */
+    public void reviseAnswer(boolean wasCorrect, boolean nowCorrect, int timeSpentMs) {
+        if (wasCorrect && !nowCorrect) {
+            this.correctCount = Math.max(0, this.correctCount - 1);
+        } else if (!wasCorrect && nowCorrect) {
+            this.correctCount++;
+        }
+        this.activeMs += Math.max(0, timeSpentMs);
+    }
+
     public void finish(SessionStatus finalStatus, Instant when,
                        BigDecimal finalScore, Map<String, Object> breakdown) {
         this.status = finalStatus;

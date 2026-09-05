@@ -85,6 +85,21 @@ public class CurriculumLookup {
         return names;
     }
 
+    /**
+     * Subject id to its blueprint weighting.
+     *
+     * <p>Exam mode samples questions in proportion to these, so a subject worth 30% of the
+     * real paper is 30% of the mock. Practice ignores them and draws evenly, because there
+     * the point is to work on what you are weak at, not to mirror the exam.
+     */
+    @Transactional(readOnly = true)
+    public Map<UUID, Double> subjectWeights(UUID spaceId) {
+        Map<UUID, Double> weights = new LinkedHashMap<>();
+        subjects.findLiveInSpace(spaceId).forEach(subject ->
+                weights.put(subject.id(), subject.weight().doubleValue()));
+        return weights;
+    }
+
     /** Topic id to name for a whole space. */
     @Transactional(readOnly = true)
     public Map<UUID, String> topicNames(UUID spaceId) {

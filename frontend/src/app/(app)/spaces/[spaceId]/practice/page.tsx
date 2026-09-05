@@ -5,6 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Alert, Button, Card, EmptyState, Spinner } from "@/components/ui";
 import { humanType, title } from "@/components/question/labels";
+import {
+  Chip,
+  DIFFICULTIES,
+  FilterGroup,
+  QUESTION_TYPES,
+} from "@/components/session/filters";
 import { api, ApiError } from "@/lib/api/client";
 import type {
   SessionAvailability,
@@ -12,9 +18,6 @@ import type {
   SessionResponse,
   Subject,
 } from "@/lib/api/types";
-
-const TYPES = ["MCQ", "MULTI_SELECT", "TRUE_FALSE", "SHORT_ANSWER", "FLASHCARD"] as const;
-const DIFFICULTIES = ["EASY", "MEDIUM", "HARD", "EXPERT"] as const;
 
 /** Choosing what to practise, or resuming what was left open. */
 export default function PracticeSetupPage() {
@@ -187,7 +190,7 @@ export default function PracticeSetupPage() {
             />
             <FilterGroup
               label="Question types"
-              options={TYPES.map((type) => ({ value: type, label: humanType(type) }))}
+              options={QUESTION_TYPES.map((type) => ({ value: type, label: humanType(type) }))}
               selected={types}
               onChange={setTypes}
             />
@@ -239,68 +242,3 @@ export default function PracticeSetupPage() {
   );
 }
 
-function FilterGroup({
-  label,
-  hint,
-  options,
-  selected,
-  onChange,
-}: {
-  label: string;
-  hint?: string;
-  options: { value: string; label: string }[];
-  selected: string[];
-  onChange: (next: string[]) => void;
-}) {
-  if (options.length === 0) return null;
-
-  return (
-    <div className="flex flex-col gap-2">
-      <span className="text-[13px] font-medium text-text">
-        {label}
-        {hint && <span className="ml-1.5 font-normal text-text-faint">{hint}</span>}
-      </span>
-      <div className="flex flex-wrap gap-1.5">
-        {options.map((option) => (
-          <Chip
-            key={option.value}
-            label={option.label}
-            active={selected.includes(option.value)}
-            onClick={() =>
-              onChange(
-                selected.includes(option.value)
-                  ? selected.filter((value) => value !== option.value)
-                  : [...selected, option.value],
-              )
-            }
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function Chip({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
-        active
-          ? "border-accent bg-accent text-accent-fg"
-          : "border-border bg-surface text-text-muted hover:border-border-strong"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}

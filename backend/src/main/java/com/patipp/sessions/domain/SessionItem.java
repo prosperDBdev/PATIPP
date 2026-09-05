@@ -151,6 +151,19 @@ public class SessionItem extends AssignedIdEntity<UUID> {
     public void markAnswered(UUID attempt, int elapsedMs) {
         this.state = ItemState.ANSWERED;
         this.attemptId = attempt;
-        this.timeSpentMs = Math.max(0, elapsedMs);
+        // Accumulates: an exam question can be visited, left, and returned to, and all of
+        // that time was spent on it.
+        this.timeSpentMs += Math.max(0, elapsedMs);
+    }
+
+    /**
+     * Flags this question to come back to, or clears the flag.
+     *
+     * <p>Clearing returns it to VIEWED rather than UNSEEN: it has been seen, and pretending
+     * otherwise would misreport the exam's progress.
+     */
+    public void setMarkedForReview(boolean marked, Instant when) {
+        markViewed(when);
+        this.state = marked ? ItemState.MARKED_FOR_REVIEW : ItemState.VIEWED;
     }
 }
