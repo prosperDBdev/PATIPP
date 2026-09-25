@@ -75,6 +75,27 @@ class ModuleBoundaryTest {
     }
 
     @Test
+    @DisplayName("the readiness model must stay free of Spring, JPA and the web layer")
+    void readinessModelIsPure() {
+        // Same reason as the other two engines. A readiness score is a weighted combination of
+        // six judgements, and the only way to know whether a change to those weights is an
+        // improvement is to run it against many hand-built learners in milliseconds.
+        ArchRule rule = noClasses()
+                .that().resideInAPackage("..analytics.model..")
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "org.springframework..",
+                        "jakarta.persistence..",
+                        "org.hibernate..",
+                        "jakarta.servlet..")
+                .because("the readiness model is pure domain logic: plain records in, plain "
+                        + "records out, so a change to the weights can be evaluated without a "
+                        + "database")
+                .allowEmptyShould(true);
+
+        rule.check(productionClasses);
+    }
+
+    @Test
     @DisplayName("the scheduling engine must stay free of Spring, JPA and the web layer")
     void schedulingEngineIsPure() {
         ArchRule rule = noClasses()

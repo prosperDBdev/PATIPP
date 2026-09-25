@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Alert, Badge, Card, Spinner } from "@/components/ui";
+import { ReadinessCard } from "@/components/analytics/readiness-card";
 import { FocusPanel } from "@/components/learning/focus-panel";
 import { ReviewPanel } from "@/components/learning/review-panel";
 import { api, ApiError } from "@/lib/api/client";
@@ -83,6 +84,8 @@ export default function SpaceOverviewPage() {
           </div>
         </div>
       </header>
+
+      <ReadinessCard spaceId={spaceId} />
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat

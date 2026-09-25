@@ -100,6 +100,23 @@ public class CurriculumLookup {
         return weights;
     }
 
+    /**
+     * How many live topics each subject has.
+     *
+     * <p>The denominator of coverage. "Nine topics assessed" is not a score until you know
+     * whether the subject has ten topics or ninety.
+     */
+    @Transactional(readOnly = true)
+    public Map<UUID, Integer> topicCountsBySubject(UUID spaceId) {
+        Map<UUID, Integer> counts = new LinkedHashMap<>();
+        // Every live subject appears, including those with no topics yet, so a subject is never
+        // silently absent from the coverage calculation.
+        subjects.findLiveInSpace(spaceId).forEach(subject -> counts.put(subject.id(), 0));
+        topics.findLiveInSpace(spaceId).forEach(topic ->
+                counts.merge(topic.subjectId(), 1, Integer::sum));
+        return counts;
+    }
+
     /** Topic id to name for a whole space. */
     @Transactional(readOnly = true)
     public Map<UUID, String> topicNames(UUID spaceId) {

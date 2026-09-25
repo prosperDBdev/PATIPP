@@ -1,5 +1,6 @@
 package com.patipp.learning.internal;
 
+import com.patipp.analytics.api.ActivityAccess;
 import com.patipp.attempts.domain.QuestionAttempt;
 import com.patipp.attempts.domain.QuestionAttemptRepository;
 import com.patipp.learning.domain.LearningStateRepository;
@@ -39,12 +40,14 @@ public class MasteryRebuilder {
     private final LearningStateRepository learningStates;
     private final ReviewScheduleUpdater reviews;
     private final SpaceSettings spaceSettings;
+    private final ActivityAccess dailyActivity;
 
     public MasteryRebuilder(TopicMasteryRepository mastery, QuestionAttemptRepository attempts,
                             QuestionAccess questions, MasteryUpdater updater,
                             LearningStateRepository learningStates,
                             ReviewScheduleUpdater reviews,
-                            SpaceSettings spaceSettings) {
+                            SpaceSettings spaceSettings,
+                            ActivityAccess dailyActivity) {
         this.mastery = mastery;
         this.attempts = attempts;
         this.questions = questions;
@@ -52,6 +55,7 @@ public class MasteryRebuilder {
         this.learningStates = learningStates;
         this.reviews = reviews;
         this.spaceSettings = spaceSettings;
+        this.dailyActivity = dailyActivity;
     }
 
     /**
@@ -70,6 +74,8 @@ public class MasteryRebuilder {
         // would quietly make it a source of truth, which is the one thing nothing in layer
         // three may become.
         learningStates.deleteForLearner(userId, spaceId);
+        // The day counts are derived from the same log, so they are rebuilt from it too.
+        dailyActivity.clear(userId, spaceId);
         // Question ratings go back to the prior their author's label implies, otherwise the
         // replay would start from ratings that already contain the history being replayed.
         questions.resetRatings(spaceId);
@@ -120,6 +126,9 @@ public class MasteryRebuilder {
                                     .orElse(60)),
                     settings,
                     attempt.createdAt());
+
+            dailyActivity.answered(userId, spaceId, attempt.isCorrect(),
+                    attempt.responseTimeMs(), attempt.createdAt());
         }
 
         log.info("Rebuilt derived state for user {} in space {} from {} attempts",

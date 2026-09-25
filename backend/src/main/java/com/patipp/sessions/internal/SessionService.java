@@ -1,5 +1,6 @@
 package com.patipp.sessions.internal;
 
+import com.patipp.analytics.api.ActivityAccess;
 import com.patipp.attempts.domain.QuestionAttempt;
 import com.patipp.attempts.domain.QuestionAttemptRepository;
 import com.patipp.common.error.BadRequestException;
@@ -77,6 +78,7 @@ public class SessionService {
     private final BlueprintMerger blueprintMerger;
     private final AdaptiveSelection adaptiveSelection;
     private final LearningAccess learning;
+    private final ActivityAccess dailyActivity;
     private final CurriculumLookup curriculum;
     private final CurrentUser currentUser;
     private final Clock clock;
@@ -94,6 +96,7 @@ public class SessionService {
                           BlueprintMerger blueprintMerger,
                           AdaptiveSelection adaptiveSelection,
                           LearningAccess learning,
+                          ActivityAccess dailyActivity,
                           CurriculumLookup curriculum,
                           CurrentUser currentUser,
                           Clock clock) {
@@ -106,6 +109,7 @@ public class SessionService {
         this.blueprintMerger = blueprintMerger;
         this.adaptiveSelection = adaptiveSelection;
         this.learning = learning;
+        this.dailyActivity = dailyActivity;
         this.curriculum = curriculum;
         this.currentUser = currentUser;
         this.clock = clock;
@@ -388,6 +392,10 @@ public class SessionService {
                 request.responseTimeMs(), request.confidence(), gradeFrom(answer),
                 question.estimatedSeconds(),
                 effectiveSettings(accessGuard.requireOwned(spaceId)), now);
+
+        // Day counts for the streak and the heatmap, and the consistency component of readiness.
+        // Kept out of the attempt log on purpose: it is a roll-up, not an event.
+        dailyActivity.answered(userId, spaceId, result.correct(), request.responseTimeMs(), now);
 
         boolean complete = session.answeredCount() >= session.totalItems();
         boolean reveal = handler.revealsFeedbackImmediately(session);

@@ -363,6 +363,10 @@ the same session.
 
 ## Phase 7 — Analytics & Readiness (2 sessions) · MVP
 
+**Status: the readiness engine is COMPLETE.** 322 backend tests (26 of them pure model tests
+running in half a second) and 32 end-to-end checks pass. The charts and the cross-space daily
+dashboard are **not yet built** — see the note below.
+
 **Build**
 - `ReadinessModel` (`WEIGHTED_V1`) with all six components + the confidence factor.
 - Nightly `readiness_snapshots` with breakdown, deltas and human-readable drivers.
@@ -372,6 +376,31 @@ the same session.
 - `study_plans` generation.
 - Analytics page: accuracy over time, performance by difficulty, by question type, per
   topic mastery, mock-exam history, study-time heatmap. Recharts.
+
+  > **Done:** the model and all six components, the confidence factor and band, snapshots with
+  > components, weights, deltas, drivers and the biggest lever, `daily_activity` with streaks,
+  > the readiness card on the space page, and `GET /readiness`, `/readiness/history` and
+  > `/activity`.
+  >
+  > **Not done, and honestly outstanding:** the charts (Recharts is not yet a dependency), the
+  > cross-space daily dashboard, and `study_plans`. The engine every one of those reads from is
+  > finished and tested; what is missing is presentation. Timezone correctness is also partial —
+  > days are currently bucketed in UTC, and `users.timezone` is stored but not yet used, so a
+  > learner well west of UTC will see a study day attributed to the wrong date. That is a real
+  > gap, not a rounding detail, and it belongs with the dashboard work.
+  >
+  > **Two rounding bugs the tests caught**, both the same shape and both worth recording because
+  > they defeated the point of the feature rather than merely being wrong. The stored *weights*
+  > were rounded to one decimal, so six weights of 0.1667 each became 0.2 and summed to 1.2 —
+  > readiness would have reported 112%. Then the reported *confidence* was rounded the same way,
+  > so 0.613 became 0.6 and the response's own numbers no longer reconciled. The whole reason to
+  > store the breakdown is that the score can be recomputed by hand from it; a test asserts
+  > exactly that, in both the unit and the integration suite.
+  >
+  > **And one piece of dishonest code, removed:** the subject rollup computed a "difficulty
+  > weight" from the mastery table, which does not carry difficulty — the expression always
+  > evaluated to exactly 2.0. It looked applied and did nothing. It now reads the real mean
+  > answered difficulty from the attempt log.
 
 **Exit criteria:** readiness is reproducible from the event log and never exceeds the
 confidence cap on thin data. Every chart answers a study question — if one does not, it is

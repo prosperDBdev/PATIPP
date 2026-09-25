@@ -1,6 +1,9 @@
 package com.patipp.learning.api;
 
 import com.patipp.adaptive.LearnerModel;
+import com.patipp.attempts.domain.QuestionAttemptRepository;
+import com.patipp.curriculum.api.CurriculumLookup;
+import com.patipp.questions.api.QuestionAccess;
 import com.patipp.adaptive.MasteryLevel;
 import com.patipp.adaptive.WeaknessDetector;
 import com.patipp.learning.domain.LearningStateRepository;
@@ -34,6 +37,9 @@ public class LearningAccess {
     private final TopicMasteryRepository mastery;
     private final LearningStateRepository learningStates;
     private final ReviewScheduleUpdater reviews;
+    private final CurriculumLookup curriculum;
+    private final QuestionAccess questions;
+    private final QuestionAttemptRepository attempts;
     private final WeaknessDetector weakness;
     private final Clock clock;
 
@@ -41,6 +47,9 @@ public class LearningAccess {
                           MasteryRebuilder rebuilder, TopicMasteryRepository mastery,
                           LearningStateRepository learningStates,
                           ReviewScheduleUpdater reviews,
+                          CurriculumLookup curriculum,
+                          QuestionAccess questions,
+                          QuestionAttemptRepository attempts,
                           WeaknessDetector weakness, Clock clock) {
         this.builder = builder;
         this.updater = updater;
@@ -48,6 +57,9 @@ public class LearningAccess {
         this.mastery = mastery;
         this.learningStates = learningStates;
         this.reviews = reviews;
+        this.curriculum = curriculum;
+        this.questions = questions;
+        this.attempts = attempts;
         this.weakness = weakness;
         this.clock = clock;
     }
@@ -141,6 +153,83 @@ public class LearningAccess {
      */
     public Instant now() {
         return clock.instant();
+    }
+
+    /**
+     * The denominators readiness needs: what the curriculum holds, and what it is worth.
+     *
+     * <p>Gathered in one place because coverage is meaningless without them. "Nine topics
+     * assessed" is not a score until you know whether the subject has ten topics or ninety, and
+     * a subject worth thirty percent of the paper being uncovered matters more than one worth
+     * five.
+     */
+    @Transactional(readOnly = true)
+    public Coverage coverageFor(UUID userId, UUID spaceId) {
+        Map<UUID, Integer> topicCounts = new java.util.LinkedHashMap<>();
+        curriculum.topicCountsBySubject(spaceId).forEach(topicCounts::put);
+
+        Map<UUID, Integer> questionCounts = new java.util.LinkedHashMap<>();
+        questions.activeCountsByTopic(spaceId).forEach(count ->
+                questionCounts.merge(count.subjectId(), count.activeQuestions(), Integer::sum));
+
+        return new Coverage(
+                curriculum.subjectNames(spaceId),
+                curriculum.subjectWeights(spaceId),
+                topicCounts,
+                questionCounts,
+                attempts.meanDifficultyBySubject(userId, spaceId));
+    }
+
+    /**
+     * The mean chance of success against items at the space's target difficulty.
+     *
+     * <p>The depth component. Distinct from accuracy on purpose: someone who only ever answers
+     * easy questions can sit at 95% accuracy with no depth at all, and a single percentage would
+     * flatter exactly that learner.
+     *
+     * @return null when there is nothing to measure against, rather than a misleading zero
+     */
+    @Transactional(readOnly = true)
+    public Double depthExpectation(UUID userId, UUID spaceId) {
+        LearnerModel model = builder.build(userId, spaceId);
+        if (model.topics().isEmpty()) {
+            return null;
+        }
+
+        List<QuestionAccess.Candidate> pool = questions.candidatesFor(spaceId,
+                QuestionAccess.SelectionFilters.none());
+        if (pool.isEmpty()) {
+            return null;
+        }
+
+        // The hardest third of the bank, which is the level a real paper's harder half sits at.
+        // Measuring against the whole bank would let a lot of easy questions hide a shallow
+        // learner, which is the failure this component exists to catch.
+        List<QuestionAccess.Candidate> hardest = pool.stream()
+                .sorted(java.util.Comparator.comparingDouble(
+                        QuestionAccess.Candidate::rating).reversed())
+                .limit(Math.max(1, pool.size() / 3))
+                .toList();
+
+        double total = 0;
+        for (QuestionAccess.Candidate candidate : hardest) {
+            total += com.patipp.adaptive.Elo.expectation(
+                    model.abilityIn(com.patipp.adaptive.LearnerModel.TopicKey.of(
+                            candidate.subjectId(), candidate.topicId())),
+                    candidate.rating());
+        }
+        return total / hardest.size();
+    }
+
+    /**
+     * @param meanDifficulty per subject, 1 EASY to 4 EXPERT, of what has actually been answered
+     */
+    public record Coverage(
+            Map<UUID, String> subjectNames,
+            Map<UUID, Double> subjectWeights,
+            Map<UUID, Integer> topicCounts,
+            Map<UUID, Integer> questionCounts,
+            Map<UUID, Double> meanDifficulty) {
     }
 
     /** How much review debt is outstanding in this space. */

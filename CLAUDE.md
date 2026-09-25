@@ -60,8 +60,26 @@ cd frontend && npm run build && npm run lint          # frontend
 
 ## Current status
 
-Architecture approved. Phases 0 to 6 complete and verified.
-Next: **Phase 7 — Analytics & Readiness**, where the MVP ends (see docs/ROADMAP.md).
+Architecture approved. Phases 0 to 6 complete and verified. **Phase 7's readiness
+engine is complete**; its charts, cross-space daily dashboard and `study_plans` are
+not (see docs/ROADMAP.md). Days are currently bucketed in UTC — `users.timezone`
+is stored but unused, so a learner well west of UTC sees study days on the wrong
+date. Real gap, belongs with the dashboard work.
+
+**`analytics.model` is pure too** — three pure engines now: `adaptive`,
+`scheduling`, `analytics.model`. All three ArchUnit-enforced.
+
+**Readiness must be recomputable by hand from what it reports.** Components,
+weights and confidence are all stored, and both the unit and integration suites
+assert `sum(component × weight) × confidence == score`. Two bugs have already
+been caught by that: weights rounded to one decimal summed to 1.2 (a 112% score),
+and confidence rounded the same way stopped the response reconciling with itself.
+**Scale matters — components 1dp, weights 4dp, confidence 3dp.**
+
+**Never fake a weighting.** The subject rollup once computed a difficulty weight
+from the mastery table, which does not carry difficulty; it always evaluated to
+exactly 2.0 and looked applied. If the number is not available, read it from the
+attempt log or drop the weighting and say so.
 
 **`com.patipp.scheduling` is pure too**, same rule as `adaptive`. Its 34 tests include two
 simulated 90-day study histories and run in under a second, which is the only reason

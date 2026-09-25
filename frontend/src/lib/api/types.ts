@@ -466,3 +466,70 @@ export interface PresentedOption {
   id: string;
   text: string;
 }
+
+/* ------------------------------------------------------------------ readiness */
+
+export type ConfidenceBandKey = "CALIBRATING" | "LOW" | "MODERATE" | "HIGH";
+
+export type ReadinessComponentKey =
+  | "coverage"
+  | "accuracy"
+  | "depth"
+  | "retention"
+  | "consistency"
+  | "mock";
+
+/**
+ * @param raw     before the confidence factor. The gap between this and `score` is the
+ *                explanation for an early figure that looks unfairly low, which is why both
+ *                are sent rather than just the one.
+ * @param weights what each component was multiplied by, so the score can be checked by hand.
+ * @param drivers the changes worth reading since the last snapshot, largest first.
+ */
+export interface Readiness {
+  score: number;
+  raw: number;
+  confidence: number;
+  confidenceBand: ConfidenceBandKey;
+  headline: string;
+  components: Record<ReadinessComponentKey, number>;
+  weights: Record<ReadinessComponentKey, number>;
+  deltas: Partial<Record<ReadinessComponentKey | "total", number>>;
+  drivers: string[];
+  biggestLever: {
+    component: ReadinessComponentKey;
+    action: string;
+    estimatedGain: number;
+  } | null;
+  streak: Streak;
+  modelVersion: string;
+}
+
+/** @param answeredToday false while today is still open, so a streak is not shown as broken early */
+export interface Streak {
+  current: number;
+  longest: number;
+  answeredToday: boolean;
+}
+
+export interface ReadinessPoint {
+  on: string;
+  score: number;
+  confidenceBand: ConfidenceBandKey;
+  components: Record<string, number>;
+}
+
+export interface ActivityDay {
+  on: string;
+  answered: number;
+  correct: number;
+  studyMinutes: number;
+  sessions: number;
+}
+
+export interface Activity {
+  from: string;
+  to: string;
+  streak: Streak;
+  days: ActivityDay[];
+}

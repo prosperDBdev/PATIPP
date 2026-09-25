@@ -55,6 +55,39 @@ public interface QuestionAttemptRepository extends JpaRepository<QuestionAttempt
                                      Pageable pageable);
 
     /**
+     * Mean answered difficulty per subject, 1 EASY to 4 EXPERT.
+     *
+     * <p>So accuracy can be weighted by how hard the questions were. Without it, a score can be
+     * inflated by drilling the easy end of the bank, and the readiness figure would reward exactly
+     * the practice that helps least.
+     */
+    @Query("""
+            select a.subjectId,
+                   avg(case a.difficulty
+                         when 'EASY' then 1.0
+                         when 'MEDIUM' then 2.0
+                         when 'HARD' then 3.0
+                         else 4.0 end)
+            from QuestionAttempt a
+            where a.userId = :userId and a.preparationSpaceId = :spaceId
+              and a.subjectId is not null
+            group by a.subjectId
+            """)
+    List<Object[]> meanDifficultyRows(@Param("userId") UUID userId,
+                                      @Param("spaceId") UUID spaceId);
+
+    /** The same, as a map, so callers never touch an {@code Object[]}. */
+    default java.util.Map<UUID, Double> meanDifficultyBySubject(UUID userId, UUID spaceId) {
+        java.util.Map<UUID, Double> bySubject = new java.util.LinkedHashMap<>();
+        for (Object[] row : meanDifficultyRows(userId, spaceId)) {
+            if (row[0] instanceof UUID subjectId && row[1] instanceof Number mean) {
+                bySubject.put(subjectId, mean.doubleValue());
+            }
+        }
+        return bySubject;
+    }
+
+    /**
      * Every attempt this learner has made in this space, oldest first.
      *
      * <p>Replay order, deliberately: this feeds both the learner model and the rebuild of
