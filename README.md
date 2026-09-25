@@ -82,5 +82,6 @@ key, token or connection string belongs in source.
 | 4 — Exam mode (timed papers, navigation grid, saved setups) | complete |
 | 5 — Adaptive engine (Elo, weakness detection, explainable selection) | complete |
 | 5.5 — Coding practice (coding, debugging, output prediction) | complete |
-| 6 — Spaced repetition & flashcards | next |
-| 7–10 | see [docs/ROADMAP.md](docs/ROADMAP.md) |
+| 6 — Spaced repetition (scheduling, grade derivation, review sessions) | complete |
+| 7 — Analytics & readiness — **MVP ends here** | next |
+| 8–10 | see [docs/ROADMAP.md](docs/ROADMAP.md) |

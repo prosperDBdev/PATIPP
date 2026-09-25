@@ -26,5 +26,15 @@ public enum SelectionStrategy {
      *
      * <p>Practice, where the point is to work on what you are actually bad at.
      */
-    ADAPTIVE
+    ADAPTIVE,
+
+    /**
+     * Whatever the review schedule says is due, most overdue first.
+     *
+     * <p>Review sessions. Deliberately not the adaptive selector: clearing what is about to be
+     * forgotten and working on what you are weak at are different jobs, and an item you know
+     * perfectly well is still worth seeing on the day its interval expires. Falls back to new
+     * material when nothing is due, so a review session is never empty.
+     */
+    DUE_FIRST
 }

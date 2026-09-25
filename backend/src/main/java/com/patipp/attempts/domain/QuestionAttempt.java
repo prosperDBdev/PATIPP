@@ -97,7 +97,16 @@ public class QuestionAttempt extends AssignedIdEntity<UUID> {
     @Column(name = "client_attempt_id", updatable = false)
     private UUID clientAttemptId;
 
-    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    /**
+     * Written by the application from its injected clock, not left to the database default.
+     *
+     * <p>The column still defaults to {@code now()} as a safety net, but the value has to be set
+     * here: everything derived from the log replays against these timestamps, and an entity that
+     * only learns its own creation time after a round trip produces a null one to anything
+     * reading it in the same transaction. That surfaced as a rebuild scheduling reviews against
+     * a null instant.
+     */
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     protected QuestionAttempt() {
@@ -118,7 +127,7 @@ public class QuestionAttempt extends AssignedIdEntity<UUID> {
                                          boolean correct, BigDecimal score, Short grade,
                                          Integer responseTimeMs, Short confidence,
                                          int attemptNo, String evaluatedBy,
-                                         UUID clientAttemptId) {
+                                         UUID clientAttemptId, Instant at) {
         QuestionAttempt attempt = new QuestionAttempt();
         attempt.id = UuidV7.generate();
         attempt.userId = userId;
@@ -142,6 +151,7 @@ public class QuestionAttempt extends AssignedIdEntity<UUID> {
         // self-assessment is one nobody can audit.
         attempt.evaluatedBy = evaluatedBy == null ? "AUTO" : evaluatedBy;
         attempt.clientAttemptId = clientAttemptId;
+        attempt.createdAt = at;
         return attempt;
     }
 

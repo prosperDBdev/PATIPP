@@ -60,8 +60,26 @@ cd frontend && npm run build && npm run lint          # frontend
 
 ## Current status
 
-Architecture approved. Phases 0 to 5.5 complete and verified.
-Next: **Phase 6 — Spaced Repetition & Flashcards** (see docs/ROADMAP.md).
+Architecture approved. Phases 0 to 6 complete and verified.
+Next: **Phase 7 — Analytics & Readiness**, where the MVP ends (see docs/ROADMAP.md).
+
+**`com.patipp.scheduling` is pure too**, same rule as `adaptive`. Its 34 tests include two
+simulated 90-day study histories and run in under a second, which is the only reason
+scheduling behaviour over months is verifiable at all.
+
+**Every format feeds the scheduler, not just flashcards.** A reported 1–4 grade wins;
+otherwise `GradeDerivation` infers one from correctness, response time and confidence.
+Never bypass that — two disconnected systems, where a flashcard counted towards
+retention and the same fact as an MCQ did not, is the failure mode it exists to prevent.
+
+**An interval preview must equal what the button does.** They come from the same
+`previewIntervals`/`next` pair on purpose. A preview that only approximates teaches the
+learner that the numbers on screen are decorative.
+
+**`learning_states` is derived, like `topic_mastery`.** `MasteryRebuilder` replays both
+and the integration test compares them exactly. Replay at `attempt.createdAt()`, never at
+`now` — stability growth depends on how close to forgetting the learner was, so replaying
+a year of history against today's clock invents a schedule that never existed.
 
 **Nothing in this codebase executes user code, and that is deliberate.** Phase 5.5 added
 `CODING`, `DEBUGGING` and `OUTPUT_PREDICTION` without a sandbox: output prediction

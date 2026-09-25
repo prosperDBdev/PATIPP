@@ -8,7 +8,13 @@ import { AnswerInput } from "@/components/session/answer-input";
 import { WhyThisQuestion } from "@/components/session/why-this-question";
 import { humanType, title } from "@/components/question/labels";
 import { api, ApiError } from "@/lib/api/client";
-import type { AnswerResult, ServedItem, SessionResponse } from "@/lib/api/types";
+import { describeInterval, explainGrade } from "@/components/session/interval";
+import type {
+  AnswerResult,
+  IntervalPreview,
+  ServedItem,
+  SessionResponse,
+} from "@/lib/api/types";
 
 /**
  * The session runner.
@@ -27,6 +33,12 @@ export default function SessionRunnerPage() {
   const [result, setResult] = useState<AnswerResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Stored with the question it belongs to, rather than cleared at the top of the effect.
+  // Clearing there is a setState during render as far as React is concerned; tagging it means
+  // a stale preview is simply ignored, which is the same outcome without the hazard.
+  const [preview, setPreview] = useState<{ questionId: string; intervals: IntervalPreview } | null>(
+    null,
+  );
 
   // Wall-clock per question. Recorded with the attempt, and used from Phase 6 to tell
   // recall apart from working it out.
@@ -65,6 +77,27 @@ export default function SessionRunnerPage() {
       cancelled = true;
     };
   }, [spaceId, sessionId, router]);
+
+  useEffect(() => {
+    if (!item) return;
+    let cancelled = false;
+    const questionId = item.questionId;
+
+    (async () => {
+      try {
+        const loaded = await api<IntervalPreview>(
+          `/api/v1/spaces/${spaceId}/questions/${questionId}/interval-preview`,
+        );
+        if (!cancelled) setPreview({ questionId, intervals: loaded });
+      } catch {
+        // A missing preview just means the buttons carry no interval. Not worth an error.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [spaceId, item]);
 
   const submit = useCallback(async () => {
     if (!item || !answer || submitting || result) return;
@@ -194,6 +227,7 @@ export default function SessionRunnerPage() {
           onChange={setAnswer}
           locked={Boolean(result)}
           result={result ? { correct: result.correct === true, correctAnswer: result.correctAnswer } : null}
+          preview={preview?.questionId === item.questionId ? preview.intervals : undefined}
         />
 
         <WhyThisQuestion reason={item.selectionReason} />
@@ -280,6 +314,25 @@ function Feedback({ result }: { result: AnswerResult }) {
       </div>
 
       {result.note && <p className="text-[13px] text-text-muted">{result.note}</p>}
+
+      {/* When it comes back, and why that grade. A correct answer scheduled as HARD looks
+          like a bug unless the reason is on screen. */}
+      {result.review && (
+        <div className="flex flex-col gap-0.5 border-t border-border pt-2">
+          <p className="text-[13px] text-text-muted">
+            <span className="font-mono text-[11px] tracking-wide text-text-faint uppercase">
+              {result.review.grade}
+            </span>
+            {" — "}
+            {describeInterval(result.review.intervalDays)}
+          </p>
+          {explainGrade(result.review.grade, result.review.derived) && (
+            <p className="text-[11px] text-text-faint">
+              {explainGrade(result.review.grade, result.review.derived)}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* The explanation is the point of practice — being told you were wrong teaches
           nothing on its own. */}

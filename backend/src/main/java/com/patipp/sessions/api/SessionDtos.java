@@ -131,7 +131,29 @@ public final class SessionDtos {
             int answeredCount,
             int totalItems,
             boolean sessionComplete,
+            /**
+             * When this question will come back, and the grade that decided it.
+             *
+             * <p>Always present, whatever the format. Showing the derived grade matters: a
+             * correct-but-slow answer scheduled as HARD is otherwise inexplicable, and a
+             * learner who cannot account for the interval stops trusting the schedule.
+             */
+            ReviewOutcome review,
             ServedItem nextItem) {
+    }
+
+    /**
+     * @param grade        AGAIN, HARD, GOOD or EASY - reported by the learner or derived
+     * @param derived      true when the platform inferred the grade rather than being told it
+     * @param intervalDays how long until it is next due
+     */
+    public record ReviewOutcome(
+            String grade,
+            boolean derived,
+            double intervalDays,
+            Instant dueAt,
+            String phase,
+            String priority) {
     }
 
     public record SessionSummary(

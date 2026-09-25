@@ -2,9 +2,11 @@ package com.patipp.learning.internal;
 
 import com.patipp.attempts.domain.QuestionAttempt;
 import com.patipp.attempts.domain.QuestionAttemptRepository;
+import com.patipp.learning.domain.LearningStateRepository;
 import com.patipp.learning.domain.TopicMasteryRepository;
 import com.patipp.questions.api.QuestionAccess;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -34,13 +36,22 @@ public class MasteryRebuilder {
     private final QuestionAttemptRepository attempts;
     private final QuestionAccess questions;
     private final MasteryUpdater updater;
+    private final LearningStateRepository learningStates;
+    private final ReviewScheduleUpdater reviews;
+    private final SpaceSettings spaceSettings;
 
     public MasteryRebuilder(TopicMasteryRepository mastery, QuestionAttemptRepository attempts,
-                            QuestionAccess questions, MasteryUpdater updater) {
+                            QuestionAccess questions, MasteryUpdater updater,
+                            LearningStateRepository learningStates,
+                            ReviewScheduleUpdater reviews,
+                            SpaceSettings spaceSettings) {
         this.mastery = mastery;
         this.attempts = attempts;
         this.questions = questions;
         this.updater = updater;
+        this.learningStates = learningStates;
+        this.reviews = reviews;
+        this.spaceSettings = spaceSettings;
     }
 
     /**
@@ -55,14 +66,25 @@ public class MasteryRebuilder {
         List<QuestionAttempt> history = attempts.findAllForLearner(userId, spaceId);
 
         mastery.deleteForLearner(userId, spaceId);
+        // The review schedule is derived too, and rebuilt from the same log. Leaving it alone
+        // would quietly make it a source of truth, which is the one thing nothing in layer
+        // three may become.
+        learningStates.deleteForLearner(userId, spaceId);
         // Question ratings go back to the prior their author's label implies, otherwise the
         // replay would start from ratings that already contain the history being replayed.
         questions.resetRatings(spaceId);
+
+        // The blueprint's target retention, read once: it is a property of the space, not of
+        // any single attempt, and re-reading it per attempt would be a query per row.
+        Map<String, Object> settings = spaceSettings.settingsFor(spaceId);
 
         // Counted here rather than re-queried per attempt: the incremental path knows how
         // many times a question had been answered before, and the replay has to agree or
         // coverage will come out different.
         Map<UUID, Integer> seenSoFar = new HashMap<>();
+        // Cached: a question's estimated time does not change mid-replay, and looking it up per
+        // attempt would be a query per row of the log.
+        Map<UUID, Integer> estimatedSeconds = new HashMap<>();
 
         for (QuestionAttempt attempt : history) {
             int prior = seenSoFar.merge(attempt.questionId(), 1, Integer::sum) - 1;
@@ -79,15 +101,40 @@ public class MasteryRebuilder {
                     attempt.responseTimeMs(),
                     prior,
                     attempt.createdAt());
+
+            // Replayed at the instant the answer was actually given, not now. Stability growth
+            // depends on how close to forgetting the learner was, so replaying a year of
+            // history against today's clock would produce a schedule that never existed.
+            reviews.record(
+                    userId,
+                    spaceId,
+                    attempt.questionId(),
+                    attempt.difficulty(),
+                    attempt.isCorrect(),
+                    attempt.responseTimeMs(),
+                    attempt.confidence() == null ? null : attempt.confidence().intValue(),
+                    attempt.grade(),
+                    estimatedSeconds.computeIfAbsent(attempt.questionId(),
+                            id -> questions.load(spaceId, id)
+                                    .map(QuestionAccess.ServedQuestion::estimatedSeconds)
+                                    .orElse(60)),
+                    settings,
+                    attempt.createdAt());
         }
 
         log.info("Rebuilt derived state for user {} in space {} from {} attempts",
                 userId, spaceId, history.size());
 
-        return new Report(history.size(), mastery.findForLearner(userId, spaceId).size());
+        return new Report(
+                history.size(),
+                mastery.findForLearner(userId, spaceId).size(),
+                learningStates.findForLearner(userId, spaceId).size());
     }
 
-    /** @param buckets how many topic-mastery rows the replay produced */
-    public record Report(int attemptsReplayed, int buckets) {
+    /**
+     * @param buckets   how many topic-mastery rows the replay produced
+     * @param scheduled how many items came out with a review schedule
+     */
+    public record Report(int attemptsReplayed, int buckets, int scheduled) {
     }
 }

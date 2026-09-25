@@ -329,6 +329,23 @@ public class QuestionAccess {
     }
 
     /**
+     * How long this question actually takes people.
+     *
+     * <p>Used to tell "I knew it" from "I worked it out": the author's estimate is a guess, and
+     * a reliably optimistic one, so the observed mean replaces it once there are enough samples
+     * to be a mean rather than an anecdote.
+     */
+    @Transactional(readOnly = true)
+    public Optional<ItemTiming> timingOf(UUID questionId) {
+        return stats.findById(questionId)
+                .map(row -> new ItemTiming(row.avgResponseMs(), row.timesServed()));
+    }
+
+    /** @param sampleCount how many answers the mean is built from */
+    public record ItemTiming(Integer averageResponseMs, int sampleCount) {
+    }
+
+    /**
      * @param subjectIds  empty means any subject
      * @param topicIds    empty means any topic
      * @param types       empty means any format

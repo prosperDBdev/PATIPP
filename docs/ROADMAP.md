@@ -306,6 +306,9 @@ multiple-choice questions do.
 
 ## Phase 6 — Spaced Repetition & Flashcards (2 sessions) · MVP
 
+**Status: COMPLETE.** 285 backend tests (34 of them pure scheduling tests running in under a
+second, including two simulated 90-day histories) and 29 end-to-end checks pass.
+
 **Build**
 - `com.patipp.scheduling`: `ReviewScheduler` (`FSRS_V1`), `learning_states` lifecycle,
   grade derivation from ordinary quiz answers, priority bands.
@@ -315,9 +318,42 @@ multiple-choice questions do.
 - Frontend: flashcard runner (flip animation, swipe on touch, 1–4 keyboard), due counters
   per topic.
 
+  > Revised during implementation, in four places.
+  >
+  > **1. The growth formula in ADAPTIVE-ENGINE.md compounds without bound.** As specified it
+  > multiplies stability by a constant on every success, so at the default settings each review
+  > nearly triples the interval and an item hits the one-year ceiling after **seven reviews**.
+  > Nothing about seven correct answers justifies not asking again for a year. Real FSRS damps
+  > growth by a negative power of stability; `Fsrs1Scheduler` now does the same with one fixed
+  > exponent, and intervals decelerate (2.6× → 1.9×) towards the cap instead of slamming into it.
+  >
+  > **2. A real bug: `lapses` never incremented for an item that never graduated.** Alternating
+  > fail/pass on a two-step learning ladder can never reach `REVIEW`, so a chronically forgotten
+  > item recorded zero lapses and never reached HIGH priority — leaving the item most in need of
+  > attention sitting in the middle of the queue. A lapse is now any failure of an item answered
+  > before, which is also the honest meaning of the word.
+  >
+  > **3. A review session reaches fifteen minutes ahead.** "Again brings the card back inside the
+  > same session" cannot be true if the queue refuses an item due in nine minutes, which is where
+  > the first learning step puts it. The debt *count* stays strictly honest; the review *queue*
+  > has a short horizon. The letter of the schedule should not defeat its purpose.
+  >
+  > **4. Attempts now carry the application's clock** rather than relying on the column default.
+  > `created_at` was `insertable = false`, so an entity read back in the same transaction had a
+  > null timestamp — and the rebuild replays against those timestamps. Phase 5's rebuild
+  > tolerated it silently (writing null dates); Phase 6's scheduler dereferences it, and the
+  > latent problem surfaced as an NPE. Timestamps are also truncated to microseconds at the
+  > persistence boundary, because Postgres `timestamptz` cannot hold nanoseconds and an
+  > untruncated `Instant` differs from itself after a round trip.
+
 **Exit criteria:** scheduler unit tests over a simulated 90-day study history produce
 monotonically increasing intervals for consistently-correct items and interval collapse on
 lapse. Flashcard reviews and MCQ answers both move the same `learning_states` row.
+
+  > "Monotonically increasing" holds up to the one-year ceiling, where it necessarily flattens —
+  > an interval cannot grow past its own cap. The test asserts non-decreasing growth plus two
+  > stronger properties the original wording missed: that the ceiling is *not* reached in a
+  > handful of reviews, and that the growth rate itself decelerates.
 
 **You verify:** review 10 flashcards choosing different grades, confirm the previewed
 intervals match what actually gets scheduled, and that "Again" brings the card back inside

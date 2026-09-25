@@ -10,10 +10,15 @@ import com.patipp.learning.api.LearningAccess;
 import com.patipp.questions.api.QuestionAccess;
 import com.patipp.questions.api.QuestionAccess.SelectionFilters;
 import com.patipp.sessions.api.SessionDtos.StartSessionRequest;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +40,20 @@ import org.springframework.stereotype.Component;
 public class AdaptiveSelection {
 
     private static final Logger log = LoggerFactory.getLogger(AdaptiveSelection.class);
+
+    /**
+     * How far ahead a review session will reach for something that is nearly due.
+     *
+     * <p>A card you have just failed is rescheduled ten minutes out by the first learning step,
+     * and it is the single most valuable thing you could see again. Refusing to serve it because
+     * it is due in nine minutes rather than now would be the letter of the schedule defeating
+     * its purpose — and it is why "Again brings the card back in the same sitting" is true rather
+     * than aspirational.
+     *
+     * <p>Fifteen minutes, not hours: wide enough to cover the learning steps, narrow enough that
+     * nothing genuinely spaced is pulled forward.
+     */
+    private static final Duration WITHIN_THIS_SITTING = Duration.ofMinutes(15);
 
     private final QuestionAccess questions;
     private final LearningAccess learning;
@@ -89,6 +108,82 @@ public class AdaptiveSelection {
                     chosen.questionId(), chosen.questionVersionId(),
                     reasonFor(chosen, selection)));
         }
+        return selected;
+    }
+
+    /**
+     * What is due, most overdue first, topped up with new material.
+     *
+     * <p>Review debt comes first because it is knowledge already paid for and about to be lost,
+     * which is the most time-critical thing available. But a review session with nothing due
+     * would be an empty screen and a wasted intention, so it falls through to unseen items — at
+     * which point it is doing the useful thing of building the backlog rather than clearing it.
+     */
+    public List<QuestionAccess.SelectedQuestion> selectDueFirst(UUID userId, UUID spaceId,
+                                                                SelectionFilters filters,
+                                                                int length, long seed) {
+        List<QuestionAccess.Candidate> pool = questions.candidatesFor(spaceId, filters);
+        if (pool.isEmpty()) {
+            return List.of();
+        }
+
+        Map<UUID, Instant> dueDates = learning.dueDatesFor(userId, spaceId);
+        Instant now = learning.now();
+        Instant horizon = now.plus(WITHIN_THIS_SITTING);
+
+        List<QuestionAccess.Candidate> due = new ArrayList<>();
+        List<QuestionAccess.Candidate> unseen = new ArrayList<>();
+
+        for (QuestionAccess.Candidate candidate : pool) {
+            Instant dueAt = dueDates.get(candidate.questionId());
+            if (dueAt == null) {
+                unseen.add(candidate);
+            } else if (!dueAt.isAfter(horizon)) {
+                due.add(candidate);
+            }
+            // Anything due beyond the horizon is deliberately skipped: showing an item early is
+            // the one thing a spaced-repetition system exists to avoid.
+        }
+
+        due.sort(Comparator.comparing(candidate -> dueDates.get(candidate.questionId())));
+        // Shuffled, so a review session that falls through to new material is not simply the
+        // question bank in creation order every time.
+        Collections.shuffle(unseen, new Random(seed));
+
+        List<QuestionAccess.SelectedQuestion> selected = new ArrayList<>(length);
+        for (QuestionAccess.Candidate candidate : due) {
+            if (selected.size() >= length) {
+                break;
+            }
+            double overdueDays = Duration.between(dueDates.get(candidate.questionId()), now)
+                    .toMillis() / 86_400_000.0;
+            selected.add(new QuestionAccess.SelectedQuestion(
+                    candidate.questionId(), candidate.questionVersionId(),
+                    Map.of("reason", "DUE_REVIEW",
+                            "why", overdueDays >= 1
+                                    ? "Due %d day%s ago".formatted(Math.round(overdueDays),
+                                            Math.round(overdueDays) == 1 ? "" : "s")
+                                    : overdueDays < 0
+                                            ? "You just missed this one"
+                                            : "Due for review now",
+                            "overdueDays", Math.round(overdueDays * 100) / 100.0,
+                            "engine", "FSRS_V1")));
+        }
+
+        for (QuestionAccess.Candidate candidate : unseen) {
+            if (selected.size() >= length) {
+                break;
+            }
+            selected.add(new QuestionAccess.SelectedQuestion(
+                    candidate.questionId(), candidate.questionVersionId(),
+                    Map.of("reason", "NEW_MATERIAL",
+                            "why", "Nothing is due, so this is something you have not seen",
+                            "engine", "FSRS_V1")));
+        }
+
+        log.debug("Due-first selection for {} in {}: {} due, {} new, {} chosen",
+                userId, spaceId, due.size(), unseen.size(), selected.size());
+
         return selected;
     }
 

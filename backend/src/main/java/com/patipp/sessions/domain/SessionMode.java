@@ -8,16 +8,17 @@ package com.patipp.sessions.domain;
  * feedback and a fixed blueprint. Adding a mode means adding a handler, not a parallel copy
  * of scoring, history and analytics.
  *
- * <p>Only PRACTICE is implemented in Phase 3. The rest are declared because preparation-type
- * blueprints already name them, and a blueprint mentioning a mode the code has not reached
- * yet must be readable rather than an error.
+ * <p>Not every mode is implemented. The rest are declared because preparation-type blueprints
+ * already name them, and a blueprint mentioning a mode the code has not reached yet must be
+ * readable rather than an error.
  */
 public enum SessionMode {
 
     PRACTICE(true),
-    EXAM(false),
+    EXAM(true),
+    FLASHCARD_REVIEW(true),
+
     INTERVIEW(false),
-    FLASHCARD_REVIEW(false),
     DRILL(false);
 
     private final boolean implemented;

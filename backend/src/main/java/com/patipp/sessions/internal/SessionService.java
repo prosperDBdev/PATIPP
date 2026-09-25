@@ -19,6 +19,7 @@ import com.patipp.questions.domain.content.EvaluationResult;
 import com.patipp.sessions.api.SessionDtos.AnswerResult;
 import com.patipp.sessions.api.SessionDtos.ItemSummary;
 import com.patipp.sessions.api.SessionDtos.ReviewItem;
+import com.patipp.sessions.api.SessionDtos.ReviewOutcome;
 import com.patipp.sessions.api.SessionDtos.ServedItem;
 import com.patipp.sessions.api.SessionDtos.SessionAvailability;
 import com.patipp.sessions.api.SessionDtos.SessionListEntry;
@@ -158,6 +159,8 @@ public class SessionService {
                     seed, curriculum.subjectWeights(spaceId));
             case ADAPTIVE -> adaptiveSelection.select(userId, spaceId, filters, length, seed,
                     settings, request);
+            case DUE_FIRST -> adaptiveSelection.selectDueFirst(userId, spaceId, filters,
+                    length, seed);
             case RANDOM -> questionAccess.selectForSession(spaceId, filters, length, seed);
         };
 
@@ -352,7 +355,7 @@ public class SessionService {
                 gradeFrom(answer), request.responseTimeMs(),
                 request.confidence() == null ? null : request.confidence().shortValue(),
                 priorAttempts + 1, question.content().evaluation().name(),
-                request.clientAttemptId()));
+                request.clientAttemptId(), now));
 
         int elapsedMs = request.responseTimeMs() == null ? 0 : request.responseTimeMs();
         item.markAnswered(attempt.id(), elapsedMs);
@@ -376,6 +379,16 @@ public class SessionService {
                 result.score(), result.correct(), request.responseTimeMs(),
                 priorAttempts, now);
 
+        // And into the review schedule. Every format, not only flashcards: a grade is derived
+        // from correctness and timing where the format does not report one, so answering a fact
+        // as a multiple-choice question counts towards retention exactly as reviewing it as a
+        // flashcard does. Two disconnected systems would be the alternative.
+        LearningAccess.Scheduled scheduled = learning.recordReview(
+                userId, spaceId, item.questionId(), question.difficulty(), result.correct(),
+                request.responseTimeMs(), request.confidence(), gradeFrom(answer),
+                question.estimatedSeconds(),
+                effectiveSettings(accessGuard.requireOwned(spaceId)), now);
+
         boolean complete = session.answeredCount() >= session.totalItems();
         boolean reveal = handler.revealsFeedbackImmediately(session);
 
@@ -392,6 +405,16 @@ public class SessionService {
                 session.answeredCount(),
                 session.totalItems(),
                 complete,
+                // When it comes back is not feedback about whether you were right, so it is
+                // reported even in an exam. Knowing something returns in four days gives away
+                // nothing about the answer you just gave.
+                new ReviewOutcome(
+                        scheduled.grade(),
+                        gradeFrom(answer) == null,
+                        scheduled.intervalDays(),
+                        scheduled.dueAt(),
+                        scheduled.phase(),
+                        scheduled.priority()),
                 complete ? null : nextItem(session).orElse(null));
     }
 

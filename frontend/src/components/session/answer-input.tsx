@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Textarea, cn } from "@/components/ui";
-import type { PresentedOption, ServedItem } from "@/lib/api/types";
+import { formatInterval } from "@/components/session/interval";
+import type { IntervalPreview, PresentedOption, ServedItem } from "@/lib/api/types";
 
 /**
  * The answer control for one question, chosen by format.
@@ -25,6 +26,11 @@ export interface AnswerInputProps {
    * the learner is editing it from that moment on.
    */
   initialAnswer?: Record<string, unknown> | null;
+  /**
+   * What each grade would schedule for this item, for the formats that ask for one.
+   * Absent until it has loaded, and absent entirely for formats with no self-grade.
+   */
+  preview?: IntervalPreview;
 }
 
 export function AnswerInput(props: AnswerInputProps) {
@@ -123,39 +129,57 @@ function SelfGrade({
   value,
   locked,
   onPick,
+  preview,
 }: {
   question: string;
   value: number | null;
   locked: boolean;
   onPick: (grade: number) => void;
+  /** What each button would schedule. Absent until the preview has loaded. */
+  preview?: IntervalPreview;
 }) {
   return (
     <div className="flex flex-col gap-2">
       <p className="text-[13px] font-medium text-text">{question}</p>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {GRADES.map((grade) => (
-          <button
-            key={grade.value}
-            type="button"
-            disabled={locked}
-            aria-pressed={value === grade.value}
-            onClick={() => onPick(grade.value)}
-            className={cn(
-              "rounded-lg border p-2.5 text-left transition-colors disabled:cursor-default",
-              value === grade.value
-                ? "border-accent bg-accent-soft"
-                : "border-border bg-surface hover:border-accent",
-            )}
-          >
-            <span className="block text-[13px] font-medium text-text">
-              <span className="mr-1.5 font-mono text-[10px] text-text-faint">{grade.value}</span>
-              {grade.label}
-            </span>
-            <span className="mt-0.5 block text-[11px] leading-snug text-text-faint">
-              {grade.hint}
-            </span>
-          </button>
-        ))}
+        {GRADES.map((grade) => {
+          const days = preview?.[grade.key];
+
+          return (
+            <button
+              key={grade.value}
+              type="button"
+              disabled={locked}
+              aria-pressed={value === grade.value}
+              onClick={() => onPick(grade.value)}
+              className={cn(
+                "rounded-lg border p-2.5 text-left transition-colors disabled:cursor-default",
+                value === grade.value
+                  ? "border-accent bg-accent-soft"
+                  : "border-border bg-surface hover:border-accent",
+              )}
+            >
+              <span className="flex items-baseline justify-between gap-1.5">
+                <span className="text-[13px] font-medium text-text">
+                  <span className="mr-1.5 font-mono text-[10px] text-text-faint">
+                    {grade.value}
+                  </span>
+                  {grade.label}
+                </span>
+                {/* The interval this button would schedule, before it is pressed. It turns a
+                    self-report from a guess into a decision with visible consequences. */}
+                {days !== undefined && (
+                  <span className="font-mono text-[11px] tabular-nums text-accent">
+                    {formatInterval(days)}
+                  </span>
+                )}
+              </span>
+              <span className="mt-0.5 block text-[11px] leading-snug text-text-faint">
+                {grade.hint}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -168,7 +192,7 @@ function SelfGrade({
  * attempting it turns the exercise into reading comprehension, and the self-grade that follows
  * would be recording something that never happened.
  */
-function CodingInput({ item, onChange, locked, initialAnswer }: AnswerInputProps) {
+function CodingInput({ item, onChange, locked, initialAnswer, preview }: AnswerInputProps) {
   const [grade, setGrade] = useState<number | null>(
     () => (initialAnswer?.grade as number | undefined) ?? null,
   );
@@ -217,6 +241,7 @@ function CodingInput({ item, onChange, locked, initialAnswer }: AnswerInputProps
         question="How did your solution go?"
         value={grade}
         locked={locked}
+        preview={preview}
         onPick={(picked) => {
           setGrade(picked);
           onChange({ grade: picked });
@@ -227,7 +252,7 @@ function CodingInput({ item, onChange, locked, initialAnswer }: AnswerInputProps
 }
 
 /** Find the bug: click the line, then grade your own explanation of it. */
-function DebuggingInput({ item, onChange, locked, initialAnswer }: AnswerInputProps) {
+function DebuggingInput({ item, onChange, locked, initialAnswer, preview }: AnswerInputProps) {
   const [line, setLine] = useState<number | null>(
     () => (initialAnswer?.line as number | undefined) ?? null,
   );
@@ -275,6 +300,7 @@ function DebuggingInput({ item, onChange, locked, initialAnswer }: AnswerInputPr
         question="Could you explain why it is wrong?"
         value={grade}
         locked={locked}
+        preview={preview}
         onPick={(picked) => {
           setGrade(picked);
           emit(line, picked);
@@ -524,16 +550,17 @@ function ShortAnswerInput({
 /* ------------------------------------------------------------------ flashcard */
 
 const GRADES = [
-  { value: 1, label: "Again", hint: "Did not recall it" },
-  { value: 2, label: "Hard", hint: "Recalled with effort" },
-  { value: 3, label: "Good", hint: "Recalled it" },
-  { value: 4, label: "Easy", hint: "Instant" },
+  { value: 1, key: "AGAIN", label: "Again", hint: "Did not recall it" },
+  { value: 2, key: "HARD", label: "Hard", hint: "Recalled with effort" },
+  { value: 3, key: "GOOD", label: "Good", hint: "Recalled it" },
+  { value: 4, key: "EASY", label: "Easy", hint: "Instant" },
 ] as const;
 
-function FlashcardInput({ item, onChange, locked }: Omit<AnswerInputProps, "result">) {
+function FlashcardInput({ item, onChange, locked, preview }: AnswerInputProps) {
   // Remounted per question via the key in the runner, so the card starts face-down again
   // without an effect resetting it.
   const [revealed, setRevealed] = useState(false);
+  const [grade, setGrade] = useState<number | null>(null);
   const back = useMemo(() => String(item.presentation.back ?? ""), [item.presentation]);
   const mnemonic = item.presentation.mnemonic as string | undefined;
 
@@ -559,33 +586,16 @@ function FlashcardInput({ item, onChange, locked }: Omit<AnswerInputProps, "resu
         {mnemonic && <p className="mt-2 text-xs text-text-muted">{mnemonic}</p>}
       </div>
 
-      <div className="flex flex-col gap-2">
-        <p className="text-[13px] font-medium text-text">How well did you recall it?</p>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {GRADES.map((grade) => (
-            <button
-              key={grade.value}
-              type="button"
-              disabled={locked}
-              onClick={() => onChange({ grade: grade.value })}
-              className={cn(
-                "rounded-lg border border-border bg-surface p-2.5 text-left transition-colors",
-                "hover:border-accent disabled:cursor-default",
-              )}
-            >
-              <span className="block text-[13px] font-medium text-text">
-                <span className="mr-1.5 font-mono text-[10px] text-text-faint">
-                  {grade.value}
-                </span>
-                {grade.label}
-              </span>
-              <span className="mt-0.5 block text-[11px] leading-snug text-text-faint">
-                {grade.hint}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
+      <SelfGrade
+        question="How well did you recall it?"
+        value={grade}
+        locked={locked}
+        preview={preview}
+        onPick={(picked) => {
+          setGrade(picked);
+          onChange({ grade: picked });
+        }}
+      />
     </div>
   );
 }

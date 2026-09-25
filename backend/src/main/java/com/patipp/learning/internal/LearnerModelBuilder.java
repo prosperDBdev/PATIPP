@@ -8,9 +8,12 @@ import com.patipp.adaptive.LearnerModel.TopicKey;
 import com.patipp.adaptive.LearnerModel.TopicState;
 import com.patipp.attempts.domain.QuestionAttempt;
 import com.patipp.attempts.domain.QuestionAttemptRepository;
+import com.patipp.learning.domain.LearningState;
+import com.patipp.learning.domain.LearningStateRepository;
 import com.patipp.learning.domain.TopicMastery;
 import com.patipp.learning.domain.TopicMasteryRepository;
 import com.patipp.questions.api.QuestionAccess;
+import com.patipp.scheduling.ReviewState;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -35,15 +38,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class LearnerModelBuilder {
 
     private final TopicMasteryRepository mastery;
+    private final LearningStateRepository learningStates;
     private final QuestionAttemptRepository attempts;
     private final QuestionAccess questions;
     private final Clock clock;
 
     public LearnerModelBuilder(TopicMasteryRepository mastery,
+                               LearningStateRepository learningStates,
                                QuestionAttemptRepository attempts,
                                QuestionAccess questions,
                                Clock clock) {
         this.mastery = mastery;
+        this.learningStates = learningStates;
         this.attempts = attempts;
         this.questions = questions;
         this.clock = clock;
@@ -108,32 +114,42 @@ public class LearnerModelBuilder {
                 ? Elo.STARTING_RATING : abilitySum / abilityWeight;
 
         return new LearnerModel(userId, spaceId, globalAbility, topics,
-                itemStates(attempts.findAllForLearner(userId, spaceId)),
+                itemStates(userId, spaceId, attempts.findAllForLearner(userId, spaceId)),
                 recentWindow(userId, spaceId), now);
     }
 
     /**
-     * Per-question history, from the attempt log.
+     * Per-question history, from the attempt log and the review schedule.
      *
-     * <p>Read from the log rather than from a derived table because Phase 5 has no
-     * {@code learning_states} yet. Phase 6 adds one and this method reads that instead; the
-     * record it produces already has the {@code dueAt} and {@code stability} fields waiting.
+     * <p>The counts and "when did I last see this" come from the log; the due date and stability
+     * come from {@code learning_states}. Joining them here is what switches the selector's
+     * retention component on: until Phase 6 every item read as new and that 30% of the composite
+     * score was inert, so it contributed nothing to the ordering rather than distorting it.
      */
-    private Map<UUID, ItemState> itemStates(List<QuestionAttempt> history) {
+    private Map<UUID, ItemState> itemStates(UUID userId, UUID spaceId,
+                                            List<QuestionAttempt> history) {
+        Map<UUID, LearningState> schedule = new HashMap<>();
+        learningStates.findForLearner(userId, spaceId)
+                .forEach(state -> schedule.put(state.questionId(), state));
+
         Map<UUID, ItemState> states = new HashMap<>();
 
         // Oldest first, so each row simply supersedes the last seen values.
         for (QuestionAttempt attempt : history) {
             ItemState existing = states.get(attempt.questionId());
+            LearningState scheduled = schedule.get(attempt.questionId());
+
             states.put(attempt.questionId(), new ItemState(
                     attempt.questionId(),
                     (existing == null ? 0 : existing.attempts()) + 1,
                     (existing == null ? 0 : existing.correct()) + (attempt.isCorrect() ? 1 : 0),
                     attempt.createdAt(),
                     attempt.isCorrect(),
-                    // Phase 6 fills these from learning_states; until then every item reads
-                    // as new and the selector's retention component stays inert.
-                    null, 0.0));
+                    // A suspended item is deliberately reported with no due date, so the
+                    // selector treats it as "not due" rather than as overdue for ever.
+                    scheduled == null || scheduled.phase() == ReviewState.Phase.SUSPENDED
+                            ? null : scheduled.dueAt(),
+                    scheduled == null ? 0.0 : scheduled.stability()));
         }
 
         return states;

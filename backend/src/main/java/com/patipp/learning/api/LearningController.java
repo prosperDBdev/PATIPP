@@ -92,6 +92,48 @@ public class LearningController {
     }
 
     /**
+     * How much review debt is outstanding.
+     *
+     * <p>The single number worth putting in front of a learner every day: retention debt is
+     * knowledge already paid for and about to be lost, which is the most time-critical thing
+     * they could spend twenty minutes on.
+     */
+    @GetMapping("/review-debt")
+    public ReviewDebtResponse reviewDebt(@PathVariable UUID spaceId) {
+        accessGuard.requireOwned(spaceId);
+        LearningAccess.ReviewDebt debt = learning.reviewDebt(currentUser.requireId(), spaceId);
+
+        return new ReviewDebtResponse(
+                debt.due(),
+                debt.struggling(),
+                debt.tracked(),
+                debt.due() == 0
+                        ? "Nothing due. Anything you practise now is new ground."
+                        : "%d item%s ready to review%s".formatted(
+                                debt.due(),
+                                debt.due() == 1 ? "" : "s",
+                                debt.struggling() > 0
+                                        ? ", %d you have forgotten more than once"
+                                                .formatted(debt.struggling())
+                                        : ""));
+    }
+
+    /**
+     * What each answer would schedule for one question, before the learner picks.
+     *
+     * <p>Rendered on the buttons themselves. It turns a self-report from a guess into a decision
+     * with visible consequences — "Hard means four days, Good means eleven" — and it is the
+     * fastest way for a learner to notice the scheduler behaving oddly, which is worth more than
+     * any amount of explanation about how it works.
+     */
+    @GetMapping("/questions/{questionId}/interval-preview")
+    public Map<String, Double> intervalPreview(@PathVariable UUID spaceId,
+                                               @PathVariable UUID questionId) {
+        accessGuard.requireOwned(spaceId);
+        return learning.intervalPreview(currentUser.requireId(), spaceId, questionId);
+    }
+
+    /**
      * Throws away the derived state and recomputes it from the attempt log.
      *
      * <p>Safe by construction, and exposed rather than hidden because it is the operation that
@@ -146,6 +188,13 @@ public class LearningController {
             int recentAccuracy,
             int attempts,
             String level) {
+    }
+
+    /**
+     * @param struggling of the due items, how many have been forgotten more than once
+     * @param summary    the same thing in a sentence, so the UI does not have to compose it
+     */
+    public record ReviewDebtResponse(int due, int struggling, int tracked, String summary) {
     }
 
     public record MasteryResponse(

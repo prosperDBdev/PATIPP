@@ -370,7 +370,33 @@ export interface AnswerResult {
   answeredCount: number;
   totalItems: number;
   sessionComplete: boolean;
+  /** When this question comes back, and the grade that decided it. Always present. */
+  review: ReviewOutcome | null;
   nextItem: ServedItem | null;
+}
+
+/**
+ * @param derived true when the platform inferred the grade from correctness and timing rather
+ *                than being told it. Shown, because a correct-but-slow answer scheduled as HARD
+ *                is otherwise inexplicable.
+ */
+export interface ReviewOutcome {
+  grade: "AGAIN" | "HARD" | "GOOD" | "EASY";
+  derived: boolean;
+  intervalDays: number;
+  dueAt: string | null;
+  phase: "NEW" | "LEARNING" | "REVIEW" | "RELEARNING" | "SUSPENDED";
+  priority: "HIGH" | "MEDIUM" | "LOW" | "SUSPENDED";
+}
+
+/** What each answer would schedule, keyed by grade. Days. */
+export type IntervalPreview = Partial<Record<ReviewOutcome["grade"], number>>;
+
+export interface ReviewDebt {
+  due: number;
+  struggling: number;
+  tracked: number;
+  summary: string;
 }
 
 export interface ReviewItem {
