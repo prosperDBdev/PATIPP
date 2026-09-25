@@ -24,6 +24,9 @@ const EDITORS: Record<QuestionTypeKey, (props: EditorProps) => React.ReactElemen
   TRUE_FALSE: TrueFalseEditor,
   SHORT_ANSWER: ShortAnswerEditor,
   FLASHCARD: FlashcardEditor,
+  CODING: CodingEditor,
+  DEBUGGING: DebuggingEditor,
+  OUTPUT_PREDICTION: OutputPredictionEditor,
 };
 
 export function PayloadEditor({
@@ -54,7 +57,338 @@ export function emptyPayloadFor(type: QuestionTypeKey): QuestionPayload {
       return { acceptedAnswers: [""], matchMode: "NORMALIZED", requiredKeywords: [] };
     case "FLASHCARD":
       return { front: "", back: "" };
+    case "CODING":
+      return { language: "javascript", starterCode: "", referenceSolution: "", rubric: [""] };
+    case "DEBUGGING":
+      return { language: "javascript", code: "", defectLine: 1, defectSummary: "", rubric: [] };
+    case "OUTPUT_PREDICTION":
+      return { language: "javascript", code: "", expectedOutput: "", matchMode: "TRIMMED" };
   }
+}
+
+/* ------------------------------------------------------------------ code */
+
+const LANGUAGES = ["javascript", "typescript", "java", "python", "sql", "html", "css", "text"];
+
+/**
+ * A monospace field that does not fight you.
+ *
+ * <p>Tab inserts a tab rather than moving focus, because a code field where Tab escapes is
+ * unusable for the one thing it exists for. Spellcheck and autocapitalise are off for the
+ * same reason.
+ */
+function CodeField({
+  label,
+  hint,
+  value,
+  rows = 10,
+  error,
+  onChange,
+}: {
+  label: string;
+  hint?: string;
+  value: string;
+  rows?: number;
+  error?: string;
+  onChange: (next: string) => void;
+}) {
+  // Derived from the label so the field and its <label> stay associated without every
+  // caller having to invent an id and keep the two in step.
+  const id = "code-" + label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "");
+
+  return (
+    <Field label={label} hint={hint} error={error} htmlFor={id}>
+      <Textarea
+        id={id}
+        rows={rows}
+        value={value}
+        spellCheck={false}
+        autoCapitalize="off"
+        autoCorrect="off"
+        className="font-mono text-[12.5px] leading-relaxed"
+        onChange={(event) => onChange(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key !== "Tab" || event.shiftKey) return;
+          event.preventDefault();
+          const field = event.currentTarget;
+          const { selectionStart: from, selectionEnd: to } = field;
+          onChange(`${value.slice(0, from)}  ${value.slice(to)}`);
+          // Put the caret after the inserted indent on the next frame, once React has
+          // re-rendered with the new value.
+          requestAnimationFrame(() => field.setSelectionRange(from + 2, from + 2));
+        }}
+      />
+    </Field>
+  );
+}
+
+function LanguageField({
+  payload,
+  onChange,
+}: {
+  payload: QuestionPayload;
+  onChange: (payload: QuestionPayload) => void;
+}) {
+  const language = String(payload.language ?? "text");
+
+  return (
+    <Field
+      label="Language"
+      hint="Only used for how the snippet is displayed."
+      htmlFor="code-language-text"
+    >
+      <div className="flex flex-wrap gap-1.5">
+        {LANGUAGES.map((option) => (
+          <button
+            key={option}
+            id={"code-language-" + option}
+            type="button"
+            aria-pressed={language === option}
+            onClick={() => onChange({ ...payload, language: option })}
+            className={cn(
+              "rounded-full border px-2.5 py-1 font-mono text-[11px] transition-colors",
+              language === option
+                ? "border-accent bg-accent text-accent-fg"
+                : "border-border bg-surface text-text-muted hover:border-border-strong",
+            )}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+    </Field>
+  );
+}
+
+/** A short list of criteria, which is what makes a self-grade mean anything. */
+function RubricEditor({
+  payload,
+  onChange,
+  errors,
+  required,
+}: EditorProps & { required: boolean }) {
+  const rubric = (payload.rubric as string[] | undefined) ?? [];
+
+  function update(next: string[]) {
+    onChange({ ...payload, rubric: next });
+  }
+
+  return (
+    <Field
+      label={required ? "Rubric" : "Rubric (optional)"}
+      hint="What a good answer does. You grade yourself against these, so write them as checks."
+      error={errors.rubric}
+      htmlFor="rubric-1"
+    >
+      <div className="flex flex-col gap-2">
+        {rubric.map((item, index) => (
+          <div key={index} className="flex items-center gap-2">
+            <span className="font-mono text-[11px] text-text-faint">{index + 1}</span>
+            <Input
+              id={"rubric-" + (index + 1)}
+              value={item}
+              placeholder="e.g. Handles the empty input"
+              onChange={(event) =>
+                update(rubric.map((existing, i) => (i === index ? event.target.value : existing)))
+              }
+            />
+            <button
+              type="button"
+              onClick={() => update(rubric.filter((_, i) => i !== index))}
+              className="text-xs text-text-faint hover:text-danger"
+              aria-label={`Remove criterion ${index + 1}`}
+            >
+              &times;
+            </button>
+          </div>
+        ))}
+        {rubric.length < 10 && (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => update([...rubric, ""])}
+          >
+            Add criterion
+          </Button>
+        )}
+      </div>
+    </Field>
+  );
+}
+
+/**
+ * A problem solved by hand, then self-graded.
+ *
+ * <p>Nothing here runs the code. The reference solution and rubric are shown to the learner
+ * only after they commit, which is what turns the rubric from a set of hints into a standard.
+ */
+function CodingEditor({ payload, onChange, errors }: EditorProps) {
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="rounded-md border border-border bg-surface-2 px-3 py-2 text-xs text-text-muted">
+        You will solve this in your own editor and grade yourself against the rubric. PATIPP
+        does not run code — what it does is schedule the problem to come back and fold the
+        result into your readiness.
+      </p>
+
+      <LanguageField payload={payload} onChange={onChange} />
+
+      <CodeField
+        label="Starter code (optional)"
+        hint="A signature or scaffold to begin from."
+        value={String(payload.starterCode ?? "")}
+        rows={6}
+        error={errors.starterCode}
+        onChange={(starterCode) => onChange({ ...payload, starterCode })}
+      />
+
+      <CodeField
+        label="Reference solution"
+        hint="Revealed after you answer, to grade yourself against."
+        value={String(payload.referenceSolution ?? "")}
+        rows={12}
+        error={errors.referenceSolution}
+        onChange={(referenceSolution) => onChange({ ...payload, referenceSolution })}
+      />
+
+      <Field
+        label="Expected complexity (optional)"
+        error={errors.complexity}
+        htmlFor="coding-complexity"
+      >
+        <Input
+          id="coding-complexity"
+          value={String(payload.complexity ?? "")}
+          placeholder="e.g. O(n log n) time, O(n) space"
+          onChange={(event) => onChange({ ...payload, complexity: event.target.value })}
+        />
+      </Field>
+
+      <RubricEditor payload={payload} onChange={onChange} errors={errors} required />
+    </div>
+  );
+}
+
+/** A snippet with a defect: the line is auto-graded, the reasoning self-graded. */
+function DebuggingEditor({ payload, onChange, errors }: EditorProps) {
+  const code = String(payload.code ?? "");
+  const lineCount = code.length === 0 ? 1 : code.split("\n").length;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <LanguageField payload={payload} onChange={onChange} />
+
+      <CodeField
+        label="Code with the defect"
+        hint="Kept exactly as you type it — indentation is part of the question."
+        value={code}
+        rows={12}
+        error={errors.code}
+        onChange={(next) => onChange({ ...payload, code: next })}
+      />
+
+      <Field
+        label="Defect line"
+        hint={`Counting from 1. This snippet has ${lineCount} line${lineCount === 1 ? "" : "s"}.`}
+        error={errors.defectLine}
+        htmlFor="defect-line"
+      >
+        <Input
+          id="defect-line"
+          type="number"
+          min={1}
+          max={lineCount}
+          value={String(payload.defectLine ?? 1)}
+          onChange={(event) =>
+            onChange({ ...payload, defectLine: Number(event.target.value) || 1 })
+          }
+        />
+      </Field>
+
+      <Field
+        label="What is wrong"
+        hint="Revealed after you answer. You grade your own explanation against it."
+        error={errors.defectSummary}
+        htmlFor="defect-summary"
+      >
+        <Textarea
+          id="defect-summary"
+          rows={4}
+          value={String(payload.defectSummary ?? "")}
+          placeholder="The loop condition uses <= so it reads one past the end of the array."
+          onChange={(event) => onChange({ ...payload, defectSummary: event.target.value })}
+        />
+      </Field>
+
+      <CodeField
+        label="The fix (optional)"
+        value={String(payload.fix ?? "")}
+        rows={6}
+        error={errors.fix}
+        onChange={(fix) => onChange({ ...payload, fix })}
+      />
+
+      <RubricEditor payload={payload} onChange={onChange} errors={errors} required={false} />
+    </div>
+  );
+}
+
+/** What does it print? Fully auto-graded, with no execution anywhere. */
+function OutputPredictionEditor({ payload, onChange, errors }: EditorProps) {
+  const matchMode = String(payload.matchMode ?? "TRIMMED");
+
+  return (
+    <div className="flex flex-col gap-4">
+      <LanguageField payload={payload} onChange={onChange} />
+
+      <CodeField
+        label="Code"
+        value={String(payload.code ?? "")}
+        rows={10}
+        error={errors.code}
+        onChange={(code) => onChange({ ...payload, code })}
+      />
+
+      <CodeField
+        label="Expected output"
+        hint="Exactly what it prints. This is the answer key and stays on the server."
+        value={String(payload.expectedOutput ?? "")}
+        rows={6}
+        error={errors.expectedOutput}
+        onChange={(expectedOutput) => onChange({ ...payload, expectedOutput })}
+      />
+
+      <Field
+        label="How strictly to compare"
+        error={errors.matchMode}
+        htmlFor="match-mode-TRIMMED"
+      >
+        <div className="flex flex-col gap-1.5">
+          {[
+            ["TRIMMED", "Forgive trailing spaces and blank lines at the ends"],
+            ["EXACT", "Character for character, whitespace included"],
+            ["LOOSE", "Ignore all whitespace and case"],
+          ].map(([value, description]) => (
+            <label key={value} className="flex items-start gap-2 text-[13px]">
+              <input
+                id={"match-mode-" + value}
+                type="radio"
+                name="matchMode"
+                checked={matchMode === value}
+                onChange={() => onChange({ ...payload, matchMode: value })}
+                className="mt-0.5 accent-[var(--accent)]"
+              />
+              <span>
+                <span className="font-mono text-[11px] text-text">{value}</span>
+                <span className="ml-1.5 text-text-muted">{description}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </Field>
+    </div>
+  );
 }
 
 /* ------------------------------------------------------------------ choice */

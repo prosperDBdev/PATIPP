@@ -19,9 +19,22 @@ import java.util.Map;
  * milliseconds without a container.
  */
 public sealed interface QuestionContent
-        permits McqContent, MultiSelectContent, TrueFalseContent, ShortAnswerContent, FlashcardContent {
+        permits McqContent, MultiSelectContent, TrueFalseContent, ShortAnswerContent,
+                FlashcardContent, CodingContent, DebuggingContent, OutputPredictionContent {
 
     QuestionType type();
+
+    /**
+     * Who grades this format.
+     *
+     * <p>Defaults to { EvaluationMode#AUTO} because most formats have an answer key the
+     * server can check. Stamped onto every attempt, so a readiness figure can always say how
+     * much of itself rests on self-assessment - a number that cannot be audited that way is a
+     * number nobody should act on.
+     */
+    default EvaluationMode evaluation() {
+        return EvaluationMode.AUTO;
+    }
 
     /** The jsonb-shaped form written to {@code question_versions.payload}. */
     Map<String, Object> toPayload();
@@ -77,9 +90,12 @@ public sealed interface QuestionContent
             case TRUE_FALSE -> TrueFalseContent.from(payload);
             case SHORT_ANSWER -> ShortAnswerContent.from(payload);
             case FLASHCARD -> FlashcardContent.from(payload);
+            case CODING -> CodingContent.from(payload);
+            case DEBUGGING -> DebuggingContent.from(payload);
+            case OUTPUT_PREDICTION -> OutputPredictionContent.from(payload);
             // Exhaustive by construction: adding a value to QuestionType without handling
             // it here fails to compile, which is the whole reason this hierarchy is sealed.
-            case LONG_ANSWER, CODING, DEBUGGING, OUTPUT_PREDICTION, SCENARIO, BEHAVIORAL ->
+            case LONG_ANSWER, SCENARIO, BEHAVIORAL ->
                     throw new IllegalArgumentException(
                             "Question type " + type + " arrives in a later phase.");
         };

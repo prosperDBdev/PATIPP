@@ -117,7 +117,8 @@ public class QuestionAttempt extends AssignedIdEntity<UUID> {
                                          String mode, Map<String, Object> answer,
                                          boolean correct, BigDecimal score, Short grade,
                                          Integer responseTimeMs, Short confidence,
-                                         int attemptNo, UUID clientAttemptId) {
+                                         int attemptNo, String evaluatedBy,
+                                         UUID clientAttemptId) {
         QuestionAttempt attempt = new QuestionAttempt();
         attempt.id = UuidV7.generate();
         attempt.userId = userId;
@@ -136,7 +137,10 @@ public class QuestionAttempt extends AssignedIdEntity<UUID> {
         attempt.responseTimeMs = responseTimeMs;
         attempt.confidence = confidence;
         attempt.attemptNo = attemptNo;
-        attempt.evaluatedBy = "AUTO";
+        // Recorded rather than assumed: a score is only interpretable alongside who produced
+        // it, and a readiness figure that cannot say how much of itself came from
+        // self-assessment is one nobody can audit.
+        attempt.evaluatedBy = evaluatedBy == null ? "AUTO" : evaluatedBy;
         attempt.clientAttemptId = clientAttemptId;
         return attempt;
     }
@@ -213,6 +217,11 @@ public class QuestionAttempt extends AssignedIdEntity<UUID> {
 
     public int attemptNo() {
         return attemptNo;
+    }
+
+    /** AUTO, SELF or MIXED - how this attempt was graded. */
+    public String evaluatedBy() {
+        return evaluatedBy;
     }
 
     public Instant createdAt() {

@@ -335,7 +335,10 @@ class QuestionContentTest {
         @Test
         @DisplayName("a format declared but not yet implemented is refused clearly")
         void unimplementedFormat() {
-            assertThatThrownBy(() -> QuestionContent.parse(QuestionType.CODING, Map.of()))
+            // LONG_ANSWER rather than CODING: coding shipped in Phase 5.5, and a test that
+            // asserts a format is unimplemented has to name one that genuinely still is, or
+            // it quietly stops testing anything.
+            assertThatThrownBy(() -> QuestionContent.parse(QuestionType.LONG_ANSWER, Map.of()))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("not implemented");
         }

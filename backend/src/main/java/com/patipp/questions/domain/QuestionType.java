@@ -19,10 +19,13 @@ public enum QuestionType {
     SHORT_ANSWER(true),
     FLASHCARD(true),
 
+    // Phase 5.5. None of them execute code: output prediction is auto-graded by comparing
+    // strings, and the other two are graded by the learner against the author's rubric.
+    CODING(true),
+    DEBUGGING(true),
+    OUTPUT_PREDICTION(true),
+
     LONG_ANSWER(false),
-    CODING(false),
-    DEBUGGING(false),
-    OUTPUT_PREDICTION(false),
     SCENARIO(false),
     BEHAVIORAL(false);
 

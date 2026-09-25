@@ -36,13 +36,32 @@ public sealed interface Answer {
     }
 
     /**
-     * A self-reported recall grade for a flashcard: 1 Again, 2 Hard, 3 Good, 4 Easy.
-     * Fed to the spaced-repetition scheduler in Phase 6.
+     * A self-reported recall grade: 1 Again, 2 Hard, 3 Good, 4 Easy.
+     *
+     * <p>Used by flashcards and by coding problems solved by hand. Sharing one scale is what
+     * lets both feed the spaced-repetition scheduler through the same path.
      */
     record Grade(int value) implements Answer {
         public Grade {
             if (value < 1 || value > 4) {
                 throw new IllegalArgumentException("grade must be between 1 and 4, was " + value);
+            }
+        }
+    }
+
+    /**
+     * A debugging answer: which line, and how well you think you explained it.
+     *
+     * @param line  1-based line number of the suspected defect, checked against the key
+     * @param grade the learner's own verdict on their explanation, 1-4
+     */
+    record Diagnosis(int line, int grade) implements Answer {
+        public Diagnosis {
+            if (line < 1) {
+                throw new IllegalArgumentException("line must be 1 or greater, was " + line);
+            }
+            if (grade < 1 || grade > 4) {
+                throw new IllegalArgumentException("grade must be between 1 and 4, was " + grade);
             }
         }
     }
@@ -67,7 +86,13 @@ public sealed interface Answer {
             case FLASHCARD -> new Grade(readGrade(body));
             // Exhaustive by construction: a new format that forgets to say how its answers
             // arrive will not compile.
-            case LONG_ANSWER, CODING, DEBUGGING, OUTPUT_PREDICTION, SCENARIO, BEHAVIORAL ->
+            // A hand-written solution is graded by the learner on the same 1-4 scale a
+            // flashcard uses, which is what lets it feed the scheduler with no special case.
+            case CODING -> new Grade(readGrade(body));
+            case OUTPUT_PREDICTION -> new Text(readText(body));
+            case DEBUGGING -> new Diagnosis(readLine(body), readGrade(body));
+
+            case LONG_ANSWER, SCENARIO, BEHAVIORAL ->
                     throw new ContentValidationException(List.of(new ContentValidationException
                             .FieldError("type", type + " cannot be answered yet")));
         };
@@ -104,6 +129,22 @@ public sealed interface Answer {
             throw reject("text", "is required");
         }
         return raw.toString();
+    }
+
+    /** The line the learner says the defect is on. Bounds are checked against the snippet. */
+    private static int readLine(Map<String, Object> body) {
+        Object raw = body.get("line");
+        try {
+            int value = raw instanceof Number number
+                    ? number.intValue()
+                    : Integer.parseInt(String.valueOf(raw).strip());
+            if (value < 1) {
+                throw reject("line", "must be a line number, counting from 1");
+            }
+            return value;
+        } catch (NumberFormatException notANumber) {
+            throw reject("line", "must be a line number, counting from 1");
+        }
     }
 
     private static int readGrade(Map<String, Object> body) {

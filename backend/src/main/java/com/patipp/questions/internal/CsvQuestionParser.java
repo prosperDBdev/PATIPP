@@ -216,6 +216,33 @@ public class CsvQuestionParser {
                 payload.put("front", value(row, "stem"));
                 payload.put("back", value(row, "back"));
             }
+            case OUTPUT_PREDICTION -> {
+                payload.put("code", rawValue(row, "code"));
+                payload.put("expectedOutput", rawValue(row, "expectedoutput"));
+                putIfPresent(payload, "language", value(row, "language"));
+                putIfPresent(payload, "matchMode", value(row, "matchmode"));
+            }
+            case DEBUGGING -> {
+                payload.put("code", rawValue(row, "code"));
+                payload.put("defectSummary", value(row, "defectsummary"));
+                putIfPresent(payload, "language", value(row, "language"));
+                putIfPresent(payload, "fix", rawValue(row, "fix"));
+
+                String line = value(row, "defectline");
+                if (line.isBlank()) {
+                    problems.add(new FieldProblem("defectLine", "is required for DEBUGGING"));
+                } else {
+                    payload.put("defectLine", line);
+                }
+                payload.put("rubric", splitList(value(row, "rubric")));
+            }
+            case CODING -> {
+                payload.put("referenceSolution", rawValue(row, "referencesolution"));
+                putIfPresent(payload, "starterCode", rawValue(row, "startercode"));
+                putIfPresent(payload, "language", value(row, "language"));
+                putIfPresent(payload, "complexity", value(row, "complexity"));
+                payload.put("rubric", splitList(value(row, "rubric")));
+            }
             default -> problems.add(new FieldProblem("type", type + " cannot be imported yet"));
         }
 
@@ -264,6 +291,25 @@ public class CsvQuestionParser {
     private static String value(Map<String, String> row, String key) {
         String raw = row.get(key);
         return raw == null ? "" : raw.strip();
+    }
+
+    /**
+     * A cell kept exactly as written.
+     *
+     * <p>For code and expected output, where indentation and trailing blank lines are the
+     * content rather than noise around it. Stripping a snippet quietly re-indents its first
+     * line, which is how an imported question comes out subtly wrong.
+     */
+    private static String rawValue(Map<String, String> row, String key) {
+        String raw = row.get(key);
+        return raw == null ? "" : raw;
+    }
+
+    /** Adds a value only when the author supplied one, so absent stays absent. */
+    private static void putIfPresent(Map<String, Object> payload, String key, String value) {
+        if (value != null && !value.isBlank()) {
+            payload.put(key, value);
+        }
     }
 
     private static String emptyToNull(String value) {

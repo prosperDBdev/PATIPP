@@ -259,9 +259,12 @@ class QuestionBankIntegrationTest extends IntegrationTest {
         mockMvc.perform(post(url(""))
                         .header(HttpHeaders.AUTHORIZATION, user.bearer())
                         .contentType(MediaType.APPLICATION_JSON)
+                        // LONG_ANSWER, because CODING shipped in Phase 5.5. A blueprint may
+                        // still name a format the code has not reached, and saying so plainly
+                        // is the difference between a clear refusal and a mystery.
                         .content("""
-                                {"subjectId":"%s","type":"CODING","difficulty":"HARD",
-                                 "stem":"Write a debounce function","payload":{}}
+                                {"subjectId":"%s","type":"LONG_ANSWER","difficulty":"HARD",
+                                 "stem":"Explain event delegation in depth","payload":{}}
                                 """.formatted(subjectId)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("question.type_unsupported"));

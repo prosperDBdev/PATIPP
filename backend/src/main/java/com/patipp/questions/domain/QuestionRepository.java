@@ -57,7 +57,7 @@ public interface QuestionRepository
             select q from Question q
             left join fetch q.currentVersion
             where q.preparationSpaceId = :spaceId and q.archivedAt is null
-            order by q.createdAt asc
+            order by q.createdAt asc, q.id asc
             """)
     List<Question> findAllLiveInSpace(@Param("spaceId") UUID spaceId);
 

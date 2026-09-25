@@ -1,0 +1,238 @@
+{
+  "space": "Technical Interview Prep",
+  "preparationType": "CODING_TEST",
+  "note": "Coding practice that needs no code execution. Import through Questions > Import with format JSON. Subjects and topics are matched by name, so create them first — every name below is offered as a suggested chip when you add the subject, so accepting the suggestions is enough.",
+  "requires": {
+    "Data Structures and Algorithms": [
+      "Arrays and strings",
+      "Hash maps and sets",
+      "Linked lists"
+    ],
+    "JavaScript": [
+      "Arrays and objects",
+      "Asynchronous JavaScript",
+      "Functions and closures",
+      "Types and coercion"
+    ],
+    "React": [
+      "Hooks",
+      "Performance"
+    ]
+  },
+  "howItWorks": "CODING and DEBUGGING are graded by you against the author's rubric, which appears only after you commit. OUTPUT_PREDICTION is graded automatically by comparing strings. Nothing here runs code — what PATIPP adds is scheduling the problem to come back and folding the result into your readiness.",
+  "count": 12,
+  "questions": [
+    {
+      "subject": "Data Structures and Algorithms",
+      "topic": "Hash maps and sets",
+      "type": "CODING",
+      "difficulty": "MEDIUM",
+      "stem": "Given an array of integers and a target, return the indices of the two numbers that add up to the target. Assume exactly one solution.",
+      "explanation": "The point of this one is recognising that a single pass with a lookup table beats the obvious nested loop, and being able to say why out loud.",
+      "payload": {
+        "language": "javascript",
+        "starterCode": "function twoSum(nums, target) {\n  \n}",
+        "referenceSolution": "function twoSum(nums, target) {\n  const seen = new Map();\n  for (let i = 0; i < nums.length; i++) {\n    const need = target - nums[i];\n    if (seen.has(need)) return [seen.get(need), i];\n    seen.set(nums[i], i);\n  }\n  return [];\n}",
+        "complexity": "O(n) time, O(n) space",
+        "rubric": [
+          "Solved it in one pass, not two nested loops",
+          "Stored values seen so far in a map or object",
+          "Said the time and space complexity without being asked",
+          "Mentioned what happens if no pair adds up"
+        ]
+      }
+    },
+    {
+      "subject": "Data Structures and Algorithms",
+      "topic": "Linked lists",
+      "type": "CODING",
+      "difficulty": "MEDIUM",
+      "stem": "Reverse a singly linked list in place and return the new head. Do it iteratively.",
+      "explanation": "Three pointers and an order of operations you have to get exactly right. A classic because it is impossible to fake having done it before.",
+      "payload": {
+        "language": "javascript",
+        "starterCode": "// node: { value, next }\nfunction reverse(head) {\n  \n}",
+        "referenceSolution": "function reverse(head) {\n  let prev = null;\n  let current = head;\n  while (current !== null) {\n    const next = current.next;\n    current.next = prev;\n    prev = current;\n    current = next;\n  }\n  return prev;\n}",
+        "complexity": "O(n) time, O(1) space",
+        "rubric": [
+          "Kept hold of the next node before reassigning it",
+          "Returned prev, not head, at the end",
+          "Handled an empty list and a single node without special cases",
+          "Did it in constant extra space"
+        ]
+      }
+    },
+    {
+      "subject": "Data Structures and Algorithms",
+      "topic": "Arrays and strings",
+      "type": "CODING",
+      "difficulty": "EASY",
+      "stem": "Decide whether a string is a palindrome, ignoring case and anything that is not a letter or digit.",
+      "explanation": "Easy to get roughly right and easy to get subtly wrong. The two-pointer version avoids allocating a cleaned copy.",
+      "payload": {
+        "language": "javascript",
+        "referenceSolution": "function isPalindrome(s) {\n  let left = 0;\n  let right = s.length - 1;\n  const ok = (c) => /[a-z0-9]/i.test(c);\n  while (left < right) {\n    while (left < right && !ok(s[left])) left++;\n    while (left < right && !ok(s[right])) right--;\n    if (s[left].toLowerCase() !== s[right].toLowerCase()) return false;\n    left++;\n    right--;\n  }\n  return true;\n}",
+        "complexity": "O(n) time, O(1) space",
+        "rubric": [
+          "Two pointers rather than building a reversed copy",
+          "Skipped non-alphanumeric characters on both sides",
+          "Compared case-insensitively",
+          "An empty string returns true"
+        ]
+      }
+    },
+    {
+      "subject": "JavaScript",
+      "topic": "Functions and closures",
+      "type": "CODING",
+      "difficulty": "MEDIUM",
+      "stem": "Write a debounce function: given a function and a delay, return a wrapper that only invokes it once calls have stopped for that long.",
+      "explanation": "The question behind the question is whether you understand closures and timer handles. Interviewers ask it because the naive version fails on the second call.",
+      "payload": {
+        "language": "javascript",
+        "referenceSolution": "function debounce(fn, delay) {\n  let timer = null;\n  return function (...args) {\n    clearTimeout(timer);\n    timer = setTimeout(() => fn.apply(this, args), delay);\n  };\n}",
+        "complexity": "O(1) per call",
+        "rubric": [
+          "Held the timer id in a closure, not on the outer scope",
+          "Cleared the previous timer before setting a new one",
+          "Forwarded both arguments and `this` to the wrapped function",
+          "Could explain how debounce differs from throttle"
+        ]
+      }
+    },
+    {
+      "subject": "JavaScript",
+      "topic": "Asynchronous JavaScript",
+      "type": "OUTPUT_PREDICTION",
+      "difficulty": "MEDIUM",
+      "stem": "What does this print, and in what order?",
+      "explanation": "Synchronous code first, then microtasks (promise callbacks), then macrotasks (timers). setTimeout with 0 does not mean immediately — it means after the current task and every queued microtask.",
+      "payload": {
+        "language": "javascript",
+        "code": "console.log('1');\nsetTimeout(() => console.log('2'), 0);\nPromise.resolve().then(() => console.log('3'));\nconsole.log('4');",
+        "expectedOutput": "1\n4\n3\n2",
+        "matchMode": "TRIMMED"
+      }
+    },
+    {
+      "subject": "JavaScript",
+      "topic": "Functions and closures",
+      "type": "OUTPUT_PREDICTION",
+      "difficulty": "MEDIUM",
+      "stem": "What does this print?",
+      "explanation": "var is function-scoped, so all three callbacks close over the same binding, which is 3 by the time they run. Changing var to let gives 0 1 2, because let creates a fresh binding per iteration.",
+      "payload": {
+        "language": "javascript",
+        "code": "for (var i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i), 0);\n}",
+        "expectedOutput": "3\n3\n3",
+        "matchMode": "TRIMMED"
+      }
+    },
+    {
+      "subject": "JavaScript",
+      "topic": "Types and coercion",
+      "type": "OUTPUT_PREDICTION",
+      "difficulty": "HARD",
+      "stem": "What does this print?",
+      "explanation": "The + operator prefers string concatenation when either side is a string, so 1 + '2' is '12'. The - operator has no string meaning, so '3' is coerced to a number and 12 - 3 is 9.",
+      "payload": {
+        "language": "javascript",
+        "code": "console.log(1 + '2' - 3);\nconsole.log([] + {});\nconsole.log(typeof NaN);",
+        "expectedOutput": "9\n[object Object]\nnumber",
+        "matchMode": "TRIMMED"
+      }
+    },
+    {
+      "subject": "JavaScript",
+      "topic": "Arrays and objects",
+      "type": "DEBUGGING",
+      "difficulty": "EASY",
+      "stem": "This should sum the numbers in an array, but it returns NaN. What is wrong?",
+      "explanation": "The loop condition uses <= so the final iteration reads nums[nums.length], which is undefined. Adding undefined to a number gives NaN, and NaN propagates through the rest of the sum.",
+      "payload": {
+        "language": "javascript",
+        "code": "function sum(nums) {\n  let total = 0;\n  for (let i = 0; i <= nums.length; i++) {\n    total += nums[i];\n  }\n  return total;\n}",
+        "defectLine": 3,
+        "defectSummary": "The condition should be i < nums.length. With <=, the last iteration reads one index past the end, which is undefined, and adding undefined produces NaN.",
+        "fix": "for (let i = 0; i < nums.length; i++) {",
+        "rubric": [
+          "Named it as an off-by-one",
+          "Explained why the result is NaN rather than just too large"
+        ]
+      }
+    },
+    {
+      "subject": "JavaScript",
+      "topic": "Arrays and objects",
+      "type": "DEBUGGING",
+      "difficulty": "MEDIUM",
+      "stem": "This is meant to copy a configuration object so the original is untouched. Editing the copy changes the original anyway. Why?",
+      "explanation": "The spread operator copies one level deep. Nested objects are shared by reference, so mutating copy.database.host also mutates original.database.host.",
+      "payload": {
+        "language": "javascript",
+        "code": "function copyConfig(config) {\n  return { ...config };\n}\n\nconst original = { name: 'app', database: { host: 'localhost' } };\nconst copy = copyConfig(original);\ncopy.database.host = 'production';",
+        "defectLine": 2,
+        "defectSummary": "Spread is a shallow copy. `database` is the same object in both, so writing through the copy writes through the original. A deep copy (structuredClone, or copying each nested object) is needed.",
+        "fix": "return structuredClone(config);",
+        "rubric": [
+          "Said the words shallow copy",
+          "Identified that the nested object is shared by reference",
+          "Named a way to copy deeply"
+        ]
+      }
+    },
+    {
+      "subject": "React",
+      "topic": "Hooks",
+      "type": "DEBUGGING",
+      "difficulty": "MEDIUM",
+      "stem": "This component fetches on mount, but it re-fetches endlessly. What is wrong?",
+      "explanation": "The effect has no dependency array, so it runs after every render. It sets state, which causes a render, which runs the effect again. An empty array makes it run once on mount.",
+      "payload": {
+        "language": "javascript",
+        "code": "function Profile({ id }) {\n  const [user, setUser] = useState(null);\n\n  useEffect(() => {\n    fetch(`/api/users/${id}`)\n      .then((r) => r.json())\n      .then(setUser);\n  });\n\n  return <p>{user?.name}</p>;\n}",
+        "defectLine": 8,
+        "defectSummary": "The useEffect call has no dependency array, so it runs after every render. It sets state, which triggers a render, which runs the effect again. It should be `}, [id]);` so it re-runs only when id changes.",
+        "fix": "  }, [id]);",
+        "rubric": [
+          "Identified the missing dependency array",
+          "Explained the set-state-causes-render loop",
+          "Chose [id] rather than [] and could say why"
+        ]
+      }
+    },
+    {
+      "subject": "React",
+      "topic": "Hooks",
+      "type": "OUTPUT_PREDICTION",
+      "difficulty": "HARD",
+      "stem": "The button is clicked once. What is logged?",
+      "explanation": "Both setCount calls read the same `count` from this render's closure, so both compute 0 + 1. The functional form, setCount(c => c + 1), would give 2. The log runs during the same render, before state has updated, so it shows the old value.",
+      "payload": {
+        "language": "javascript",
+        "code": "function Counter() {\n  const [count, setCount] = useState(0);\n\n  function onClick() {\n    setCount(count + 1);\n    setCount(count + 1);\n    console.log(count);\n  }\n\n  return <button onClick={onClick}>{count}</button>;\n}",
+        "expectedOutput": "0",
+        "matchMode": "TRIMMED"
+      }
+    },
+    {
+      "subject": "React",
+      "topic": "Performance",
+      "type": "CODING",
+      "difficulty": "MEDIUM",
+      "stem": "Write a useDebouncedValue(value, delay) hook that returns the value only after it has stopped changing for the given delay.",
+      "explanation": "Tests whether you can write a hook with a cleanup function. The cleanup is what most people forget, and without it every keystroke leaves a timer running.",
+      "payload": {
+        "language": "javascript",
+        "referenceSolution": "function useDebouncedValue(value, delay) {\n  const [settled, setSettled] = useState(value);\n\n  useEffect(() => {\n    const timer = setTimeout(() => setSettled(value), delay);\n    return () => clearTimeout(timer);\n  }, [value, delay]);\n\n  return settled;\n}",
+        "complexity": "One timer at a time",
+        "rubric": [
+          "Returned a cleanup function that clears the timer",
+          "Listed both value and delay as dependencies",
+          "Initialised state to the current value rather than undefined",
+          "Could say why the cleanup matters on every keystroke"
+        ]
+      }
+    }
+  ]
+}

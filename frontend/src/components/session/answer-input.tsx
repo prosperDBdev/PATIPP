@@ -39,7 +39,292 @@ export function AnswerInput(props: AnswerInputProps) {
       return <ShortAnswerInput {...props} />;
     case "FLASHCARD":
       return <FlashcardInput {...props} />;
+    case "CODING":
+      return <CodingInput {...props} />;
+    case "DEBUGGING":
+      return <DebuggingInput {...props} />;
+    case "OUTPUT_PREDICTION":
+      return <OutputPredictionInput {...props} />;
   }
+}
+
+/* ------------------------------------------------------------------ code */
+
+/** A read-only snippet with line numbers, so "line 14" means something specific. */
+function CodeBlock({
+  code,
+  language,
+  selectedLine,
+  onSelectLine,
+}: {
+  code: string;
+  language?: string;
+  selectedLine?: number | null;
+  onSelectLine?: (line: number) => void;
+}) {
+  const lines = code.replace(/\n$/, "").split("\n");
+  const clickable = Boolean(onSelectLine);
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-border bg-surface-2">
+      {language && (
+        <div className="border-b border-border px-3 py-1 font-mono text-[10px] tracking-wider text-text-faint uppercase">
+          {language}
+        </div>
+      )}
+      <div className="overflow-x-auto">
+        <ol className="min-w-full py-1 font-mono text-[12.5px] leading-relaxed">
+          {lines.map((line, index) => {
+            const number = index + 1;
+            const selected = selectedLine === number;
+
+            return (
+              <li key={number}>
+                <button
+                  type="button"
+                  disabled={!clickable}
+                  onClick={() => onSelectLine?.(number)}
+                  aria-pressed={clickable ? selected : undefined}
+                  className={cn(
+                    "flex w-full items-start gap-3 px-3 py-px text-left",
+                    clickable && "cursor-pointer hover:bg-accent-soft",
+                    selected && "bg-accent-soft",
+                    !clickable && "cursor-text",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "w-6 shrink-0 text-right tabular-nums select-none",
+                      selected ? "font-bold text-accent" : "text-text-faint",
+                    )}
+                  >
+                    {number}
+                  </span>
+                  {/* pre-wrap, so indentation survives and long lines still wrap. */}
+                  <span className="whitespace-pre text-text">{line || " "}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The self-grade control.
+ *
+ * <p>Shared by coding and debugging, and the same 1-4 scale a flashcard uses — which is what
+ * lets a hand-solved problem enter the spaced-repetition scheduler with no special case.
+ */
+function SelfGrade({
+  question,
+  value,
+  locked,
+  onPick,
+}: {
+  question: string;
+  value: number | null;
+  locked: boolean;
+  onPick: (grade: number) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-[13px] font-medium text-text">{question}</p>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {GRADES.map((grade) => (
+          <button
+            key={grade.value}
+            type="button"
+            disabled={locked}
+            aria-pressed={value === grade.value}
+            onClick={() => onPick(grade.value)}
+            className={cn(
+              "rounded-lg border p-2.5 text-left transition-colors disabled:cursor-default",
+              value === grade.value
+                ? "border-accent bg-accent-soft"
+                : "border-border bg-surface hover:border-accent",
+            )}
+          >
+            <span className="block text-[13px] font-medium text-text">
+              <span className="mr-1.5 font-mono text-[10px] text-text-faint">{grade.value}</span>
+              {grade.label}
+            </span>
+            <span className="mt-0.5 block text-[11px] leading-snug text-text-faint">
+              {grade.hint}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * A coding problem: solve it elsewhere, then say honestly how it went.
+ *
+ * <p>The reveal is deliberately a separate step. Looking at the reference solution before
+ * attempting it turns the exercise into reading comprehension, and the self-grade that follows
+ * would be recording something that never happened.
+ */
+function CodingInput({ item, onChange, locked, initialAnswer }: AnswerInputProps) {
+  const [grade, setGrade] = useState<number | null>(
+    () => (initialAnswer?.grade as number | undefined) ?? null,
+  );
+  const [attempted, setAttempted] = useState(() => initialAnswer?.grade !== undefined);
+
+  const starter = item.presentation.starterCode as string | undefined;
+  const language = item.presentation.language as string | undefined;
+  const rubricCount = (item.presentation.rubricItemCount as number | undefined) ?? 0;
+
+  if (!attempted) {
+    return (
+      <div className="flex flex-col gap-3">
+        {starter && <CodeBlock code={starter} language={language} />}
+
+        <div className="rounded-lg border border-dashed border-border-strong bg-surface-2 p-4">
+          <p className="text-[13px] text-text">
+            Solve this by hand in your editor, out loud if you can.
+          </p>
+          <p className="mt-1 text-xs text-text-muted">
+            Narrating is most of what a technical interview is actually testing, and it is the
+            part you cannot practise by reading. When you are done, reveal the reference
+            solution
+            {rubricCount > 0 && ` and ${rubricCount} rubric point${rubricCount === 1 ? "" : "s"}`}
+            {" "}and mark yourself against it.
+          </p>
+          <button
+            type="button"
+            onClick={() => setAttempted(true)}
+            className="mt-3 inline-flex h-9 items-center rounded-md bg-accent px-3 text-[13px] font-medium text-accent-fg hover:bg-accent-hover"
+          >
+            I have attempted it — show the solution
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {starter && <CodeBlock code={starter} language={language} />}
+      <p className="text-xs text-text-muted">
+        The reference solution and rubric are below the question, once you submit. Grade
+        yourself on what you actually produced, not what you now see.
+      </p>
+      <SelfGrade
+        question="How did your solution go?"
+        value={grade}
+        locked={locked}
+        onPick={(picked) => {
+          setGrade(picked);
+          onChange({ grade: picked });
+        }}
+      />
+    </div>
+  );
+}
+
+/** Find the bug: click the line, then grade your own explanation of it. */
+function DebuggingInput({ item, onChange, locked, initialAnswer }: AnswerInputProps) {
+  const [line, setLine] = useState<number | null>(
+    () => (initialAnswer?.line as number | undefined) ?? null,
+  );
+  const [grade, setGrade] = useState<number | null>(
+    () => (initialAnswer?.grade as number | undefined) ?? null,
+  );
+
+  const code = String(item.presentation.code ?? "");
+  const language = item.presentation.language as string | undefined;
+
+  // Both halves are required: a line with no self-assessment is an incomplete answer, and
+  // the submit button stays disabled until onChange has been given something whole.
+  const emit = useCallback(
+    (nextLine: number | null, nextGrade: number | null) => {
+      onChange(nextLine !== null && nextGrade !== null
+        ? { line: nextLine, grade: nextGrade }
+        : null);
+    },
+    [onChange],
+  );
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1.5">
+        <p className="text-[13px] font-medium text-text">Click the line with the defect</p>
+        <CodeBlock
+          code={code}
+          language={language}
+          selectedLine={line}
+          onSelectLine={
+            locked
+              ? undefined
+              : (picked) => {
+                  setLine(picked);
+                  emit(picked, grade);
+                }
+          }
+        />
+        {line !== null && (
+          <p className="font-mono text-[11px] text-text-muted">line {line} selected</p>
+        )}
+      </div>
+
+      <SelfGrade
+        question="Could you explain why it is wrong?"
+        value={grade}
+        locked={locked}
+        onPick={(picked) => {
+          setGrade(picked);
+          emit(line, picked);
+        }}
+      />
+    </div>
+  );
+}
+
+/** What does it print? Typed out, compared as strings, nothing executed. */
+function OutputPredictionInput({ item, onChange, locked, initialAnswer }: AnswerInputProps) {
+  const [text, setText] = useState(() => String(initialAnswer?.text ?? ""));
+
+  const code = String(item.presentation.code ?? "");
+  const language = item.presentation.language as string | undefined;
+  const matchMode = String(item.presentation.matchMode ?? "TRIMMED");
+
+  return (
+    <div className="flex flex-col gap-3">
+      <CodeBlock code={code} language={language} />
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="predicted-output" className="text-[13px] font-medium text-text">
+          What does it print?
+        </label>
+        <Textarea
+          id="predicted-output"
+          rows={5}
+          value={text}
+          disabled={locked}
+          spellCheck={false}
+          autoCapitalize="off"
+          autoCorrect="off"
+          className="font-mono text-[12.5px]"
+          placeholder="One line per line of output"
+          onChange={(event) => {
+            setText(event.target.value);
+            onChange(event.target.value.trim() ? { text: event.target.value } : null);
+          }}
+        />
+        <p className="text-[11px] text-text-faint">
+          {matchMode === "EXACT"
+            ? "Compared character for character, whitespace included."
+            : matchMode === "LOOSE"
+              ? "Whitespace and capitalisation are ignored."
+              : "Trailing spaces and blank lines at the ends are forgiven."}
+        </p>
+      </div>
+    </div>
+  );
 }
 
 /* ------------------------------------------------------------------ choice */

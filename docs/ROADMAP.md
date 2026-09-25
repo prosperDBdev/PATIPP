@@ -227,6 +227,10 @@ drops after a bad run rather than piling on.
 
 ## Phase 5.5 — Coding Practice Without Execution (1–2 sessions) · MVP
 
+**Status: COMPLETE.** 238 backend tests (27 new pure content tests, 8 new integration tests)
+and 30 end-to-end checks pass. 12 coding questions ship in
+[seeds/coding-interview-prep.json](../seeds/coding-interview-prep.json).
+
 **Why it exists.** PATIPP's five formats drill concepts well — Big-O, "what is wrong with
 this snippet", OOP principles — but nothing here executes code, and a technical interview is
 mostly live coding and debugging. The temptation is to read that as "PATIPP needs a code
@@ -269,6 +273,26 @@ is a real security surface (untrusted code, timeouts, resource limits) and would
 network dependency underneath a core feature, which contradicts the standing rule that the
 application must work without external APIs. If it is ever built it goes behind an interface,
 late, and everything above keeps working when it is switched off.
+
+  > Revised during implementation, in three places.
+  >
+  > **1. One migration was needed after all, and it is one line of vocabulary.** `evaluated_by`
+  > already permitted `AUTO`, `SELF` and `AI`, but debugging is graded *partly* by each — the
+  > line by the server, the explanation by the learner — so `MIXED` was added (V7). Squeezing
+  > it into `SELF` would have understated the evidence behind those attempts. The
+  > `questions.type` CHECK needed nothing: it has listed all three formats since V3.
+  >
+  > **2. `PayloadReader` gained `requireVerbatim`.** Every existing reader strips whitespace,
+  > which is right for a stem and wrong for a code snippet — it silently re-indents the first
+  > line. Code and expected output are now stored exactly as written, with only line endings
+  > normalised so a question authored on Windows grades the same everywhere.
+  >
+  > **3. A real bug surfaced, unrelated to this phase.** The candidate pool was ordered by
+  > `createdAt` alone, and questions written in a loop can share a timestamp to the
+  > microsecond — leaving the order ambiguous between two reads. Since every seeded draw
+  > shuffles that list, a mock exam was occasionally **not reproducible from its own recorded
+  > seed**. Now ordered by `(createdAt, id)`. It appeared as an exam test that passed alone and
+  > failed in the full suite, which is the shape order-dependence always takes.
 
 **Exit criteria:** a self-graded coding attempt moves the same `topic_mastery` row, the same
 question Elo and the same readiness inputs as an MCQ. Output prediction grades automatically

@@ -351,7 +351,8 @@ public class SessionService {
                 result.correct(), BigDecimal.valueOf(result.score()).setScale(3, RoundingMode.HALF_UP),
                 gradeFrom(answer), request.responseTimeMs(),
                 request.confidence() == null ? null : request.confidence().shortValue(),
-                priorAttempts + 1, request.clientAttemptId()));
+                priorAttempts + 1, question.content().evaluation().name(),
+                request.clientAttemptId()));
 
         int elapsedMs = request.responseTimeMs() == null ? 0 : request.responseTimeMs();
         item.markAnswered(attempt.id(), elapsedMs);
@@ -659,8 +660,19 @@ public class SessionService {
     }
 
     /** Flashcards carry an explicit recall grade; other formats derive one in Phase 6. */
+    /**
+     * The 1-4 recall grade, where the format produces one.
+     *
+     * <p>Flashcards and coding problems report it directly; a debugging answer carries it
+     * alongside the line number. Phase 6 derives a grade for the remaining formats from
+     * correctness and response time, so every format ends up feeding the same scheduler.
+     */
     private Short gradeFrom(Answer answer) {
-        return answer instanceof Answer.Grade grade ? (short) grade.value() : null;
+        return switch (answer) {
+            case Answer.Grade grade -> (short) grade.value();
+            case Answer.Diagnosis diagnosis -> (short) diagnosis.grade();
+            default -> null;
+        };
     }
 
     private SessionMode parseMode(String raw) {

@@ -38,6 +38,42 @@ final class PayloadReader {
         return value;
     }
 
+    /**
+     * A required string kept exactly as written, including leading and trailing whitespace.
+     *
+     * <p>For code and for expected output, where whitespace is part of the content rather
+     * than noise around it. Stripping a snippet would quietly re-indent its first line, and
+     * stripping expected output would make a question about trailing newlines unanswerable.
+     * Only the line endings are touched, normalised to {@code \n} so a question authored on
+     * Windows grades the same as one authored anywhere else.
+     */
+    String requireVerbatim(String field, int maxLength) {
+        Object raw = payload.get(field);
+        if (raw == null || raw.toString().isBlank()) {
+            errors.add(new FieldError(field, "is required"));
+            return "";
+        }
+        String value = raw.toString().replace("\r\n", "\n").replace("\r", "\n");
+        if (value.length() > maxLength) {
+            errors.add(new FieldError(field, "must be at most " + maxLength + " characters"));
+            return value.substring(0, maxLength);
+        }
+        return value;
+    }
+
+    /** The same, but absent is allowed. */
+    String optionalVerbatim(String field, int maxLength) {
+        Object raw = payload.get(field);
+        if (raw == null || raw.toString().isBlank()) {
+            return null;
+        }
+        String value = raw.toString().replace("\r\n", "\n").replace("\r", "\n");
+        if (value.length() > maxLength) {
+            errors.add(new FieldError(field, "must be at most " + maxLength + " characters"));
+        }
+        return value;
+    }
+
     String optionalString(String field, int maxLength) {
         Object raw = payload.get(field);
         if (raw == null || raw.toString().isBlank()) {

@@ -110,7 +110,10 @@ export type QuestionTypeKey =
   | "MULTI_SELECT"
   | "TRUE_FALSE"
   | "SHORT_ANSWER"
-  | "FLASHCARD";
+  | "FLASHCARD"
+  | "CODING"
+  | "DEBUGGING"
+  | "OUTPUT_PREDICTION";
 
 export type DifficultyKey = "EASY" | "MEDIUM" | "HARD" | "EXPERT";
 export type QuestionStatusKey = "DRAFT" | "ACTIVE" | "ARCHIVED";

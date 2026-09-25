@@ -60,8 +60,19 @@ cd frontend && npm run build && npm run lint          # frontend
 
 ## Current status
 
-Architecture approved. Phases 0 to 5 complete and verified.
-Next: **Phase 5.5 — Coding Practice Without Execution** (see docs/ROADMAP.md).
+Architecture approved. Phases 0 to 5.5 complete and verified.
+Next: **Phase 6 — Spaced Repetition & Flashcards** (see docs/ROADMAP.md).
+
+**Nothing in this codebase executes user code, and that is deliberate.** Phase 5.5 added
+`CODING`, `DEBUGGING` and `OUTPUT_PREDICTION` without a sandbox: output prediction
+compares strings, and the other two are graded by the learner against the author's
+rubric, which is revealed only after they commit. `evaluated_by` on every attempt
+records AUTO / SELF / MIXED so the mix behind any readiness figure can be audited.
+A sandbox would put a network dependency and an untrusted-code surface underneath a
+core feature; if it is ever built it goes behind an interface, late.
+
+**Code and expected output are read with `PayloadReader.requireVerbatim`**, never
+`requireString`. Stripping a snippet silently re-indents its first line.
 
 The adaptive engine lives in `com.patipp.adaptive` and is **pure** — no Spring,
 no JPA, no web types, enforced by ArchUnit. Its 27 unit tests run in under half a

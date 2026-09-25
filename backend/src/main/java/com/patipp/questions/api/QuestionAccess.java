@@ -137,6 +137,16 @@ public class QuestionAccess {
                 "seed", seed));
     }
 
+    /**
+     * The eligible questions, in a stable order.
+     *
+     * <p>The order matters and is not incidental. Every seeded draw shuffles this list, so two
+     * draws with the same seed only agree if the list arrives the same way both times.
+     * {@code findAllLiveInSpace} therefore orders by {@code (createdAt, id)} rather than by
+     * timestamp alone: questions written in a loop can share a timestamp to the microsecond,
+     * and the ambiguity showed up as a mock exam that was occasionally not reproducible from
+     * its own recorded seed.
+     */
     private List<Question> candidatePool(UUID spaceId, SelectionFilters filters) {
         return questions.findAllLiveInSpace(spaceId).stream()
                 .filter(question -> question.status() == QuestionStatus.ACTIVE)

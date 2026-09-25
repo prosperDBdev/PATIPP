@@ -6,7 +6,16 @@ const TYPE_LABELS: Record<string, string> = {
   TRUE_FALSE: "True / false",
   SHORT_ANSWER: "Short answer",
   FLASHCARD: "Flashcard",
+  CODING: "Coding problem",
+  DEBUGGING: "Find the bug",
+  OUTPUT_PREDICTION: "What does it print?",
 };
+
+/** Formats the learner grades themselves, which the UI has to say plainly up front. */
+export const SELF_GRADED_TYPES = new Set(["CODING", "DEBUGGING"]);
+
+/** Formats whose body is a code snippet, so the editor offers a monospace field. */
+export const CODE_TYPES = new Set(["CODING", "DEBUGGING", "OUTPUT_PREDICTION"]);
 
 export function humanType(type: string): string {
   return TYPE_LABELS[type] ?? type;
