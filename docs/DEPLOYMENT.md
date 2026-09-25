@@ -37,7 +37,7 @@ Vercel project and stay connected across environments.
 
 ```bash
 npm i -g vercel
-vercel login
+vercel login                        # opens a browser
 cd frontend && vercel link          # creates/links the Vercel project
 
 vercel integration discover --category storage   # confirm the current catalogue
@@ -56,10 +56,16 @@ every query is the easiest self-inflicted latency there is.
 
 ## 2. API on Fly.io
 
+Install `flyctl` once. **On Windows, in PowerShell** — the `curl | sh` line from Fly's docs is
+for macOS and Linux and will not work in Git Bash:
+
+```powershell
+iwr https://fly.io/install.ps1 -useb | iex
+```
+
 ```bash
-# once
-curl -L https://fly.io/install.sh | sh
-fly auth login
+# then, in any shell
+fly auth login                # opens a browser
 
 cd backend
 fly launch --no-deploy        # accept the existing fly.toml; pick a region near Neon
