@@ -71,6 +71,12 @@ docs/       Architecture, data model, adaptive engine, roadmap
 every key with a placeholder. The application reads all secrets from the environment; no
 key, token or connection string belongs in source.
 
+## Deployment
+
+Frontend on Vercel at `patipp.ebitimi.dev`, API on Fly.io, Postgres on Neon.
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — the `/api` rewrite in `frontend/vercel.ts` is
+load-bearing for authentication, not a convenience.
+
 ## Status
 
 | Phase | State |

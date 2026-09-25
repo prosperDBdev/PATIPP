@@ -1,0 +1,57 @@
+# =============================================================================
+# PATIPP API on Fly.io
+#
+# Rename `app` to whatever `fly launch` assigns you, or set it before first
+# deploy. Secrets are NOT in this file and never should be — set them with
+# `fly secrets set`, which stores them encrypted and restarts the machine.
+# =============================================================================
+
+app = "patipp-api"
+primary_region = "lhr"   # London. Put this near your Neon region, not near you.
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PATIPP_PORT = "8081"
+  # The browser only ever talks to patipp.ebitimi.dev; Vercel proxies /api to
+  # here. This is defence in depth for anything that reaches the API directly.
+  PATIPP_CORS_ORIGINS = "https://patipp.ebitimi.dev"
+  # Mandatory in production. The refresh cookie is SameSite=Strict and httpOnly;
+  # without Secure it would also travel over plain HTTP, which on a .dev domain
+  # cannot happen anyway — but relying on the TLD for a security property is not
+  # a control, it is a coincidence.
+  PATIPP_SECURE_COOKIE = "true"
+
+[http_service]
+  internal_port = 8081
+  force_https = true
+
+  # Deliberately NOT scaling to zero. A JVM plus a Spring context is ~10 seconds
+  # to start, so a suspended machine would put that on the critical path of
+  # whichever request happened to wake it. One always-on machine is the entire
+  # reason for choosing a container host over a serverless function here.
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 40
+    hard_limit = 60
+
+  # Actuator exposes health and info only (application.yml restricts it), so
+  # this is safe to leave reachable.
+  [[http_service.checks]]
+    grace_period = "45s"        # generous: Flyway migrations run before ready
+    interval = "15s"
+    method = "GET"
+    timeout = "5s"
+    path = "/actuator/health"
+
+[[vm]]
+  # 512 MB is tight for a JVM with Hibernate and a connection pool. Start here
+  # and watch it; 1 GB if the machine gets OOM-killed under load.
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 1
