@@ -48,7 +48,7 @@ export default function SpaceOverviewPage() {
     return (
       <div className="flex flex-col gap-4">
         <Alert>{error}</Alert>
-        <Link href="/" className="text-sm text-accent hover:underline">
+        <Link href="/spaces" className="text-sm text-accent hover:underline">
           &larr; Back to spaces
         </Link>
       </div>
@@ -68,7 +68,7 @@ export default function SpaceOverviewPage() {
   return (
     <div className="flex flex-col gap-8">
       <header className="flex flex-col gap-3">
-        <Link href="/" className="text-sm text-text-muted hover:text-text">
+        <Link href="/spaces" className="text-sm text-text-muted hover:text-text">
           &larr; All spaces
         </Link>
         <div className="flex flex-wrap items-start justify-between gap-4">

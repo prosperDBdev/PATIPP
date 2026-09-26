@@ -18,7 +18,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace("/");
+      router.replace("/spaces");
     }
   }, [loading, user, router]);
 
@@ -28,7 +28,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
-      router.replace("/");
+      router.replace("/spaces");
     } catch (caught) {
       // The server refuses to say whether the address exists, and neither do we.
       setError(

@@ -22,7 +22,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace("/");
+      router.replace("/spaces");
     }
   }, [loading, user, router]);
 
@@ -33,7 +33,7 @@ export default function RegisterPage() {
     setSubmitting(true);
     try {
       await register({ email, password, displayName });
-      router.replace("/");
+      router.replace("/spaces");
     } catch (caught) {
       if (caught instanceof ApiError) {
         // Field errors land under the inputs; anything else goes to the banner.

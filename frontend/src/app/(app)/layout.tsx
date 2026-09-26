@@ -34,14 +34,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-20 border-b border-border bg-bg/85 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 sm:px-6">
           <Link
-            href="/"
+            href="/spaces"
             className="font-mono text-xs tracking-[0.18em] text-text uppercase"
           >
             PATIPP
           </Link>
 
           <nav className="ml-2 hidden items-center gap-1 sm:flex">
-            <NavLink href="/" current={pathname === "/"}>
+            <NavLink href="/spaces" current={pathname === "/spaces"}>
               Spaces
             </NavLink>
           </nav>

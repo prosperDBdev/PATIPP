@@ -65,7 +65,7 @@ export default function NewSpacePage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8">
       <div className="flex flex-col gap-1.5">
-        <Link href="/" className="text-sm text-text-muted hover:text-text">
+        <Link href="/spaces" className="text-sm text-text-muted hover:text-text">
           &larr; Back to spaces
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight text-text">
@@ -201,7 +201,7 @@ export default function NewSpacePage() {
           <Button type="submit" loading={submitting} disabled={!typeId || !name}>
             Create space
           </Button>
-          <Button type="button" variant="secondary" onClick={() => router.push("/")}>
+          <Button type="button" variant="secondary" onClick={() => router.push("/spaces")}>
             Cancel
           </Button>
         </div>

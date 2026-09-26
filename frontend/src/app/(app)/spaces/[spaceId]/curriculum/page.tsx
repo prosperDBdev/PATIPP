@@ -77,7 +77,7 @@ export default function CurriculumPage() {
     return (
       <div className="flex flex-col gap-4">
         <Alert>{error}</Alert>
-        <Link href="/" className="text-sm text-accent hover:underline">
+        <Link href="/spaces" className="text-sm text-accent hover:underline">
           &larr; Back to spaces
         </Link>
       </div>
