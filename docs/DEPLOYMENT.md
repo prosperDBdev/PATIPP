@@ -130,6 +130,20 @@ immediately.
 
 ---
 
+### If the build says "open Dockerfile: no such file or directory"
+
+The service is not reading `render.yaml`. Only a service created through **New > Blueprint**
+does; one created through **New > Web Service** is configured by its own dashboard settings
+and ignores the file.
+
+Fix it in the service’s **Settings** tab: set **Root Directory** to `backend` and leave
+**Dockerfile Path** as `./Dockerfile`, which then resolves relative to it.
+
+The service name tells you which kind you have — a Blueprint service is called `patipp-api`,
+because that is what `render.yaml` names it.
+
+---
+
 ## 3. Frontend on Vercel
 
 Two environment variables:

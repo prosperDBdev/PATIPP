@@ -1,6 +1,19 @@
 # =============================================================================
 # PATIPP API on Render
 #
+# THIS FILE ONLY APPLIES TO A SERVICE CREATED VIA "New > Blueprint".
+#
+# A service created through "New > Web Service" is configured entirely by its own
+# dashboard settings and ignores this file — including rootDir, which is the one
+# setting that stops the build failing with:
+#
+#   failed to read dockerfile: open Dockerfile: no such file or directory
+#
+# If that is the error you are looking at, set Root Directory to "backend" in the
+# service's Settings tab. The name of the service is the quickest way to tell
+# which kind you have: a Blueprint service is called "patipp-api", because that is
+# what this file says.
+#
 # A Blueprint, so the service is defined here rather than clicked together in a
 # dashboard — which means it can be recreated, reviewed in a diff, and is honest
 # about what it runs.
