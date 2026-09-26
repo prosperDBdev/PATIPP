@@ -1,0 +1,19 @@
+# The Vercel project builds the Next.js app in frontend/ (Root Directory =
+# "frontend"), but a CLI deploy uploads from the repository root so that
+# push-triggered and command-line builds see the same tree. Everything below is
+# irrelevant to that build and only slows the upload.
+
+backend/
+infra/
+docs/
+seeds/
+
+*.pdf
+*.json.example
+html-test-questions.json
+
+# Belt and braces. These are git-ignored already, so they should never reach an
+# upload — but a deploy is the last place to discover that assumption was wrong.
+.env
+.env.*
+!.env.example
