@@ -130,6 +130,24 @@ immediately.
 
 ---
 
+### A manually created service needs the non-secret variables too
+
+`render.yaml` declares `PATIPP_SECURE_COOKIE` and `PATIPP_CORS_ORIGINS` as plain values, so on a
+Blueprint service they are set automatically. A service created through **New > Web Service**
+ignores the file, and it is easy to paste only the four secrets and miss these.
+
+The symptom is quiet: the application works, but the refresh cookie is issued **without the
+`Secure` flag**, because `PATIPP_SECURE_COOKIE` defaults to false. Check it with:
+
+```bash
+curl -s -D - -o /dev/null -X POST https://patipp.ebitimi.dev/api/v1/auth/refresh | grep -i set-cookie
+```
+
+The cookie should read `HttpOnly; Secure; SameSite=Strict`. If `Secure` is missing, add both
+variables in the service’s Environment tab and redeploy.
+
+---
+
 ### If the build says "open Dockerfile: no such file or directory"
 
 The service is not reading `render.yaml`. Only a service created through **New > Blueprint**
