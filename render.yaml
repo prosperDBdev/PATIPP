@@ -14,9 +14,18 @@ services:
   - type: web
     name: patipp-api
     runtime: docker
-    # The repository root holds both apps, so Render is pointed at the backend.
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+
+    # The repository holds both apps, so Render is pointed at the backend.
+    #
+    # rootDir is what actually does this: dockerfilePath alone is interpreted
+    # relative to the repository root and was ignored, so the build looked for a
+    # Dockerfile at the top level and failed with "no such file or directory".
+    # With rootDir set, both paths below are relative to backend/ — which is also
+    # what the Dockerfile expects, since it copies pom.xml and src/ from the root
+    # of its build context.
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     # Neon provisioned this database in us-east-1, so the service goes beside it.
     # Putting the API in Europe would add an Atlantic round trip to every query —
     # and the adaptive engine reads the whole learner model at session start.
