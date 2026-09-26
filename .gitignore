@@ -54,3 +54,7 @@ test-results/
 
 .vercel
 .env*
+
+# Generated locally from Neon credentials for pasting into a host. Never committed.
+render-env.local.txt
+*-env.local.txt

@@ -1,0 +1,50 @@
+# =============================================================================
+# PATIPP API on Render
+#
+# A Blueprint, so the service is defined here rather than clicked together in a
+# dashboard — which means it can be recreated, reviewed in a diff, and is honest
+# about what it runs.
+#
+# Render serves the frontend? No. The Next.js app is on Vercel; this file is the
+# API only. See docs/DEPLOYMENT.md for why the two are split and why the /api
+# rewrite on Vercel is load-bearing for authentication.
+# =============================================================================
+
+services:
+  - type: web
+    name: patipp-api
+    runtime: docker
+    # The repository root holds both apps, so Render is pointed at the backend.
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    # Neon provisioned this database in us-east-1, so the service goes beside it.
+    # Putting the API in Europe would add an Atlantic round trip to every query —
+    # and the adaptive engine reads the whole learner model at session start.
+    region: virginia
+    plan: free                 # See the note on cold starts in DEPLOYMENT.md.
+
+    # Flyway runs the migrations at boot and ddl-auto is `validate`, so a failed
+    # migration fails the health check rather than serving against a wrong schema.
+    healthCheckPath: /actuator/health
+
+    envVars:
+      # Render injects PORT itself; application.yml honours it.
+      - key: PATIPP_CORS_ORIGINS
+        value: https://patipp.ebitimi.dev
+
+      # The refresh cookie is httpOnly and SameSite=Strict. Secure is mandatory
+      # in production: without it the cookie would also travel over plain HTTP.
+      - key: PATIPP_SECURE_COOKIE
+        value: "true"
+
+      # Secrets. `sync: false` means Render prompts for these on first deploy and
+      # stores them encrypted — they are deliberately NOT in this file, which is
+      # committed to a public repository.
+      - key: PATIPP_DB_URL
+        sync: false
+      - key: PATIPP_DB_USER
+        sync: false
+      - key: PATIPP_DB_PASSWORD
+        sync: false
+      - key: PATIPP_JWT_SECRET
+        sync: false

@@ -50,7 +50,13 @@ spring:
       enabled: true
 
 server:
-  port: ${PATIPP_PORT:8081}
+  # PATIPP_PORT first, then PORT, then 8081.
+  #
+  # PORT is the convention every container host uses to tell a process which port to bind -
+  # Render, Railway, Heroku and Cloud Run all inject it, and a service that ignores it binds
+  # somewhere the platform is not listening and is marked unhealthy with no useful error. The
+  # explicit PATIPP_PORT still wins, so local development keeps its fixed 8081.
+  port: ${PATIPP_PORT:${PORT:8081}}
   error:
     # Never leak internals. All errors are mapped to RFC 7807 ProblemDetail.
     include-message: never

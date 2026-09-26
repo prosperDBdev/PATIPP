@@ -1,6 +1,12 @@
 # Deploying PATIPP
 
-**Target:** frontend on Vercel at `patipp.ebitimi.dev`, API on Fly.io, Postgres on Neon.
+**Target:** frontend on Vercel at `patipp.ebitimi.dev`, API on Render, Postgres on Neon.
+
+> Render rather than Fly.io. Both are always-on container hosts and either works; Render was
+> chosen because it deploys from the GitHub repo through a browser and needs no CLI login,
+> after the Fly device-code flow failed repeatedly. `backend/fly.toml` is left in place, so
+> switching back is a `fly launch` away. Nothing else in the architecture changes — the
+> Dockerfile is identical and the Vercel rewrite just points at a different hostname.
 
 ---
 
