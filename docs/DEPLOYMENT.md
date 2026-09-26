@@ -55,6 +55,21 @@ Neon gives two connection strings. **Use the pooled one** (`...-pooler...`) for 
 opens its own pool, and a container that restarts takes its connections with it, so a server-side
 pooler in front of Postgres is what keeps the connection count sane.
 
+### Converting Neon's URL to JDBC
+
+Neon hands out a libpq URL — `postgres://user:pass@host/db?sslmode=require&channel_binding=require`.
+JDBC wants the host and database in the URL but the credentials passed separately:
+
+```
+PATIPP_DB_URL=jdbc:postgresql://<host>-pooler.<region>.aws.neon.tech/neondb?sslmode=require
+PATIPP_DB_USER=<user>
+PATIPP_DB_PASSWORD=<password>
+```
+
+> **Drop `channel_binding=require`.** It is a libpq connection parameter that the PostgreSQL
+> JDBC driver does not implement. `sslmode=require` is what matters, and Neon is happy with it
+> alone.
+
 Put the Neon region and Fly's `primary_region` in the same place. A round trip across an ocean on
 every query is the easiest self-inflicted latency there is.
 
