@@ -24,7 +24,8 @@ COPY src/ src/
 
 # Tests are deliberately skipped here. They need a real PostgreSQL through
 # Testcontainers, which means a Docker daemon inside the build — and the suite
-# already gates the commit. A build that silently skips tests would be wrong; a
+# runs in GitHub Actions. Configure Render to deploy after CI checks pass (see
+# docs/CI-CD.md). A build that silently skips tests would be wrong; a
 # build that cannot run them and says so is not.
 RUN mvn -B -ntp -DskipTests package
 

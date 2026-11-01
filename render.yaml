@@ -27,6 +27,9 @@ services:
   - type: web
     name: patipp-api
     runtime: docker
+    # Blueprint-managed services deploy only after the repository's checks pass.
+    # For a manually created service, set this in the Render dashboard instead.
+    autoDeployTrigger: checksPass
 
     # The repository holds both apps, so Render is pointed at the backend.
     #

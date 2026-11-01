@@ -193,6 +193,47 @@ behaviour; just do not mistake it for a broken deploy.
 
 ---
 
+## 3b. Google sign-in
+
+Optional. Leave the variables unset and the feature is simply off: the endpoint answers
+`503 auth.google_not_configured` and everything else works. That is deliberate — a missing
+client id is not a security hole, so it is not worth refusing to boot over.
+
+**There is no client secret anywhere in this.** The browser obtains a Google ID token and
+posts it once; the API verifies it against Google's published keys. The only value either
+side needs is the client id, which is public by construction — it ships in the page that
+renders the button.
+
+| Where | Variable | Value |
+|---|---|---|
+| Render | `PATIPP_GOOGLE_CLIENT_ID` | the client id |
+| Vercel | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | the same client id |
+
+In the Google Cloud console, under **Credentials → your OAuth client**:
+
+- **Authorised JavaScript origins** must list every origin the button is served from —
+  `https://patipp.ebitimi.dev` and `http://localhost:3001`. A missing origin fails in the
+  browser before any request reaches the API, so the server logs show nothing at all.
+- **Authorised redirect URIs** stay empty. This flow never redirects.
+
+### Publish the consent screen, and do not upload a logo
+
+Under **Google Auth Platform → Audience**, publishing status must be **In production**.
+In *Testing* only accounts explicitly added as test users can sign in, which fails as a
+generic "that Google sign-in could not be verified" for everyone else.
+
+Publishing needs no Google review **as long as the only scopes are `openid`, `email` and
+`profile`**, which are the only ones PATIPP asks for. Two things forfeit that:
+
+- **Uploading an app logo.** The Branding page says so plainly: a logo requires verification
+  unless the app is internal or in Testing. The field is optional; leave it empty.
+- **Adding any sensitive scope.** Nothing here needs one.
+
+The **Branding** page also wants a home page and a privacy policy link. Both must resolve:
+`https://patipp.ebitimi.dev` and `https://patipp.ebitimi.dev/privacy`.
+
+---
+
 ## 4. Verify, in this order
 
 Each step fails for a different reason, so doing them in order tells you which layer is wrong.
@@ -224,8 +265,10 @@ looking fine.
 
 Honest list, so none of it is a surprise later:
 
-- **No CI.** Fly deploys on `fly deploy`, Vercel on push to `main`. The backend test suite is not
-  gated on either, so a broken API can be deployed. Phase 10 covers this.
+- **CI is committed; deployment gates need dashboard configuration.** GitHub Actions runs
+  backend tests/packaging and frontend lint/tests/build. Render's Blueprint requests deployment
+  after passing checks; manually created services need that setting applied in the dashboard.
+  Vercel and branch protection need their gates configured too. See [CI-CD.md](CI-CD.md).
 - **No backups.** Neon has point-in-time restore on paid plans; on the free tier there is nothing.
   The attempt log is the only irreplaceable data — every derived table can be rebuilt from it with
   `POST /api/v1/spaces/{id}/derived-state/rebuild`, but the log itself cannot be reconstructed.

@@ -43,7 +43,18 @@ cd frontend && npm install && npm run dev
 
 Health check: `curl http://localhost:8081/actuator/health` → `{"status":"UP"}`
 
-## Commands
+## 30-day Java and Spring Boot challenge
+
+Open **Spaces → Start the 30-day challenge**. Each day has a 10–30 minute core,
+an optional 1–2 hour extension, a focused resource, local behaviour checks and progressive
+hints. Practise in your IDE, record incomplete or completed work and any assistance,
+then revisit concepts through later variants. Final drills can use the existing timer.
+Progress is saved in ordinary spaces, sessions and attempts; code is never executed by PATIPP.
+See [the routine, sequence and verification guide](docs/JAVA-SPRING-30-DAYS.md).
+
+Run `cd frontend && npm run test:challenge` for timezone/streak checks (Node 20+).
+
+## Development commands
 
 ```bash
 cd backend  && ./mvnw test            # unit + integration tests (Testcontainers)
@@ -72,6 +83,9 @@ every key with a placeholder. The application reads all secrets from the environ
 key, token or connection string belongs in source.
 
 ## Deployment
+
+GitHub Actions checks pull requests and pushes to `main`. For the existing Render/Vercel
+projects to deploy after passing checks, follow [the CI/CD setup](docs/CI-CD.md).
 
 Frontend on Vercel at `patipp.ebitimi.dev`, API on Fly.io, Postgres on Neon.
 See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — the `/api` rewrite in `frontend/vercel.ts` is
