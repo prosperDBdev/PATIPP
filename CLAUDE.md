@@ -99,6 +99,30 @@ and the integration test compares them exactly. Replay at `attempt.createdAt()`,
 `now` — stability growth depends on how close to forgetting the learner was, so replaying
 a year of history against today's clock invents a schedule that never existed.
 
+**Google is an identity provider, not the session system.** The browser obtains a Google
+ID token, posts it once to `/api/v1/auth/oauth/google`, and the server verifies it against
+Google's JWKS and issues PATIPP's own access token and refresh cookie. Google is never
+consulted again, so a learner signed in that way is unaffected if it becomes unreachable.
+**There is no client secret anywhere** — the ID-token flow does not need one, and
+`PATIPP_GOOGLE_CLIENT_ID` is public by construction. Unset, the feature is simply off.
+
+Three things in that path that look safe to change and are not:
+
+- **`email_verified` must be true.** A verified Google address is linked to an existing
+  PATIPP account with the same address, so accepting an unverified one is a request to be
+  handed somebody else's data.
+- **Identities are keyed on Google's `sub`, never on email.** Google's own guidance is that
+  an address can change hands. `user_identities.email` is an audit copy, and nothing
+  resolves an account by it.
+- **A provider is a row in `user_identities`, not a column on `users`.** Someone who
+  registered with a password and later signed in with Google has two ways in, and a single
+  `auth_provider` column cannot say so without discarding one of them.
+
+Password login against a provider-only account returns exactly what an unknown address
+returns, and a test asserts the two responses are byte-identical rather than merely both
+401. The learner who signed up with Google and forgot is rescued on the login screen, by a
+hint shown to everyone after any failure — which tells a prober nothing.
+
 **Nothing in this codebase executes user code, and that is deliberate.** Phase 5.5 added
 `CODING`, `DEBUGGING` and `OUTPUT_PREDICTION` without a sandbox: output prediction
 compares strings, and the other two are graded by the learner against the author's

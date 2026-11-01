@@ -10,6 +10,11 @@ interface AuthState {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
+  /**
+   * Exchanges a Google ID token for a PATIPP session. There is no separate "register with
+   * Google": whether the account already exists is something only the server can see.
+   */
+  signInWithGoogle: (idToken: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -78,6 +83,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await loadProfile();
   }, [loadProfile]);
 
+  const signInWithGoogle = useCallback(async (idToken: string) => {
+    const response = await api<AuthResponse>("/api/v1/auth/oauth/google", {
+      method: "POST",
+      body: {
+        idToken,
+        // Only used if this call creates the account. Google does not tell the server a
+        // timezone, and the browser is the only thing here that knows one.
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
+      skipRefresh: true,
+    });
+    setAccessToken(response.accessToken);
+    await loadProfile();
+  }, [loadProfile]);
+
   const logout = useCallback(async () => {
     try {
       await api<void>("/api/v1/auth/logout", { method: "POST", skipRefresh: true });
@@ -90,8 +110,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo<AuthState>(
-    () => ({ user, loading, login, register, logout, refreshUser: loadProfile }),
-    [user, loading, login, register, logout, loadProfile],
+    () => ({
+      user,
+      loading,
+      login,
+      register,
+      signInWithGoogle,
+      logout,
+      refreshUser: loadProfile,
+    }),
+    [user, loading, login, register, signInWithGoogle, logout, loadProfile],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

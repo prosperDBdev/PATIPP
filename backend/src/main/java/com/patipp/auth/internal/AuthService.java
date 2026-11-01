@@ -1,9 +1,11 @@
 package com.patipp.auth.internal;
 
 import com.patipp.auth.api.AuthDtos.AuthResponse;
+import com.patipp.auth.api.AuthDtos.GoogleSignInRequest;
 import com.patipp.auth.api.AuthDtos.LoginRequest;
 import com.patipp.auth.api.AuthDtos.RegisterRequest;
 import com.patipp.auth.api.AuthDtos.UserSummary;
+import com.patipp.auth.domain.AuthProvider;
 import com.patipp.auth.domain.RefreshToken;
 import com.patipp.auth.domain.RefreshTokenRepository;
 import com.patipp.auth.domain.User;
@@ -39,6 +41,8 @@ public class AuthService {
     private final JwtService jwtService;
     private final RefreshTokenFactory refreshTokenFactory;
     private final JwtProperties jwtProperties;
+    private final GoogleIdTokenVerifier googleVerifier;
+    private final ProviderAccountResolver providerAccounts;
     private final Clock clock;
 
     public AuthService(UserRepository users,
@@ -47,6 +51,8 @@ public class AuthService {
                        JwtService jwtService,
                        RefreshTokenFactory refreshTokenFactory,
                        JwtProperties jwtProperties,
+                       GoogleIdTokenVerifier googleVerifier,
+                       ProviderAccountResolver providerAccounts,
                        Clock clock) {
         this.users = users;
         this.refreshTokens = refreshTokens;
@@ -54,6 +60,8 @@ public class AuthService {
         this.jwtService = jwtService;
         this.refreshTokenFactory = refreshTokenFactory;
         this.jwtProperties = jwtProperties;
+        this.googleVerifier = googleVerifier;
+        this.providerAccounts = providerAccounts;
         this.clock = clock;
     }
 
@@ -91,11 +99,47 @@ public class AuthService {
         }
 
         User user = found.get();
+        if (!user.hasPassword()) {
+            // A provider-only account, reachable since V10 made password_hash nullable.
+            // Hash anyway and report the usual message: saying "this account uses Google"
+            // would confirm the address is registered, and login is the one endpoint an
+            // attacker can point at addresses that are not theirs. The login screen tells
+            // everyone to try the Google button on failure, which rescues the confused
+            // learner without answering the question for anybody else.
+            passwordEncoder.encode(request.password());
+            throw invalidCredentials();
+        }
         if (!passwordEncoder.matches(request.password(), user.passwordHash())) {
             throw invalidCredentials();
         }
 
         user.touchLastActive(now());
+        return grantSession(user, userAgent);
+    }
+
+    /**
+     * Signs in with a Google ID token, registering the learner if this is their first visit.
+     *
+     * <p>Google is an identity provider here and nothing more. It answers "who is this, and
+     * has Google verified the address?", and from that point the session is PATIPP's own:
+     * the same access token, the same rotating refresh cookie with reuse detection, the
+     * same {@code users} row every other table already points at. Google is never consulted
+     * again, so a learner signed in this way is unaffected if it becomes unreachable.
+     *
+     * <p>There is no separate "register with Google" endpoint because the distinction is not
+     * one the caller can make: whether this is a new account depends on state only the
+     * server can see. Both outcomes return 200 for the same reason - telling them apart
+     * would reveal whether an address is already registered.
+     */
+    @Transactional
+    public SessionGrant signInWithGoogle(GoogleSignInRequest request, String userAgent) {
+        ExternalIdentity identity = googleVerifier.verify(request.idToken());
+        Instant now = now();
+
+        User user = providerAccounts.resolve(
+                AuthProvider.GOOGLE, identity, request.timezone(), now);
+        user.touchLastActive(now);
+
         return grantSession(user, userAgent);
     }
 

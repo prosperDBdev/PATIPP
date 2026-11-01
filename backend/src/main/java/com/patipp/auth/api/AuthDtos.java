@@ -29,6 +29,27 @@ public final class AuthDtos {
     }
 
     /**
+     * A Google ID token, obtained in the browser and posted here once to be exchanged for a
+     * PATIPP session.
+     *
+     * @param idToken  the raw JWT. The size cap is a cheap guard rather than a real check:
+     *                 a Google ID token is comfortably under a kilobyte, and refusing
+     *                 anything absurd means signature verification is never asked to chew
+     *                 through a megabyte of attacker-chosen input. What makes the token
+     *                 trustworthy is checked in {@code GoogleIdTokenVerifier}, not here.
+     * @param timezone the browser's IANA zone, used <em>only</em> when this call creates the
+     *                 account. Google does not tell us one, and without it every learner who
+     *                 arrived through Google would sit in UTC and see their study days
+     *                 attributed to the wrong date. It is never applied to an existing
+     *                 account: whatever the learner chose in their settings wins over
+     *                 whatever laptop they happen to be signing in from.
+     */
+    public record GoogleSignInRequest(
+            @NotBlank @Size(max = 4096) String idToken,
+            @Size(max = 64) String timezone) {
+    }
+
+    /**
      * The refresh token is deliberately absent: it travels only as an httpOnly cookie, so
      * it is never readable by JavaScript and never lands in a log or an error report.
      */

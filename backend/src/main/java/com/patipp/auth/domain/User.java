@@ -25,7 +25,10 @@ public class User extends AssignedIdEntity<UUID> {
     @Column(name = "email", nullable = false)
     private String email;
 
-    @Column(name = "password_hash", nullable = false)
+    // Nullable since V10: an account created through a provider has no password. The
+    // obligation moved to the application, which creates a user and its identity in one
+    // transaction, because "has a password OR has an identity" spans two tables.
+    @Column(name = "password_hash")
     private String passwordHash;
 
     @Column(name = "display_name", nullable = false)
@@ -75,6 +78,44 @@ public class User extends AssignedIdEntity<UUID> {
                 (timezone == null || timezone.isBlank()) ? "UTC" : timezone.strip());
     }
 
+    /**
+     * A user vouched for by an external provider, with no password of their own.
+     *
+     * <p>The caller must already have verified the provider's assertion. This factory is
+     * about shape, not trust: it will happily build a user from any address, so the checks
+     * that the token was signed, unexpired and audience-bound belong upstream of it.
+     *
+     * <p>{@code displayNameHint} is whatever the provider offered, which may be nothing -
+     * Google lets a user withhold their profile name. Rather than fail, or write a blank
+     * that the CHECK constraint would reject at the very end of a sign-in, the local part
+     * of the address is used instead and the result is clamped to the 80 characters the
+     * column allows.
+     */
+    public static User fromProvider(String email, String displayNameHint, String timezone) {
+        String normalised = normaliseEmail(email);
+        return new User(
+                UuidV7.generate(),
+                normalised,
+                null,
+                deriveDisplayName(displayNameHint, normalised),
+                (timezone == null || timezone.isBlank()) ? "UTC" : timezone.strip());
+    }
+
+    private static String deriveDisplayName(String hint, String normalisedEmail) {
+        String candidate = hint == null ? "" : hint.strip();
+        if (candidate.isEmpty()) {
+            int at = normalisedEmail.indexOf('@');
+            candidate = at > 0 ? normalisedEmail.substring(0, at) : normalisedEmail;
+        }
+        if (candidate.isEmpty()) {
+            // Only reachable from a malformed address, which the verifier rejects before
+            // it ever gets here. Present so the constraint can never be the thing that
+            // reports the problem.
+            candidate = "Learner";
+        }
+        return candidate.length() <= 80 ? candidate : candidate.substring(0, 80);
+    }
+
     public static String normaliseEmail(String email) {
         return email.strip().toLowerCase(Locale.ROOT);
     }
@@ -95,6 +136,18 @@ public class User extends AssignedIdEntity<UUID> {
 
     public String passwordHash() {
         return passwordHash;
+    }
+
+    /**
+     * False for an account that only ever signed in through a provider.
+     *
+     * <p>Password login checks this explicitly rather than relying on the encoder to reject
+     * a null hash. {@code BCryptPasswordEncoder} does return false for one, but depending on
+     * that leaves the most security-sensitive branch in the system resting on the internals
+     * of a library call instead of on a stated rule.
+     */
+    public boolean hasPassword() {
+        return passwordHash != null && !passwordHash.isBlank();
     }
 
     public String displayName() {

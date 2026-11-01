@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="PATIPP">
+  <title>PATIPP</title>
+  <!--
+    Three ascending capsules: a topic being learned, rising as evidence accumulates.
+    Chosen over a monogram because it survives 16px, where lettering turns to mush, and
+    because it says what the product does rather than what it is called.
+
+    The tile is deliberately dark in both themes. A favicon sits in browser chrome that
+    may be light or dark and cannot ask which; a solid tile is legible against either,
+    whereas a transparent mark disappears into one of them.
+
+    Colours are the application's own tokens, the near-black green of the text colour and
+    the brass of the accent, so the mark and the interface look like one thing.
+
+    Note for anyone editing: no double hyphen may appear in this comment. It is illegal
+    inside XML and makes strict parsers reject the whole file, which is how the first
+    version of this broke the PNG render while still looking fine in a browser.
+  -->
+  <rect width="64" height="64" rx="14" fill="#0f1716"/>
+  <g fill="#dca149">
+    <rect x="13" y="36" width="10" height="16" rx="5" opacity=".45"/>
+    <rect x="27" y="26" width="10" height="26" rx="5" opacity=".72"/>
+    <rect x="41" y="14" width="10" height="38" rx="5"/>
+  </g>
+</svg>

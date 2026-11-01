@@ -61,6 +61,11 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
+                                // Unauthenticated by necessity: this endpoint is how a
+                                // caller becomes authenticated. Its own proof is the
+                                // Google-signed token in the body, verified against
+                                // Google's published keys before anything else happens.
+                                "/api/v1/auth/oauth/google",
                                 "/api/v1/auth/refresh",
                                 "/api/v1/auth/logout").permitAll()
                         // Preflight carries no credentials by design and must not 401.

@@ -12,6 +12,11 @@ patipp:
     secure-cookie: false
   cors:
     allowed-origins: http://localhost:3000
+  google:
+    # Enables the Google code path so integration tests can exercise it. No network call
+    # results from this: NimbusJwtDecoder fetches Google's keys lazily on first decode, and
+    # the tests that decode anything replace the decoder bean outright.
+    client-id: test-client.apps.googleusercontent.com
 
 spring:
   jpa:

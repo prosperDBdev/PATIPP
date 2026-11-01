@@ -1,6 +1,7 @@
 package com.patipp.auth.api;
 
 import com.patipp.auth.api.AuthDtos.AuthResponse;
+import com.patipp.auth.api.AuthDtos.GoogleSignInRequest;
 import com.patipp.auth.api.AuthDtos.LoginRequest;
 import com.patipp.auth.api.AuthDtos.RegisterRequest;
 import com.patipp.auth.internal.AuthService;
@@ -41,6 +42,23 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request,
                                               HttpServletRequest httpRequest) {
         AuthService.SessionGrant grant = authService.login(request, userAgent(httpRequest));
+        return respondWithSession(grant, HttpStatus.OK);
+    }
+
+    /**
+     * Exchanges a verified Google ID token for a PATIPP session.
+     *
+     * <p>Always 200, never 201, even when this call created the account. Which of the two
+     * happened depends on whether the address was already registered, and a status code
+     * that reported it would let anyone with a Google account discover who else has one
+     * here.
+     */
+    @PostMapping("/oauth/google")
+    public ResponseEntity<AuthResponse> signInWithGoogle(
+            @Valid @RequestBody GoogleSignInRequest request,
+            HttpServletRequest httpRequest) {
+        AuthService.SessionGrant grant =
+                authService.signInWithGoogle(request, userAgent(httpRequest));
         return respondWithSession(grant, HttpStatus.OK);
     }
 

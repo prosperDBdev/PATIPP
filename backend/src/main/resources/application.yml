@@ -86,6 +86,17 @@ patipp:
     # Exact origins only. Wildcards are invalid when credentials are sent.
     allowed-origins: ${PATIPP_CORS_ORIGINS:http://localhost:3001}
 
+  google:
+    # The OAuth 2.0 Web application client id, and also the `aud` every accepted Google ID
+    # token must carry. Not a secret - it ships in the page that renders the sign-in button -
+    # but environment-supplied because it differs between local and production.
+    #
+    # Left unset, Google sign-in is simply off and the endpoint reports that honestly. It is
+    # optional on purpose: unlike the signing key below, a missing client id is not a
+    # security hole, and refusing to boot over it would stop the whole API for anyone who
+    # has not set Google up, including the test suite.
+    client-id: ${PATIPP_GOOGLE_CLIENT_ID:}
+
   jwt:
     secret: ${PATIPP_JWT_SECRET}
     access-ttl-minutes: ${PATIPP_JWT_ACCESS_TTL_MINUTES:15}

@@ -191,9 +191,12 @@ export default function LandingPage() {
           <span className="font-mono tracking-[0.18em] uppercase">PATIPP</span>
           <span>Personalized Adaptive Test &amp; Interview Preparation Platform</span>
           <Link
-            href="/login"
+            href="/privacy"
             className="ml-auto text-text-muted transition-colors hover:text-text"
           >
+            Privacy
+          </Link>
+          <Link href="/login" className="text-text-muted transition-colors hover:text-text">
             Sign in
           </Link>
         </div>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Alert, Button, Field, Input } from "@/components/ui";
+import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import { ApiError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/auth-context";
 
@@ -11,7 +12,7 @@ const MIN_PASSWORD_LENGTH = 10;
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register, user, loading } = useAuth();
+  const { register, signInWithGoogle, user, loading } = useAuth();
 
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
@@ -50,6 +51,25 @@ export default function RegisterPage() {
     }
   }
 
+  async function handleGoogle(idToken: string) {
+    setError(null);
+    setFieldErrors({});
+    setSubmitting(true);
+    try {
+      // The same call the sign-in page makes. Whether this creates an account or finds an
+      // existing one is the server's business, and deliberately not visible from here.
+      await signInWithGoogle(idToken);
+      router.replace("/spaces");
+    } catch (caught) {
+      setError(
+        caught instanceof ApiError
+          ? caught.message
+          : "Could not reach the server. Is the API running?",
+      );
+      setSubmitting(false);
+    }
+  }
+
   const passwordTooShort = password.length > 0 && password.length < MIN_PASSWORD_LENGTH;
 
   return (
@@ -63,9 +83,23 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2" noValidate>
-        {error && <Alert>{error}</Alert>}
+      {error && <Alert>{error}</Alert>}
 
+      <div className="flex flex-col gap-5">
+        <GoogleSignInButton
+          onSignedIn={handleGoogle}
+          onError={setError}
+          text="signup_with"
+        />
+
+        <div className="flex items-center gap-3" aria-hidden="true">
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-[11px] tracking-wider text-text-faint uppercase">or</span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2" noValidate>
         <Field label="Name" htmlFor="displayName" error={fieldErrors.displayName}>
           <Input
             id="displayName"
