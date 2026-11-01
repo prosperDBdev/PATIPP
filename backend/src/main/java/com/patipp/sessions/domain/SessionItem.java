@@ -58,6 +58,17 @@ public class SessionItem extends AssignedIdEntity<UUID> {
     @Column(name = "time_spent_ms", nullable = false)
     private int timeSpentMs;
 
+    @Column(name = "hints_revealed", nullable = false)
+    private int hintsRevealed;
+
+    @Column(name = "solution_revealed", nullable = false)
+    private boolean solutionRevealed;
+
+    public int hintsRevealed() { return hintsRevealed; }
+    public boolean solutionRevealed() { return solutionRevealed; }
+    public void revealHint(int available) { hintsRevealed = Math.min(available, hintsRevealed + 1); }
+    public void revealSolution() { solutionRevealed = true; }
+
     /**
      * Why the engine chose this question. Random in Phase 3; real reasoning from Phase 5.
      *

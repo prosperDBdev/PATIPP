@@ -33,6 +33,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/spaces/{spaceId}/sessions")
 public class SessionController {
 
+    @PostMapping("/{sessionId}/items/{position}/hint")
+    public SessionDtos.ServedItem hint(@PathVariable UUID spaceId, @PathVariable UUID sessionId,
+                                      @PathVariable int position) {
+        return sessionService.revealHelp(spaceId, sessionId, position, false);
+    }
+
+    @PostMapping("/{sessionId}/items/{position}/solution")
+    public SessionDtos.ServedItem solution(@PathVariable UUID spaceId, @PathVariable UUID sessionId,
+                                          @PathVariable int position) {
+        return sessionService.revealHelp(spaceId, sessionId, position, true);
+    }
+
     private final SessionService sessionService;
 
     public SessionController(SessionService sessionService) {

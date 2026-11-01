@@ -135,6 +135,17 @@ public class SessionService {
 
     @Transactional
     public SessionResponse start(UUID spaceId, StartSessionRequest request) {
+        return startSelected(spaceId, request, null);
+    }
+
+    /** An authored guide chooses a specific task while retaining the ordinary session engine. */
+    @Transactional
+    public SessionResponse startQuestion(UUID spaceId, UUID questionId, Integer minutes) {
+        return startSelected(spaceId, new StartSessionRequest(minutes == null ? "PRACTICE" : "EXAM",
+                1, minutes, null, null, null, null, null), questionId);
+    }
+
+    private SessionResponse startSelected(UUID spaceId, StartSessionRequest request, UUID questionId) {
         PreparationSpace space = accessGuard.requireWritable(spaceId);
         UUID userId = currentUser.requireId();
 
@@ -158,7 +169,7 @@ public class SessionService {
         config.put("seed", seed);
 
         SelectionFilters filters = filtersFrom(request);
-        List<QuestionAccess.SelectedQuestion> selected = switch (handler.selectionStrategy()) {
+        List<QuestionAccess.SelectedQuestion> selected = questionId == null ? switch (handler.selectionStrategy()) {
             case BLUEPRINT_WEIGHTED -> questionAccess.selectWeighted(spaceId, filters, length,
                     seed, curriculum.subjectWeights(spaceId));
             case ADAPTIVE -> adaptiveSelection.select(userId, spaceId, filters, length, seed,
@@ -166,7 +177,12 @@ public class SessionService {
             case DUE_FIRST -> adaptiveSelection.selectDueFirst(userId, spaceId, filters,
                     length, seed);
             case RANDOM -> questionAccess.selectForSession(spaceId, filters, length, seed);
-        };
+        } : questionAccess.candidatesFor(spaceId, SelectionFilters.none()).stream()
+                .filter(candidate -> candidate.questionId().equals(questionId))
+                .map(candidate -> new QuestionAccess.SelectedQuestion(candidate.questionId(),
+                        candidate.questionVersionId(), Map.<String, Object>of("reason", "GUIDED_TASK",
+                                "why", "The next task in your authored learning guide")))
+                .toList();
 
         if (selected.isEmpty()) {
             throw new BadRequestException("session.no_questions",
@@ -334,7 +350,19 @@ public class SessionService {
                 .orElseThrow(() -> new NotFoundException("question.not_found",
                         "That question is no longer available."));
 
-        Answer answer = Answer.parse(question.type(), request.answer());
+        Map<String, Object> submittedAnswer = new LinkedHashMap<>(request.answer());
+        if (question.type() == com.patipp.questions.domain.QuestionType.CODING
+                && submittedAnswer.containsKey("completed")) {
+            if (!(submittedAnswer.get("completed") instanceof Boolean completed)) {
+                throw new BadRequestException("answer.completed", "Completion must be true or false.");
+            }
+            if (completed && !Boolean.TRUE.equals(submittedAnswer.get("checksPassed"))) {
+                throw new BadRequestException("answer.checks", "Confirm your local behaviour checks before marking the core complete.");
+            }
+            // Logging some practice is useful, but must not claim a solved exercise.
+            if (!completed) submittedAnswer.put("grade", 1);
+        }
+        Answer answer = Answer.parse(question.type(), submittedAnswer);
         EvaluationResult result = question.content().evaluate(answer);
 
         Instant now = clock.instant();
@@ -348,13 +376,31 @@ public class SessionService {
                         .map(QuestionAttempt::isCorrect)
                         .orElse(false);
 
+        Map<String, Object> recordedAnswer = new LinkedHashMap<>(submittedAnswer);
+        if (question.type() == com.patipp.questions.domain.QuestionType.CODING) {
+            recordedAnswer.put("hintsUsed", item.hintsRevealed());
+            recordedAnswer.put("solutionUsed", item.solutionRevealed());
+            recordedAnswer.put("assistance", item.solutionRevealed() ? "SOLUTION"
+                    : item.hintsRevealed() > 0 ? "HINTS" : "INDEPENDENT");
+            if (recordedAnswer.get("externalHelp") instanceof String help) {
+                if (!List.of("NONE", "HINTS", "SOLUTION").contains(help)) {
+                    throw new BadRequestException("answer.external_help", "Choose a valid assistance level.");
+                }
+                if (help.equals("SOLUTION") || help.equals("HINTS") && !item.solutionRevealed()) {
+                    recordedAnswer.put("assistance", help);
+                }
+            }
+            if (recordedAnswer.get("reflection") instanceof String reflection && reflection.length() > 2000) {
+                throw new BadRequestException("answer.reflection", "Keep your reflection under 2000 characters.");
+            }
+        }
         QuestionAttempt attempt = attempts.save(QuestionAttempt.record(
                 userId, spaceId, item.questionId(),
                 // The version served, not the current one. If the question was edited while
                 // this session was open, the score still refers to what was actually shown.
                 item.questionVersionId(),
                 sessionId, question.subjectId(), question.topicId(), question.difficulty(),
-                session.mode().name(), request.answer(),
+                session.mode().name(), recordedAnswer,
                 result.correct(), BigDecimal.valueOf(result.score()).setScale(3, RoundingMode.HALF_UP),
                 gradeFrom(answer), request.responseTimeMs(),
                 request.confidence() == null ? null : request.confidence().shortValue(),
@@ -514,6 +560,11 @@ public class SessionService {
      * invalidates.
      */
     private ServedItem toServedItem(SessionItem item, ServedQuestion question) {
+        Map<String, Object> presentation = new LinkedHashMap<>(question.content().presentation());
+        presentation.put("hintsAvailable", question.hints().size());
+        presentation.put("hintsRevealed", item.hintsRevealed());
+        presentation.put("solutionRevealed", item.solutionRevealed());
+        if (item.solutionRevealed()) presentation.put("revealedAnswer", question.content().correctAnswer());
         return new ServedItem(
                 item.position(),
                 question.questionId(),
@@ -523,9 +574,31 @@ public class SessionService {
                 question.topicId(),
                 question.estimatedSeconds(),
                 question.stem(),
-                question.hints(),
-                question.content().presentation(),
+                question.hints().subList(0, Math.min(item.hintsRevealed(), question.hints().size())),
+                presentation,
                 item.selectionReason());
+    }
+
+    /** Help is persisted before revealing it, so reloads cannot turn assisted work independent. */
+    @Transactional
+    public ServedItem revealHelp(UUID spaceId, UUID sessionId, int position, boolean solution) {
+        StudySession session = requireSession(spaceId, sessionId);
+        accessGuard.requireWritable(spaceId);
+        if (session.isFinished() || session.mode() == SessionMode.EXAM) {
+            throw new BadRequestException("session.help_unavailable", "Help is unavailable during a timed mock or after submission.");
+        }
+        SessionItem item = requireItem(sessionId, position);
+        if (item.isAnswered()) throw new ConflictException("session.already_answered", "This answer is already recorded.");
+        ServedQuestion question = questionAccess.load(spaceId, item.questionId()).orElseThrow();
+        if (solution) {
+            if (question.type() != com.patipp.questions.domain.QuestionType.CODING) {
+                throw new BadRequestException("session.solution_unavailable", "This format reveals its answer after submission.");
+            }
+            item.revealSolution();
+        } else {
+            item.revealHint(question.hints().size());
+        }
+        return toServedItem(item, question);
     }
 
     private SessionResponse toResponse(StudySession session, SessionModeHandler handler) {

@@ -1,0 +1,722 @@
+[
+  {
+    "day": 1,
+    "title": "Run and explain a Java program",
+    "subject": "Java",
+    "topic": "Syntax and types",
+    "core": "Create BookStats.java with a main method. Given int[] pages = {120, 250, 80}, print the total and count of books with at least 100 pages.",
+    "stretch": "Read three page counts from the console, reject negative values, and explain each variable's type.",
+    "checks": [
+      "The sample prints total=450 and longBooks=2",
+      "An empty array produces zero totals",
+      "Explain the loop and run the program without AI-generated code"
+    ],
+    "hints": [
+      "Start with a total of zero and visit each array element.",
+      "Keep a second counter and increment it only when pages >= 100.",
+      "Use a for-each loop; update total on every iteration."
+    ],
+    "referenceSolution": "public class BookStats {\n  public static void main(String[] args) {\n    int[] pages = {120, 250, 80};\n    int total = 0, longBooks = 0;\n    for (int count : pages) {\n      total += count;\n      if (count >= 100) longBooks++;\n    }\n    System.out.println(\"total=\" + total + \" and longBooks=\" + longBooks);\n  }\n}",
+    "resourceTitle": "Java learning reference",
+    "resourceUrl": "https://dev.java/learn/",
+    "readingFocus": "Language basics: variables, arrays, conditions and loops.",
+    "revisitDay": null,
+    "timedMinutes": null
+  },
+  {
+    "day": 2,
+    "title": "Extract methods and handle boundaries",
+    "subject": "Java",
+    "topic": "Syntax and types",
+    "core": "Write static int totalPages(int[] pages). Call it with the sample from day 1 and an empty array. Decide and document how null input behaves.",
+    "stretch": "Add countLongBooks(int[] pages, int minimum). Test zero and negative thresholds.",
+    "checks": [
+      "totalPages({120,250,80}) returns 450",
+      "An empty array returns 0",
+      "Null input is rejected explicitly; explain return values versus printing"
+    ],
+    "hints": [
+      "Separate calculation from console output.",
+      "An accumulator belongs inside the method so each call starts fresh.",
+      "Objects.requireNonNull can make the null contract explicit."
+    ],
+    "referenceSolution": "static int totalPages(int[] pages) {\n  java.util.Objects.requireNonNull(pages, \"pages\");\n  int total = 0;\n  for (int pageCount : pages) total += pageCount;\n  return total;\n}",
+    "resourceTitle": "Java learning reference",
+    "resourceUrl": "https://dev.java/learn/",
+    "readingFocus": "Methods, parameters, return values and scope.",
+    "revisitDay": null,
+    "timedMinutes": null
+  },
+  {
+    "day": 3,
+    "title": "Model a book with an invariant",
+    "subject": "Java",
+    "topic": "Object-oriented programming",
+    "core": "Create a Book record with long id, String title and String author. Reject non-positive ids and blank titles or authors in its constructor.",
+    "stretch": "Build a console catalogue using three Book objects. Explain record immutability and equality.",
+    "checks": [
+      "new Book(1,\"Clean Code\",\"Robert Martin\") succeeds",
+      "A zero id, blank title or null author is rejected",
+      "Explain the difference between a type, an instance and a constructor"
+    ],
+    "hints": [
+      "Make invalid states fail at construction.",
+      "A record compact constructor can validate its components.",
+      "Check id <= 0, null strings, and isBlank before accepting input."
+    ],
+    "referenceSolution": "record Book(long id, String title, String author) {\n  Book {\n    if (id <= 0 || title == null || title.isBlank()\n        || author == null || author.isBlank()) {\n      throw new IllegalArgumentException(\"Invalid book\");\n    }\n  }\n}",
+    "resourceTitle": "Java learning reference",
+    "resourceUrl": "https://dev.java/learn/",
+    "readingFocus": "Object-oriented programming and records.",
+    "revisitDay": null,
+    "timedMinutes": null
+  },
+  {
+    "day": 4,
+    "title": "Find books in a list",
+    "subject": "Java",
+    "topic": "Collections",
+    "core": "Using the Book type from day 3, write Optional<Book> findById(List<Book> books, long id) using a loop.",
+    "stretch": "Add findByAuthor without mutating the input list. Explain why the result should not expose mutable storage.",
+    "checks": [
+      "An existing id returns its book",
+      "An absent id returns Optional.empty()",
+      "An empty list works; explain Optional without calling get blindly"
+    ],
+    "hints": [
+      "The search may not find a match; represent that in the return type.",
+      "Return immediately when a matching id is found.",
+      "Return Optional.of(book) on a match and Optional.empty() after the loop."
+    ],
+    "referenceSolution": "static java.util.Optional<Book> findById(java.util.List<Book> books, long id) {\n  for (Book book : books) {\n    if (book.id() == id) return java.util.Optional.of(book);\n  }\n  return java.util.Optional.empty();\n}",
+    "resourceTitle": "Java learning reference",
+    "resourceUrl": "https://dev.java/learn/",
+    "readingFocus": "Collections: List iteration; Optional.",
+    "revisitDay": null,
+    "timedMinutes": null
+  },
+  {
+    "day": 5,
+    "title": "Add and delete without duplicate ids",
+    "subject": "Java",
+    "topic": "Collections",
+    "core": "Create an in-memory catalogue backed by Map<Long,Book>. Implement add(Book) and boolean delete(long id). Reject a duplicate id.",
+    "stretch": "Add a list() method returning a defensive copy. Discuss why Map fits identifier lookups.",
+    "checks": [
+      "Adding a new id makes it retrievable",
+      "A duplicate id is rejected without overwriting the first book",
+      "Delete returns true once and false for a missing id"
+    ],
+    "hints": [
+      "A map key should be the book id.",
+      "putIfAbsent distinguishes a new id from a duplicate.",
+      "remove(id) returns the removed value, or null when absent."
+    ],
+    "referenceSolution": "final class Catalogue {\n  private final java.util.Map<Long, Book> books = new java.util.LinkedHashMap<>();\n  void add(Book book) {\n    if (books.putIfAbsent(book.id(), book) != null)\n      throw new IllegalArgumentException(\"Duplicate id\");\n  }\n  boolean delete(long id) { return books.remove(id) != null; }\n  java.util.List<Book> list() { return java.util.List.copyOf(books.values()); }\n}",
+    "resourceTitle": "Java learning reference",
+    "resourceUrl": "https://dev.java/learn/",
+    "readingFocus": "Collections: Map, keys, duplicates and defensive copies.",
+    "revisitDay": null,
+    "timedMinutes": null
+  },
+  {
+    "day": 6,
+    "title": "Debug a removal bug",
+    "subject": "Java",
+    "topic": "Exceptions",
+    "core": "Reproduce removing matching books from an ArrayList inside a for-each loop. Explain the failure, then implement removeByAuthor(List<Book>, String) safely.",
+    "stretch": "Compare removeIf with an explicit Iterator. Demonstrate an input with adjacent matches.",
+    "checks": [
+      "Every matching author is removed",
+      "Adjacent matches are not skipped",
+      "No ConcurrentModificationException occurs; explain why structural modification caused the original failure"
+    ],
+    "hints": [
+      "The for-each loop is using an iterator internally.",
+      "Use an API designed for removal while iterating.",
+      "books.removeIf(book -> book.author().equals(author)) is one safe option."
+    ],
+    "referenceSolution": "static boolean removeByAuthor(java.util.List<Book> books, String author) {\n  return books.removeIf(book -> book.author().equals(author));\n}",
+    "resourceTitle": "Java learning reference",
+    "resourceUrl": "https://dev.java/learn/",
+    "readingFocus": "Collections iteration and exception stack traces.",
+    "revisitDay": null,
+    "timedMinutes": null
+  },
+  {
+    "day": 7,
+    "title": "Rebuild Java basics using expenses",
+    "subject": "Java",
+    "topic": "Syntax and types",
+    "core": "Close earlier solutions. Write int totalPositive(int[] amounts): sum strictly positive values and ignore zero or negative values. Narrate your loop.",
+    "stretch": "Build a console expense tracker with validation and a list command.",
+    "checks": [
+      "{100,-20,0,50} returns 150",
+      "An empty array returns 0",
+      "Rebuild from a blank file and explain the filtering condition"
+    ],
+    "hints": [
+      "Recall the accumulator from day 1, but change which values contribute.",
+      "Only add when amount > 0.",
+      "Initialise total to zero, loop once, and return the accumulator."
+    ],
+    "referenceSolution": "static int totalPositive(int[] amounts) {\n  int total = 0;\n  for (int amount : amounts) if (amount > 0) total += amount;\n  return total;\n}",
+    "resourceTitle": "Java learning reference",
+    "resourceUrl": "https://dev.java/learn/",
+    "readingFocus": "Recall before reading: variables, loops and methods.",
+    "revisitDay": 1,
+    "timedMinutes": null
+  },
+  {
+    "day": 8,
+    "title": "Introduce an interface and a service",
+    "subject": "Java",
+    "topic": "Object-oriented programming",
+    "core": "Define BookStore with findAll() and add(Book). Implement InMemoryBookStore. Write a BookService that receives BookStore through its constructor.",
+    "stretch": "Add delete and a second fake implementation. Explain how constructor injection helps testing.",
+    "checks": [
+      "The service can list and add through the interface",
+      "The service receives its dependency; it does not create the store",
+      "Explain interface versus implementation with your own code"
+    ],
+    "hints": [
+      "Start with the operations the service needs.",
+      "A constructor parameter can be an interface type.",
+      "Keep a final BookStore field and delegate to it."
+    ],
+    "referenceSolution": "interface BookStore {\n  java.util.List<Book> findAll();\n  void add(Book book);\n}\nfinal class InMemoryBookStore implements BookStore {\n  private final java.util.List<Book> books = new java.util.ArrayList<>();\n  public java.util.List<Book> findAll() { return java.util.List.copyOf(books); }\n  public void add(Book book) { books.add(book); }\n}\nfinal class BookService {\n  private final BookStore store;\n  BookService(BookStore store) { this.store = store; }\n  java.util.List<Book> list() { return store.findAll(); }\n  void add(Book book) { store.add(book); }\n}",
+    "resourceTitle": "Java learning reference",
+    "resourceUrl": "https://dev.java/learn/",
+    "readingFocus": "Interfaces, constructors and dependency boundaries.",
+    "revisitDay": null,
+    "timedMinutes": null
+  },
+  {
+    "day": 9,
+    "title": "Filter and sort book titles",
+    "subject": "Java",
+    "topic": "Streams and lambdas",
+    "core": "Write List<String> titlesByAuthor(List<Book>, String) that filters by exact author, returns titles alphabetically, and leaves the input unchanged.",
+    "stretch": "Implement it once with loops and once with streams. Compare their readability.",
+    "checks": [
+      "Only matching authors appear",
+      "Titles are sorted alphabetically",
+      "No matches returns an empty list and the source order is unchanged"
+    ],
+    "hints": [
+      "Think filter, transform, then sort.",
+      "map(Book::title) changes books into titles.",
+      "Chain filter, map, sorted and toList."
+    ],
+    "referenceSolution": "static java.util.List<String> titlesByAuthor(java.util.List<Book> books, String author) {\n  return books.stream().filter(book -> book.author().equals(author))\n      .map(Book::title).sorted().toList();\n}",
+    "resourceTitle": "Java learning reference",
+    "resourceUrl": "https://dev.java/learn/",
+    "readingFocus": "Collections and streams: filter, map and sorted.",
+    "revisitDay": null,
+    "timedMinutes": null
+  },
+  {
+    "day": 10,
+    "title": "Read sample JSON into books",
+    "subject": "Java",
+    "topic": "JSON mapping",
+    "core": "In a Spring Boot project with JSON support, load books.json from src/main/resources into Book[]. Fixture: [{\"id\":1,\"title\":\"Clean Code\",\"author\":\"Robert Martin\"},{\"id\":2,\"title\":\"Effective Java\",\"author\":\"Joshua Bloch\"}]. Print both titles. Use the JSON mapper managed by your chosen Boot version.",
+    "stretch": "Expose loading through a small reader class. Try an empty array, malformed JSON and a missing resource.",
+    "checks": [
+      "The two supplied books deserialize with correct ids and titles",
+      "[] produces zero books",
+      "A missing file causes a clear error rather than silently pretending the catalogue is empty"
+    ],
+    "hints": [
+      "A classpath resource is different from a path relative to your shell.",
+      "Read an InputStream and tell the mapper the target array type.",
+      "Use getResourceAsStream(\"/books.json\"), check for null, and readValue(stream, Book[].class)."
+    ],
+    "referenceSolution": "// Boot 4 / Jackson 3 focused example; use your project's managed mapper.\nvar mapper = tools.jackson.databind.json.JsonMapper.builder().build();\ntry (var input = Book.class.getResourceAsStream(\"/books.json\")) {\n  if (input == null) throw new IllegalStateException(\"books.json is missing\");\n  Book[] books = mapper.readValue(input, Book[].class);\n  for (Book book : books) System.out.println(book.title());\n}",
+    "resourceTitle": "Spring REST service guide",
+    "resourceUrl": "https://spring.io/guides/gs/rest-service/",
+    "readingFocus": "JSON representation and Java records. Use your IDE's mapper API for the Boot version you selected.",
+    "revisitDay": null,
+    "timedMinutes": null
+  },
+  {
+    "day": 11,
+    "title": "Wire a service through Spring",
+    "subject": "Spring Boot",
+    "topic": "Dependency injection",
+    "core": "Create a Boot application with @Service BookService and @RestController BookController. Inject the service through the controller constructor. Add GET /status returning {\"status\":\"ready\"}. Use port 8082 for your practice app.",
+    "stretch": "Inject an in-memory store into the service. Explain component scanning and why manually creating BookService bypasses Spring.",
+    "checks": [
+      "GET /status on port 8082 returns 200 and status=ready",
+      "The controller uses constructor injection",
+      "Explain where Spring discovers both classes"
+    ],
+    "hints": [
+      "Put components beneath the application package.",
+      "A single constructor does not need @Autowired.",
+      "Add server.port=8082 in application.properties to keep PATIPP's 8081 free."
+    ],
+    "referenceSolution": "// Separate files under the application package; imports omitted.\n@Service\nclass BookService { String status() { return \"ready\"; } }\n@RestController\nclass BookController {\n  private final BookService service;\n  BookController(BookService service) { this.service = service; }\n  @GetMapping(\"/status\")\n  java.util.Map<String, String> status() {\n    return java.util.Map.of(\"status\", service.status());\n  }\n}\n// application.properties: server.port=8082",
+    "resourceTitle": "Spring REST service guide",
+    "resourceUrl": "https://spring.io/guides/gs/rest-service/",
+    "readingFocus": "Controller annotations and Java resource representation.",
+    "revisitDay": null,
+    "timedMinutes": null
+  },
+  {
+    "day": 12,
+    "title": "Serve the JSON catalogue",
+    "subject": "Spring Boot",
+    "topic": "REST controllers",
+    "core": "Extend yesterday's app: load the two-book fixture and implement GET /books through a service. Keep HTTP mapping in the controller and storage in the service.",
+    "stretch": "Add GET /books/{id} with 404 for absent ids. Explain request -> controller -> service -> store.",
+    "checks": [
+      "GET /books returns 200 and a JSON array containing both sample books",
+      "An empty catalogue returns []",
+      "The controller delegates instead of holding its own book list"
+    ],
+    "hints": [
+      "Reuse the reader from day 10.",
+      "A controller can return a List<Book>; Spring serializes it.",
+      "Load once during construction or initialization, then expose a defensive list copy."
+    ],
+    "referenceSolution": "// Boot 4 / Jackson 3. Separate files; imports omitted. Keep books.json from day 10.\n@Service\nclass BookService {\n  private final java.util.Map<Long, Book> books = new java.util.LinkedHashMap<>();\n  BookService(tools.jackson.databind.json.JsonMapper mapper) {\n    try (var input = Book.class.getResourceAsStream(\"/books.json\")) {\n      if (input == null) throw new IllegalStateException(\"books.json is missing\");\n      for (Book book : mapper.readValue(input, Book[].class)) books.put(book.id(), book);\n    } catch (java.io.IOException failure) {\n      throw new IllegalStateException(\"Could not close the book fixture\", failure);\n    }\n  }\n  java.util.List<Book> list() { return java.util.List.copyOf(books.values()); }\n}\n@RestController\nclass BookController {\n  private final BookService service;\n  BookController(BookService service) { this.service = service; }\n  @GetMapping(\"/books\") java.util.List<Book> list() { return service.list(); }\n}",
+    "resourceTitle": "Spring REST service guide",
+    "resourceUrl": "https://spring.io/guides/gs/rest-service/",
+    "readingFocus": "Returning Java objects as JSON; adapt the greeting response to a list.",
+    "revisitDay": 10,
+    "timedMinutes": null
+  },
+  {
+    "day": 13,
+    "title": "Add a book through POST",
+    "subject": "Spring Boot",
+    "topic": "REST controllers",
+    "core": "Implement POST /books accepting {\"id\":3,\"title\":\"Refactoring\",\"author\":\"Martin Fowler\"}. Return 201 and the created book. Reject duplicate ids with 409. Use the existing service map.",
+    "stretch": "Add Location: /books/{id}. Test blank titles and explain request DTOs versus stored records.",
+    "checks": [
+      "A new id returns 201 and the submitted fields",
+      "A subsequent GET /books includes the new book",
+      "A duplicate returns 409 and does not replace existing data"
+    ],
+    "hints": [
+      "@RequestBody binds JSON to your Java input type.",
+      "Keep duplicate detection inside the service.",
+      "putIfAbsent plus a conflict exception avoids overwriting the existing book."
+    ],
+    "referenceSolution": "// Add to the existing service and controller; imports omitted.\n// BookService:\nBook add(Book book) {\n  if (books.putIfAbsent(book.id(), book) != null)\n    throw new org.springframework.web.server.ResponseStatusException(\n        org.springframework.http.HttpStatus.CONFLICT, \"Duplicate id\");\n  return book;\n}\n// BookController:\n@PostMapping(\"/books\")\norg.springframework.http.ResponseEntity<Book> add(@RequestBody Book book) {\n  Book added = service.add(book);\n  return org.springframework.http.ResponseEntity.created(\n      java.net.URI.create(\"/books/\" + added.id())).body(added);\n}",
+    "resourceTitle": "Spring REST service guide",
+    "resourceUrl": "https://spring.io/guides/gs/rest-service/",
+    "readingFocus": "Request bodies, HTTP mappings and response representation.",
+    "revisitDay": 5,
+    "timedMinutes": null
+  },
+  {
+    "day": 14,
+    "title": "Delete a book through DELETE",
+    "subject": "Spring Boot",
+    "topic": "REST controllers",
+    "core": "Implement DELETE /books/{id}. Return 204 with no body when removed and 404 for a missing id. Keep deletion in the service.",
+    "stretch": "Use an HTTP client to prove that deleting one book leaves other books intact. Explain why repeated deletion can return 404.",
+    "checks": [
+      "Deleting an existing id returns 204 with an empty body",
+      "The deleted book no longer appears in GET /books",
+      "Deleting an unknown id returns 404 and other books remain"
+    ],
+    "hints": [
+      "@PathVariable binds the id in the URL.",
+      "Map.remove returns null for a missing key.",
+      "Return ResponseEntity.noContent().build() after a successful service call."
+    ],
+    "referenceSolution": "// BookService:\nvoid delete(long id) {\n  if (books.remove(id) == null)\n    throw new org.springframework.web.server.ResponseStatusException(\n        org.springframework.http.HttpStatus.NOT_FOUND, \"Book not found\");\n}\n// BookController:\n@DeleteMapping(\"/books/{id}\")\norg.springframework.http.ResponseEntity<Void> delete(@PathVariable long id) {\n  service.delete(id);\n  return org.springframework.http.ResponseEntity.noContent().build();\n}",
+    "resourceTitle": "Spring REST service guide",
+    "resourceUrl": "https://spring.io/guides/gs/rest-service/",
+    "readingFocus": "HTTP mappings and path parameters.",
+    "revisitDay": 5,
+    "timedMinutes": null
+  },
+  {
+    "day": 15,
+    "title": "Make bad requests predictable",
+    "subject": "Spring Boot",
+    "topic": "Error handling",
+    "core": "Add a create-book DTO with @NotBlank title and author, and @Positive id. Apply @Valid to the POST request. Test one blank title and one malformed body. Ensure the validation starter is installed.",
+    "stretch": "Add @RestControllerAdvice with a consistent problem response. Keep 400 validation errors distinct from 404 and 409.",
+    "checks": [
+      "A blank title returns 400",
+      "Malformed JSON returns 400 rather than 500",
+      "Valid JSON still creates a book with 201"
+    ],
+    "hints": [
+      "Binding and validation are separate steps.",
+      "Use jakarta.validation annotations on the request DTO.",
+      "@Valid @RequestBody CreateBook request triggers constraint validation."
+    ],
+    "referenceSolution": "// Add spring-boot-starter-validation. Imports omitted.\nrecord CreateBook(@jakarta.validation.constraints.Positive long id,\n  @jakarta.validation.constraints.NotBlank String title,\n  @jakarta.validation.constraints.NotBlank String author) {}\n@PostMapping(\"/books\")\norg.springframework.http.ResponseEntity<Book> add(\n    @jakarta.validation.Valid @RequestBody CreateBook request) {\n  Book book = service.add(new Book(request.id(), request.title(), request.author()));\n  return org.springframework.http.ResponseEntity.status(201).body(book);\n}",
+    "resourceTitle": "Spring web testing guide",
+    "resourceUrl": "https://spring.io/guides/gs/testing-web/",
+    "readingFocus": "Use the web testing guide to assert status and response data; look up validation APIs in your IDE.",
+    "revisitDay": null,
+    "timedMinutes": null
+  },
+  {
+    "day": 16,
+    "title": "Test the API's behaviour",
+    "subject": "Spring Boot",
+    "topic": "Testing",
+    "core": "Write a web test for GET /books and POST /books. Assert status and JSON fields, not just that the application starts. Use the testing imports for your selected Boot version.",
+    "stretch": "Add DELETE success, missing-id, duplicate-id and invalid-input tests. Explain what a slice test replaces compared with an integration test.",
+    "checks": [
+      "GET has a test asserting 200 and a known title",
+      "POST has a test asserting 201 and the created id",
+      "Tests can run without manually starting the app"
+    ],
+    "hints": [
+      "MockMvc sends requests through Spring's web layer.",
+      "Use a known store state; each test should own its data.",
+      "perform(get(\"/books\")).andExpect(status().isOk()) then assert a JSON path."
+    ],
+    "referenceSolution": "// Inside a configured MockMvc test using your Boot version's test annotations.\nmockMvc.perform(get(\"/books\"))\n  .andExpect(status().isOk())\n  .andExpect(jsonPath(\"$[0].title\").value(\"Clean Code\"));\nmockMvc.perform(post(\"/books\").contentType(\"application/json\")\n  .content(\"{\\\"id\\\":3,\\\"title\\\":\\\"Refactoring\\\",\\\"author\\\":\\\"Martin Fowler\\\"}\"))\n  .andExpect(status().isCreated())\n  .andExpect(jsonPath(\"$.id\").value(3));",
+    "resourceTitle": "Spring web testing guide",
+    "resourceUrl": "https://spring.io/guides/gs/testing-web/",
+    "readingFocus": "MockMvc, assertions and isolating the web layer.",
+    "revisitDay": null,
+    "timedMinutes": null
+  },
+  {
+    "day": 17,
+    "title": "Rebuild a small product API",
+    "subject": "Spring Boot",
+    "topic": "REST controllers",
+    "core": "Close the book code. In a fresh package, implement Product(id,name) with GET /products and DELETE /products/{id} over an in-memory map.",
+    "stretch": "Rebuild GET, POST and DELETE from a fresh Boot project, then add validation and tests. Narrate all layers.",
+    "checks": [
+      "GET returns the current products as an array",
+      "Deleting a seeded product returns 204",
+      "A missing id returns 404; implement without copying the book solution"
+    ],
+    "hints": [
+      "Identify the shared behaviour, then rename the domain.",
+      "Use a service map and constructor-injected controller.",
+      "Transfer the GET and remove patterns from memory; only inspect the reference after trying."
+    ],
+    "referenceSolution": "record Product(long id, String name) {}\n@Service\nclass ProductService {\n  private final java.util.Map<Long, Product> data = new java.util.LinkedHashMap<>(\n      java.util.Map.of(1L, new Product(1, \"Keyboard\")));\n  java.util.List<Product> list() { return java.util.List.copyOf(data.values()); }\n  void delete(long id) {\n    if (data.remove(id) == null) throw new org.springframework.web.server.ResponseStatusException(\n        org.springframework.http.HttpStatus.NOT_FOUND);\n  }\n}\n@RestController\nclass ProductController {\n  private final ProductService service;\n  ProductController(ProductService service) { this.service = service; }\n  @GetMapping(\"/products\") java.util.List<Product> list() { return service.list(); }\n  @DeleteMapping(\"/products/{id}\")\n  org.springframework.http.ResponseEntity<Void> delete(@PathVariable long id) {\n    service.delete(id); return org.springframework.http.ResponseEntity.noContent().build();\n  }\n}",
+    "resourceTitle": "Spring REST service guide",
+    "resourceUrl": "https://spring.io/guides/gs/rest-service/",
+    "readingFocus": "Recall the mappings before opening the guide.",
+    "revisitDay": 14,
+    "timedMinutes": null
+  },
+  {
+    "day": 18,
+    "title": "Persist your first entity",
+    "subject": "Spring Boot",
+    "topic": "Data access",
+    "core": "Create a separate persistence practice app with Spring Data JPA and H2. Define a BookEntity class with a generated Long id and a protected no-argument constructor. Save and read a book through a repository in a test.",
+    "stretch": "Wire the repository into a service and compare file-backed H2 or PostgreSQL with an in-memory database.",
+    "checks": [
+      "Saving a book assigns a non-null id",
+      "Reading the saved id returns its title",
+      "Explain why a JPA entity is a class rather than reusing the immutable Book record"
+    ],
+    "hints": [
+      "Follow the JPA guide's entity and repository structure.",
+      "Use @Id @GeneratedValue and a no-argument constructor.",
+      "Extend JpaRepository<BookEntity,Long> and use save then findById."
+    ],
+    "referenceSolution": "@jakarta.persistence.Entity\nclass BookEntity {\n  @jakarta.persistence.Id @jakarta.persistence.GeneratedValue\n  private Long id;\n  private String title;\n  protected BookEntity() {}\n  BookEntity(String title) { this.title = title; }\n  public Long getId() { return id; }\n  public String getTitle() { return title; }\n}\ninterface BookRepository extends org.springframework.data.jpa.repository.JpaRepository<BookEntity, Long> {}\n// Test: var saved = repository.save(new BookEntity(\"Effective Java\"));\n// assertThat(repository.findById(saved.getId())).isPresent();",
+    "resourceTitle": "Spring Data JPA guide",
+    "resourceUrl": "https://spring.io/guides/gs/accessing-data-jpa/",
+    "readingFocus": "Entity, id generation, repository and a repository test.",
+    "revisitDay": null,
+    "timedMinutes": null
+  },
+  {
+    "day": 19,
+    "title": "Map API data separately from entities",
+    "subject": "Spring Boot",
+    "topic": "Data access",
+    "core": "Add BookResponse(Long id,String title) and map a BookEntity into it in your service. Make GET return DTOs rather than entities.",
+    "stretch": "Add CreateBookRequest and explain where input validation, persistence and response formatting belong.",
+    "checks": [
+      "The response contains only id and title",
+      "Mapping preserves the stored values",
+      "The controller does not expose the JPA entity directly"
+    ],
+    "hints": [
+      "A response record describes the HTTP contract.",
+      "Mapping can be a small method before adding any mapping library.",
+      "new BookResponse(entity.getId(), entity.getTitle()) is sufficient."
+    ],
+    "referenceSolution": "record BookResponse(Long id, String title) {}\nstatic BookResponse toResponse(BookEntity entity) {\n  return new BookResponse(entity.getId(), entity.getTitle());\n}\n// In the service:\n// return repository.findAll().stream().map(BookService::toResponse).toList();",
+    "resourceTitle": "Spring Data JPA guide",
+    "resourceUrl": "https://spring.io/guides/gs/accessing-data-jpa/",
+    "readingFocus": "Entity fields versus application response data.",
+    "revisitDay": 3,
+    "timedMinutes": null
+  },
+  {
+    "day": 20,
+    "title": "Update inside a transaction",
+    "subject": "Spring Boot",
+    "topic": "Data access",
+    "core": "Add rename(long id,String title) to the persistence service. Reject blank titles, find the entity or return 404, and update inside @Transactional.",
+    "stretch": "Add a test that a rejected update leaves the prior title intact. Explain dirty checking and transaction boundaries.",
+    "checks": [
+      "Renaming an existing book is observable on a later read",
+      "A missing book returns 404",
+      "A blank title is rejected without altering the stored title"
+    ],
+    "hints": [
+      "Place the transaction on the service operation.",
+      "Load the entity before changing its title.",
+      "A managed entity's change is written when the transaction commits."
+    ],
+    "referenceSolution": "// Add setTitle(String title) to BookEntity.\n@org.springframework.transaction.annotation.Transactional\npublic BookResponse rename(long id, String title) {\n  if (title == null || title.isBlank()) throw new IllegalArgumentException(\"Blank title\");\n  BookEntity entity = repository.findById(id).orElseThrow(() ->\n      new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND));\n  entity.setTitle(title);\n  return new BookResponse(entity.getId(), entity.getTitle());\n}",
+    "resourceTitle": "Spring Data JPA guide",
+    "resourceUrl": "https://spring.io/guides/gs/accessing-data-jpa/",
+    "readingFocus": "Repository operations and transaction boundaries.",
+    "revisitDay": null,
+    "timedMinutes": null
+  },
+  {
+    "day": 21,
+    "title": "Test persistence with isolated data",
+    "subject": "Spring Boot",
+    "topic": "Testing",
+    "core": "Write a repository test that saves two books, deletes one and verifies the other still exists. Do not depend on test execution order.",
+    "stretch": "Add a service integration test for rename and missing-id behaviour. Explain rollback between tests.",
+    "checks": [
+      "Two saved books get distinct ids",
+      "Deleting one id does not remove the other",
+      "The test passes when run alone and repeatedly"
+    ],
+    "hints": [
+      "Each test should create its own starting data.",
+      "Use ids returned by save instead of assuming 1 and 2.",
+      "Check existsById for both records after deleteById."
+    ],
+    "referenceSolution": "// In a repository test with the configured test database:\nvar first = repository.save(new BookEntity(\"One\"));\nvar second = repository.save(new BookEntity(\"Two\"));\nrepository.deleteById(first.getId());\nassertThat(repository.existsById(first.getId())).isFalse();\nassertThat(repository.existsById(second.getId())).isTrue();",
+    "resourceTitle": "Spring Data JPA guide",
+    "resourceUrl": "https://spring.io/guides/gs/accessing-data-jpa/",
+    "readingFocus": "Repository testing with an embedded database.",
+    "revisitDay": 16,
+    "timedMinutes": null
+  },
+  {
+    "day": 22,
+    "title": "Return deliberate error responses",
+    "subject": "Spring Boot",
+    "topic": "Error handling",
+    "core": "Introduce BookNotFoundException and translate it to a 404 ProblemDetail in @RestControllerAdvice. Keep internal exception details out of the response.",
+    "stretch": "Add validation and duplicate-conflict responses, and tests for their status and stable fields.",
+    "checks": [
+      "A missing book yields HTTP 404",
+      "The response has a human-readable detail",
+      "A normal GET still returns the successful DTO"
+    ],
+    "hints": [
+      "A domain exception can be translated at the HTTP boundary.",
+      "@ExceptionHandler selects the exception to translate.",
+      "ProblemDetail.forStatusAndDetail creates the response without a custom error framework."
+    ],
+    "referenceSolution": "class BookNotFoundException extends RuntimeException {}\n@org.springframework.web.bind.annotation.RestControllerAdvice\nclass ApiErrors {\n  @org.springframework.web.bind.annotation.ExceptionHandler(BookNotFoundException.class)\n  org.springframework.http.ProblemDetail missing(BookNotFoundException failure) {\n    return org.springframework.http.ProblemDetail.forStatusAndDetail(\n      org.springframework.http.HttpStatus.NOT_FOUND, \"Book not found\");\n  }\n}",
+    "resourceTitle": "Spring REST service guide",
+    "resourceUrl": "https://spring.io/guides/gs/rest-service/",
+    "readingFocus": "HTTP response contracts; inspect ProblemDetail in your framework API.",
+    "revisitDay": 15,
+    "timedMinutes": null
+  },
+  {
+    "day": 23,
+    "title": "Search by title with a query parameter",
+    "subject": "Spring Boot",
+    "topic": "REST controllers",
+    "core": "Add GET /books?title=java that filters titles case-insensitively. An absent parameter returns all books; no match returns [].",
+    "stretch": "Move filtering into a repository query for persisted data. Test spaces and mixed case.",
+    "checks": [
+      "A mixed-case query matches titles regardless of case",
+      "An absent query returns all books",
+      "A query with no matches returns 200 and []"
+    ],
+    "hints": [
+      "A query parameter is not a path variable.",
+      "Normalise both query and title using Locale.ROOT.",
+      "Use @RequestParam(required=false) and a filtering service method."
+    ],
+    "referenceSolution": "// Service implementation over DTOs:\njava.util.List<BookResponse> search(String query) {\n  var all = repository.findAll().stream().map(BookService::toResponse).toList();\n  if (query == null || query.isBlank()) return all;\n  String needle = query.toLowerCase(java.util.Locale.ROOT);\n  return all.stream().filter(book -> book.title().toLowerCase(java.util.Locale.ROOT)\n      .contains(needle)).toList();\n}\n// Controller: @GetMapping(\"/books\") list(@RequestParam(required=false) String title)",
+    "resourceTitle": "Spring REST service guide",
+    "resourceUrl": "https://spring.io/guides/gs/rest-service/",
+    "readingFocus": "Optional request parameters and response mapping.",
+    "revisitDay": 9,
+    "timedMinutes": null
+  },
+  {
+    "day": 24,
+    "title": "Paginate a stable collection",
+    "subject": "Java",
+    "topic": "Collections",
+    "core": "Write <T> List<T> page(List<T> values,int offset,int limit). Reject negative offsets and non-positive limits. Return an empty list beyond the end.",
+    "stretch": "Expose pagination on GET /books and keep ordering stable. Explain why result limits matter.",
+    "checks": [
+      "page([1,2,3,4],1,2) returns [2,3]",
+      "An offset beyond the end returns []",
+      "Invalid arguments are rejected and the returned list is a copy"
+    ],
+    "hints": [
+      "Compute start and end within the list bounds.",
+      "Beware overflow when offset + limit is large.",
+      "Bound the requested length by values.size() - start before adding."
+    ],
+    "referenceSolution": "static <T> java.util.List<T> page(java.util.List<T> values, int offset, int limit) {\n  if (offset < 0 || limit < 1) throw new IllegalArgumentException(\"Invalid page\");\n  int start = Math.min(offset, values.size());\n  int end = start + Math.min(limit, values.size() - start);\n  return java.util.List.copyOf(values.subList(start, end));\n}",
+    "resourceTitle": "Java learning reference",
+    "resourceUrl": "https://dev.java/learn/",
+    "readingFocus": "Collections: subList, copies and generics.",
+    "revisitDay": 4,
+    "timedMinutes": null
+  },
+  {
+    "day": 25,
+    "title": "Debug the wrong HTTP mapping",
+    "subject": "Spring Boot",
+    "topic": "REST controllers",
+    "core": "Deliberately annotate a delete handler with @GetMapping(\"/books/{id}\"). Reproduce why DELETE receives 405, fix the mapping, and add a regression test.",
+    "stretch": "Use a breakpoint to trace an HTTP request through controller and service. Log only useful, non-sensitive values.",
+    "checks": [
+      "The corrected DELETE returns 204 for an existing id",
+      "GET /books does not delete anything",
+      "A regression test fails for the broken mapping and passes after the fix"
+    ],
+    "hints": [
+      "A URL alone does not identify an HTTP operation.",
+      "Compare the method sent by the client with the annotation.",
+      "Use @DeleteMapping for deletion and assert it with MockMvc.delete."
+    ],
+    "referenceSolution": "@DeleteMapping(\"/books/{id}\")\norg.springframework.http.ResponseEntity<Void> delete(@PathVariable long id) {\n  service.delete(id);\n  return org.springframework.http.ResponseEntity.noContent().build();\n}\n// Regression test:\nmockMvc.perform(delete(\"/books/{id}\", existingId)).andExpect(status().isNoContent());",
+    "resourceTitle": "Spring web testing guide",
+    "resourceUrl": "https://spring.io/guides/gs/testing-web/",
+    "readingFocus": "MockMvc requests and response status assertions.",
+    "revisitDay": 14,
+    "timedMinutes": null
+  },
+  {
+    "day": 26,
+    "title": "Transfer persistence to a task tracker",
+    "subject": "Spring Boot",
+    "topic": "Data access",
+    "core": "Without opening the book implementation, define TaskEntity(id,description,done) and a repository. Save a task, mark it done and read it back.",
+    "stretch": "Build GET/POST/PATCH/DELETE /tasks with DTOs, validation and tests.",
+    "checks": [
+      "A saved task receives an id and starts unfinished",
+      "Marking it done survives a later read",
+      "Explain the entity/repository/service boundaries without copying book code"
+    ],
+    "hints": [
+      "Identify the concept that transfers: generated id and stored fields.",
+      "Use a boolean field for done and a domain method to change it.",
+      "Inside a transaction, load the entity and call markDone()."
+    ],
+    "referenceSolution": "@jakarta.persistence.Entity\nclass TaskEntity {\n  @jakarta.persistence.Id @jakarta.persistence.GeneratedValue Long id;\n  String description;\n  boolean done;\n  protected TaskEntity() {}\n  TaskEntity(String description) { this.description = description; }\n  void markDone() { done = true; }\n}\ninterface TaskRepository extends org.springframework.data.jpa.repository.JpaRepository<TaskEntity, Long> {}\n// In a transactional service: tasks.findById(id).orElseThrow().markDone();",
+    "resourceTitle": "Spring Data JPA guide",
+    "resourceUrl": "https://spring.io/guides/gs/accessing-data-jpa/",
+    "readingFocus": "Recall entity and repository design before reopening the guide.",
+    "revisitDay": 18,
+    "timedMinutes": null
+  },
+  {
+    "day": 27,
+    "title": "A short Java interview drill",
+    "subject": "Java",
+    "topic": "Collections",
+    "core": "After untimed practice, try a 15-minute drill: implement firstUnique(List<String>) returning the first value appearing once, or Optional.empty(). Explain your choice of collection.",
+    "stretch": "Repeat with case-insensitive matching, then write tests. If the timed attempt feels premature, use untimed practice.",
+    "checks": [
+      "[a,b,a,c] returns b",
+      "[a,a] and [] return Optional.empty()",
+      "Explain the time and space costs and test before declaring completion"
+    ],
+    "hints": [
+      "You need counts and original encounter order.",
+      "Count with a LinkedHashMap, then find the first count of 1.",
+      "merge(value,1,Integer::sum) builds the counts in one pass."
+    ],
+    "referenceSolution": "static java.util.Optional<String> firstUnique(java.util.List<String> values) {\n  var counts = new java.util.LinkedHashMap<String, Integer>();\n  for (String value : values) counts.merge(value, 1, Integer::sum);\n  return counts.entrySet().stream().filter(entry -> entry.getValue() == 1)\n      .map(java.util.Map.Entry::getKey).findFirst();\n}\n// O(n) expected time; O(n) space.",
+    "resourceTitle": "Java learning reference",
+    "resourceUrl": "https://dev.java/learn/",
+    "readingFocus": "Attempt from memory first; review Map only after the drill.",
+    "revisitDay": 5,
+    "timedMinutes": 15
+  },
+  {
+    "day": 28,
+    "title": "A short Spring interview drill",
+    "subject": "Spring Boot",
+    "topic": "REST controllers",
+    "core": "After practising the underlying concepts, rebuild DELETE /products/{id} with a service-backed map in 20 minutes. Return 204 on success and 404 when absent. Narrate the request path.",
+    "stretch": "Spend 60 minutes rebuilding GET/POST/DELETE and two tests from a fresh project. Stay untimed if you still need the reference.",
+    "checks": [
+      "The controller delegates to a constructor-injected service",
+      "An existing product is removed with 204",
+      "A missing product returns 404; explain how the id reaches the service"
+    ],
+    "hints": [
+      "Write the service operation before the controller.",
+      "Use @PathVariable long id and @DeleteMapping.",
+      "Map.remove plus a missing-id exception expresses the core behaviour."
+    ],
+    "referenceSolution": "// Service:\nvoid delete(long id) {\n  if (products.remove(id) == null) throw new org.springframework.web.server.ResponseStatusException(\n    org.springframework.http.HttpStatus.NOT_FOUND, \"Product not found\");\n}\n// Controller:\n@DeleteMapping(\"/products/{id}\")\norg.springframework.http.ResponseEntity<Void> delete(@PathVariable long id) {\n  service.delete(id); return org.springframework.http.ResponseEntity.noContent().build();\n}",
+    "resourceTitle": "Spring REST service guide",
+    "resourceUrl": "https://spring.io/guides/gs/rest-service/",
+    "readingFocus": "Attempt the mapping and service boundary before reading.",
+    "revisitDay": 17,
+    "timedMinutes": 20
+  },
+  {
+    "day": 29,
+    "title": "Build a small app feature end to end",
+    "subject": "Spring Boot",
+    "topic": "Testing",
+    "core": "Choose your books or tasks app. Implement one previously missing operation through request DTO, controller, service and storage, and add one behavioural test.",
+    "stretch": "Complete the app's create/list/delete operations, errors, validation and tests. Write a README with exact commands and sample requests.",
+    "checks": [
+      "The chosen operation works through an HTTP request",
+      "A test verifies the successful result and a failure case",
+      "You can explain the code you wrote and identify any assistance used"
+    ],
+    "hints": [
+      "Choose one thin feature instead of rewriting the whole project.",
+      "Write expected HTTP input/output before implementation.",
+      "Trace one request across the layers and test it at the boundary."
+    ],
+    "referenceSolution": "// Review outline for your chosen feature (there is no single implementation):\n// 1. Define method, path, request body, success status and failure status.\n// 2. Write a failing behavioural test for that contract.\n// 3. Map the request in the controller and delegate to the service.\n// 4. Validate rules and persist changes in the service/store.\n// 5. Pass the test, add an edge case, and explain the request path.\n// Compare your actual behaviour with the checks; this outline is not runnable app code.",
+    "resourceTitle": "Spring web testing guide",
+    "resourceUrl": "https://spring.io/guides/gs/testing-web/",
+    "readingFocus": "Review only the testing section needed for your chosen operation.",
+    "revisitDay": 16,
+    "timedMinutes": null
+  },
+  {
+    "day": 30,
+    "title": "Rebuild, explain and choose your next focus",
+    "subject": "Spring Boot",
+    "topic": "REST controllers",
+    "core": "Close your earlier implementation. Rebuild a tiny in-memory Book service with add and delete, including duplicate and missing-id behaviour. Record one remaining weakness.",
+    "stretch": "In 90–120 minutes rebuild a fresh Book API with JSON loading, GET/POST/DELETE, validation and tests. Explain it without reading the source. Compare day 1 and day 30 evidence.",
+    "checks": [
+      "A new book can be added and deleted",
+      "A duplicate is rejected and a missing delete is reported",
+      "You rebuild from a blank file, explain your choices and name the next concept to revisit"
+    ],
+    "hints": [
+      "Recall the map operations before thinking about annotations.",
+      "Separate the Java service from HTTP mapping.",
+      "Use putIfAbsent for add and remove for delete; wire mappings only after the service works."
+    ],
+    "referenceSolution": "final class BookCatalogue {\n  private final java.util.Map<Long, Book> books = new java.util.LinkedHashMap<>();\n  void add(Book book) {\n    if (books.putIfAbsent(book.id(), book) != null)\n      throw new IllegalArgumentException(\"Duplicate id\");\n  }\n  void delete(long id) {\n    if (books.remove(id) == null) throw new java.util.NoSuchElementException(\"Book not found\");\n  }\n}\n// Add HTTP mapping in the optional extension; translate duplicate/missing errors to 409/404.",
+    "resourceTitle": "Spring REST service guide",
+    "resourceUrl": "https://spring.io/guides/gs/rest-service/",
+    "readingFocus": "Recall first; revisit only the concept identified in your reflection.",
+    "revisitDay": 13,
+    "timedMinutes": null
+  }
+]

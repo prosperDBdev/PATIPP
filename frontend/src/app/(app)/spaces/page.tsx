@@ -6,6 +6,7 @@ import { Alert, Badge, Card, EmptyState, Spinner } from "@/components/ui";
 import { api, ApiError } from "@/lib/api/client";
 import type { Space } from "@/lib/api/types";
 import { useAuth } from "@/lib/auth/auth-context";
+import { ChallengeInvite } from "@/components/learning/challenge-invite";
 
 export default function SpacesPage() {
   const { user } = useAuth();
@@ -53,6 +54,8 @@ export default function SpacesPage() {
       </header>
 
       {error && <Alert>{error}</Alert>}
+
+      {spaces !== null && <ChallengeInvite spaceId={spaces.find((space) => space.config.challengeKey === "java-spring-30-v1")?.id} />}
 
       {spaces === null && !error ? (
         <div className="grid place-items-center py-20">

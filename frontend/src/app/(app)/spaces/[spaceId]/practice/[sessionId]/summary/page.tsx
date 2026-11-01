@@ -79,6 +79,11 @@ export default function SessionSummaryPage() {
 
       <SessionResults summary={summary} />
 
+      {summary.items.some((item) => item.selectionReason?.reason === "GUIDED_TASK") && <Link
+        href={`/spaces/${spaceId}/challenge`} className="text-sm font-medium text-accent hover:underline">
+        Continue the 30-day challenge &rarr;
+      </Link>}
+
       <div className="flex flex-wrap gap-3">
         <Link
           href={`/spaces/${spaceId}/practice`}

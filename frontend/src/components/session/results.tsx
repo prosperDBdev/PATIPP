@@ -127,6 +127,16 @@ function ReviewCard({ item }: { item: ReviewItem }) {
 
       <p className="text-sm whitespace-pre-wrap text-text">{item.stem}</p>
 
+      {typeof item.yourAnswer?.assistance === "string" && <p className="text-xs text-text-muted">
+        {item.yourAnswer.completed === true && item.correct ? "Core completed" : "Practised; core unfinished"}
+        {" · "}{item.yourAnswer.assistance.toLowerCase()}
+        {typeof item.yourAnswer.hintsUsed === "number" && item.yourAnswer.hintsUsed > 0
+          ? ` · ${item.yourAnswer.hintsUsed} hint(s)` : ""}
+      </p>}
+      {typeof item.yourAnswer?.reflection === "string" && item.yourAnswer.reflection && <p className="text-sm whitespace-pre-wrap text-text-muted">
+        {item.yourAnswer.reflection}
+      </p>}
+
       {item.yourAnswer && !item.correct && (
         <p className="text-[13px] text-text-muted">
           <span className="font-medium text-text">You said: </span>
@@ -135,7 +145,7 @@ function ReviewCard({ item }: { item: ReviewItem }) {
       )}
 
       {item.correctAnswer && (
-        <p className="text-[13px] text-text-muted">
+        <p className="text-[13px] whitespace-pre-wrap text-text-muted">
           <span className="font-medium text-text">Answer: </span>
           {formatAnswer(item.correctAnswer)}
         </p>
@@ -150,6 +160,13 @@ function ReviewCard({ item }: { item: ReviewItem }) {
 
 /** Renders an answer readably, whatever shape its format uses. */
 export function formatAnswer(answer: Record<string, unknown>): string {
+  if (typeof answer.referenceSolution === "string") {
+    const rubric = Array.isArray(answer.rubric) ? `\n\nChecks:\n- ${answer.rubric.join("\n- ")}` : "";
+    return answer.referenceSolution + rubric;
+  }
+  if (typeof answer.grade === "number") {
+    return `Self-assessment ${answer.grade}/4${typeof answer.assistance === "string" ? ` · ${answer.assistance.toLowerCase()}` : ""}`;
+  }
   if (Array.isArray(answer.optionIds)) {
     return (answer.optionIds as string[]).join(", ");
   }

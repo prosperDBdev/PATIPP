@@ -33,6 +33,7 @@ export default function SessionRunnerPage() {
   const [result, setResult] = useState<AnswerResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [helpBusy, setHelpBusy] = useState(false);
   // Stored with the question it belongs to, rather than cleared at the top of the effect.
   // Clearing there is a setState during render as far as React is concerned; tagging it means
   // a stale preview is simply ignored, which is the same outcome without the hazard.
@@ -133,6 +134,19 @@ export default function SessionRunnerPage() {
     }
   }, [item, answer, submitting, result, spaceId, sessionId]);
 
+  async function revealHelp(kind: "hint" | "solution") {
+    if (!item || helpBusy || submitting || result) return;
+    setHelpBusy(true); setError(null);
+    try {
+      const updated = await api<ServedItem>(
+        `/api/v1/spaces/${spaceId}/sessions/${sessionId}/items/${item.position}/${kind}`,
+        { method: "POST" });
+      setItem(updated);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not reveal help. Please retry.");
+    } finally { setHelpBusy(false); }
+  }
+
   const advance = useCallback(() => {
     if (!result) return;
 
@@ -151,6 +165,8 @@ export default function SessionRunnerPage() {
   // is most of what makes a long practice session bearable.
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      // Let native controls handle Enter, including hint/solution buttons and selects.
+      if (event.target instanceof Element && event.target.closest("button, a, select, summary")) return;
       const typing = event.target instanceof HTMLTextAreaElement
         || event.target instanceof HTMLInputElement;
 
@@ -232,19 +248,24 @@ export default function SessionRunnerPage() {
 
         <WhyThisQuestion reason={item.selectionReason} />
 
-        {item.hints.length > 0 && !result && (
-          <details className="text-sm">
-            <summary className="cursor-pointer text-text-muted hover:text-text">
-              Need a hint?
-            </summary>
-            <ul className="mt-2 flex flex-col gap-1 pl-4 text-text-muted">
+        {!result && (
+          <div className="flex flex-col gap-3 text-sm">
+            {item.hints.length > 0 && <ol className="flex flex-col gap-2 pl-4 text-text-muted">
               {item.hints.map((hint, index) => (
-                <li key={index} className="list-disc">
+                <li key={index} className="list-decimal">
                   {hint}
                 </li>
               ))}
-            </ul>
-          </details>
+            </ol>}
+            <div className="flex flex-wrap gap-2">
+              {Number(item.presentation.hintsAvailable ?? 0) > item.hints.length && <Button
+                variant="secondary" size="sm" loading={helpBusy} disabled={submitting}
+                onClick={() => revealHelp("hint")}>Reveal hint {item.hints.length + 1}</Button>}
+              {item.type === "CODING" && !item.presentation.solutionRevealed && <Button
+                variant="ghost" size="sm" disabled={helpBusy || submitting}
+                onClick={() => revealHelp("solution")}>Use reference solution · records assistance</Button>}
+            </div>
+          </div>
         )}
       </Card>
 
@@ -256,8 +277,8 @@ export default function SessionRunnerPage() {
             {result.sessionComplete ? "See results" : "Next question"}
           </Button>
         ) : (
-          <Button onClick={submit} loading={submitting} disabled={!answer}>
-            Submit answer
+          <Button onClick={submit} loading={submitting} disabled={!answer || helpBusy}>
+            {item.type === "CODING" ? "Record practice" : "Submit answer"}
           </Button>
         )}
 
@@ -279,6 +300,8 @@ export default function SessionRunnerPage() {
           End session
         </button>
       </div>
+      <Link href={`/spaces/${spaceId}/challenge`} className="text-sm text-accent hover:underline"
+        hidden={item.selectionReason.reason !== "GUIDED_TASK"}>Back to the 30-day guide</Link>
     </div>
   );
 }
@@ -289,6 +312,7 @@ function Feedback({ result }: { result: AnswerResult }) {
   // way to find out a mode was misconfigured.
   const correct = result.correct === true;
   const score = result.score ?? 0;
+  const coding = typeof result.correctAnswer?.referenceSolution === "string";
 
   return (
     <Card
@@ -304,7 +328,8 @@ function Feedback({ result }: { result: AnswerResult }) {
             correct ? "text-success" : "text-danger",
           )}
         >
-          {correct ? "Correct" : score > 0 ? "Partly right" : "Not quite"}
+          {coding ? (correct ? "Core recorded complete" : "Practice recorded; revisit the core")
+            : correct ? "Correct" : score > 0 ? "Partly right" : "Not quite"}
         </span>
         {score > 0 && score < 1 && (
           <span className="font-mono text-xs text-text-muted tabular-nums">
@@ -339,6 +364,14 @@ function Feedback({ result }: { result: AnswerResult }) {
       {result.explanation && (
         <p className="text-sm whitespace-pre-wrap text-text">{result.explanation}</p>
       )}
+      {coding && <details className="text-sm text-text-muted">
+        <summary className="cursor-pointer font-medium text-text">Compare the reference after your recorded attempt</summary>
+        <pre className="mt-3 overflow-auto rounded-md bg-surface-2 p-3 text-xs whitespace-pre-wrap">{String(result.correctAnswer?.referenceSolution)}</pre>
+        {Array.isArray(result.correctAnswer?.rubric) && <ul className="mt-3 list-disc space-y-1 pl-5">
+          {(result.correctAnswer.rubric as string[]).map((point) => <li key={point}>{point}</li>)}
+        </ul>}
+        <p className="mt-2 text-xs">If your checks missed something, record an unfinished retry. Previous attempts stay in your history.</p>
+      </details>}
     </Card>
   );
 }

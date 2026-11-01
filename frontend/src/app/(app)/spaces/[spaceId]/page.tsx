@@ -7,6 +7,7 @@ import { Alert, Badge, Card, Spinner } from "@/components/ui";
 import { ReadinessCard } from "@/components/analytics/readiness-card";
 import { FocusPanel } from "@/components/learning/focus-panel";
 import { ReviewPanel } from "@/components/learning/review-panel";
+import { ChallengeInvite } from "@/components/learning/challenge-invite";
 import { api, ApiError } from "@/lib/api/client";
 import type { Space, Subject } from "@/lib/api/types";
 
@@ -85,6 +86,7 @@ export default function SpaceOverviewPage() {
         </div>
       </header>
 
+      {space.config.challengeKey === "java-spring-30-v1" && <ChallengeInvite spaceId={spaceId} />}
       <ReadinessCard spaceId={spaceId} />
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

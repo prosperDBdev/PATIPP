@@ -12,6 +12,7 @@ public interface SessionItemRepository extends JpaRepository<SessionItem, UUID> 
     @Query("select i from SessionItem i where i.sessionId = :sessionId order by i.position asc")
     List<SessionItem> findForSession(@Param("sessionId") UUID sessionId);
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @Query("select i from SessionItem i where i.sessionId = :sessionId and i.position = :position")
     Optional<SessionItem> findAt(@Param("sessionId") UUID sessionId,
                                  @Param("position") short position);

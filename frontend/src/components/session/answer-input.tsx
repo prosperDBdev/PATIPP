@@ -196,57 +196,70 @@ function CodingInput({ item, onChange, locked, initialAnswer, preview }: AnswerI
   const [grade, setGrade] = useState<number | null>(
     () => (initialAnswer?.grade as number | undefined) ?? null,
   );
-  const [attempted, setAttempted] = useState(() => initialAnswer?.grade !== undefined);
+  const [checked, setChecked] = useState(() => initialAnswer?.checksPassed === true);
+  const [external, setExternal] = useState(() => String(initialAnswer?.externalHelp ?? "NONE"));
+  const [reflection, setReflection] = useState(() => String(initialAnswer?.reflection ?? ""));
 
   const starter = item.presentation.starterCode as string | undefined;
   const language = item.presentation.language as string | undefined;
-  const rubricCount = (item.presentation.rubricItemCount as number | undefined) ?? 0;
-
-  if (!attempted) {
-    return (
-      <div className="flex flex-col gap-3">
-        {starter && <CodeBlock code={starter} language={language} />}
-
-        <div className="rounded-lg border border-dashed border-border-strong bg-surface-2 p-4">
-          <p className="text-[13px] text-text">
-            Solve this by hand in your editor, out loud if you can.
-          </p>
-          <p className="mt-1 text-xs text-text-muted">
-            Narrating is most of what a technical interview is actually testing, and it is the
-            part you cannot practise by reading. When you are done, reveal the reference
-            solution
-            {rubricCount > 0 && ` and ${rubricCount} rubric point${rubricCount === 1 ? "" : "s"}`}
-            {" "}and mark yourself against it.
-          </p>
-          <button
-            type="button"
-            onClick={() => setAttempted(true)}
-            className="mt-3 inline-flex h-9 items-center rounded-md bg-accent px-3 text-[13px] font-medium text-accent-fg hover:bg-accent-hover"
-          >
-            I have attempted it — show the solution
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const revealed = item.presentation.revealedAnswer as Record<string, unknown> | undefined;
+  const emit = (nextGrade: number | null, nextChecked: boolean, nextExternal: string, nextReflection: string) => {
+    onChange(nextGrade === null || (nextGrade >= 3 && !nextChecked) ? null : {
+      grade: nextGrade, completed: nextGrade >= 3, checksPassed: nextChecked,
+      externalHelp: nextExternal, reflection: nextReflection,
+    });
+  };
 
   return (
     <div className="flex flex-col gap-4">
       {starter && <CodeBlock code={starter} language={language} />}
       <p className="text-xs text-text-muted">
-        The reference solution and rubric are below the question, once you submit. Grade
-        yourself on what you actually produced, not what you now see.
+        Work in your IDE. Run the expected behaviour checks and explain your decisions out loud.
+        Submit before comparing the reference to preserve an independent attempt. You can also
+        record unfinished practice and return later.
       </p>
-      <SelfGrade
-        question="How did your solution go?"
-        value={grade}
-        locked={locked}
-        preview={preview}
-        onPick={(picked) => {
-          setGrade(picked);
-          onChange({ grade: picked });
-        }}
-      />
+      {revealed && <div className="flex flex-col gap-2 rounded-md border border-border p-3">
+        <p className="text-xs text-text-muted">Reference opened. This attempt will record solution assistance.</p>
+        <CodeBlock code={String(revealed.referenceSolution ?? "")} language={language} />
+        {Array.isArray(revealed.rubric) && <ul className="list-disc space-y-1 pl-4 text-xs text-text-muted">
+          {(revealed.rubric as string[]).map((point) => <li key={point}>{point}</li>)}
+        </ul>}
+      </div>}
+      <label className="flex gap-2 text-sm text-text">
+        <input type="checkbox" checked={checked} disabled={locked} onChange={(event) => {
+          setChecked(event.target.checked); emit(grade, event.target.checked, external, reflection);
+        }} />
+        I ran the expected behaviour checks locally and can explain the core code.
+      </label>
+      <fieldset className="flex flex-col gap-2" disabled={locked}>
+        <legend className="mb-2 text-sm font-medium text-text">How did the core task go?</legend>
+        {[
+          { value: 1, label: "Practised; core unfinished", interval: preview?.AGAIN },
+          { value: 3, label: "Core checks pass", interval: preview?.GOOD },
+          { value: 4, label: "Core checks pass confidently", interval: preview?.EASY },
+        ].map((choice) => <button key={choice.value} type="button" aria-pressed={grade === choice.value}
+          className={cn("rounded border p-3 text-left text-sm", grade === choice.value
+            ? "border-accent bg-accent-soft text-accent" : "border-border text-text-muted")}
+          onClick={() => { setGrade(choice.value); emit(choice.value, checked, external, reflection); }}>
+          {choice.label}{choice.interval !== undefined && <span className="ml-2 text-xs">· review {formatInterval(choice.interval)}</span>}
+        </button>)}
+      </fieldset>
+      {grade !== null && grade >= 3 && !checked && <p className="text-xs text-text-muted">Confirm your local checks above to record completion.</p>}
+      <label className="flex flex-col gap-2 text-sm text-text">
+        Help used outside PATIPP
+        <select value={external} disabled={locked} className="rounded border border-border bg-surface p-2"
+          onChange={(event) => { setExternal(event.target.value); emit(grade, checked, event.target.value, reflection); }}>
+          <option value="NONE">None (normal documentation lookup is fine)</option>
+          <option value="HINTS">Conceptual hints from a person or AI</option>
+          <option value="SOLUTION">Copied or generated implementation</option>
+        </select>
+      </label>
+      <label className="flex flex-col gap-2 text-sm text-text">
+        What can you explain, or what will you try next?
+        <Textarea rows={3} value={reflection} maxLength={2000} disabled={locked}
+          onChange={(event) => { setReflection(event.target.value); emit(grade, checked, external, event.target.value); }} />
+      </label>
+      <p className="text-xs text-text-faint">PATIPP hints and reference use are tracked automatically. Checking is self-reported; your code runs in your IDE.</p>
     </div>
   );
 }
