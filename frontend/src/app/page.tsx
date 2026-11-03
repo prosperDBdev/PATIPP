@@ -1,276 +1,61 @@
 "use client";
-
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Card, cn } from "@/components/ui";
+import { Brand, Glyph } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/lib/auth/auth-context";
 
-/**
- * The public front page.
- *
- * <p>Everything else in the application lives behind authentication, which meant a first-time
- * visitor got a spinner and then a login form — a password prompt for a product they have not
- * been told anything about. This page exists to answer "what is this and why would I use it?"
- * before asking for an account.
- *
- * <p>Signed-in visitors are sent straight to their spaces, so the marketing copy is never in the
- * way of someone who already knows.
- */
 export default function LandingPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-
-  useEffect(() => {
-    // Only once the bootstrap refresh has settled. Redirecting while `loading` is still true
-    // would bounce a signed-out visitor the moment their cookie exchange failed.
-    if (!loading && user) {
-      router.replace("/spaces");
-    }
-  }, [loading, user, router]);
-
-  return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-20 border-b border-border bg-bg/85 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-5xl items-center gap-4 px-4 sm:px-6">
-          <span className="font-mono text-xs tracking-[0.18em] text-text uppercase">PATIPP</span>
-          <div className="ml-auto flex items-center gap-2">
-            <ThemeToggle />
-            {/* Rendered only once auth has settled, so a signed-in visitor never sees
-                "Sign in" flash before being redirected. */}
-            {!loading && !user && (
-              <>
-                <Link
-                  href="/login"
-                  className="rounded-md px-3 py-1.5 text-[13px] font-medium text-text-muted transition-colors hover:text-text"
-                >
-                  Sign in
-                </Link>
-                <Link
-                  href="/register"
-                  className="inline-flex h-9 items-center rounded-md bg-accent px-3 text-[13px] font-medium text-accent-fg transition-colors hover:bg-accent-hover"
-                >
-                  Get started
-                </Link>
-              </>
-            )}
-          </div>
+  useEffect(() => { if (!loading && user) router.replace("/spaces"); }, [loading, user, router]);
+  return <div className="min-h-dvh">
+    <header className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-3 px-5 sm:px-8">
+      <Brand /><nav className="flex items-center gap-2 sm:gap-5" aria-label="Main navigation">
+        <Link href="#the-loop" className="hidden text-sm text-text-muted sm:inline">How it works</Link><ThemeToggle />
+        {!loading && !user && <Link href="/login" className="text-sm font-medium text-text">Sign in ↗</Link>}
+      </nav>
+    </header>
+    <main className="mx-auto max-w-7xl px-5 pb-16 sm:px-8">
+      <section className="grid items-center gap-10 pb-14 pt-8 lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:py-20">
+        <div className="studio-enter flex flex-col items-start gap-7">
+          <span className="eyebrow flex items-center gap-2 text-accent"><span className="size-1.5 rounded-full bg-accent" />Your practice. Your progress.</span>
+          <h1 className="display-title max-w-2xl text-5xl text-text sm:text-6xl xl:text-7xl">Close the gap.<br /><span className="text-accent">Build it yourself.</span></h1>
+          <p className="max-w-lg text-base leading-relaxed text-text-muted sm:text-lg">Turn the things you struggle with into the things you can explain. Focused practice, useful hints, and a reason to try again.</p>
+          <div className="flex flex-wrap items-center gap-5"><Link href="/register" className="gold-button">Find your starting point <Glyph /></Link><Link href="#the-loop" className="text-sm font-medium text-text-muted">Explore the practice loop ↓</Link></div>
+          <p className="text-xs text-text-muted">A small session counts. A missed day isn’t the end.</p>
         </div>
-      </header>
-
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 sm:px-6">
-        {/* ---------------------------------------------------------------- hero */}
-        <section className="flex flex-col items-start gap-6 py-16 sm:py-24">
-          <span className="rounded-full border border-border bg-surface px-3 py-1 font-mono text-[11px] tracking-wide text-text-muted">
-            Personalized Adaptive Test &amp; Interview Preparation
-          </span>
-
-          <h1 className="max-w-3xl text-4xl leading-[1.1] font-semibold tracking-tight text-text sm:text-5xl">
-            Preparation that adapts to what you are actually weak at.
-          </h1>
-
-          <p className="max-w-2xl text-base leading-relaxed text-text-muted sm:text-lg">
-            PATIPP learns what you know from how you answer, serves you the questions that will
-            teach you most, and tells you when to come back to them. For a semester exam, a
-            technical interview, a certification, a coding test — the same engine, configured
-            differently.
-          </p>
-
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            <Link
-              href="/register"
-              className="inline-flex h-11 items-center rounded-md bg-accent px-5 text-sm font-medium text-accent-fg transition-colors hover:bg-accent-hover"
-            >
-              Create an account
-            </Link>
-            <Link
-              href="/login"
-              className="inline-flex h-11 items-center rounded-md border border-border bg-surface px-5 text-sm font-medium text-text transition-colors hover:border-border-strong"
-            >
-              Sign in
-            </Link>
+        <div className="ink-panel studio-enter p-6 sm:p-8">
+          <div className="mb-8 flex items-center justify-between"><span className="eyebrow text-[#97a6a3]">A look inside your practice</span><Glyph kind="code" className="size-6 text-[#dca149]" /></div>
+          <span className="rounded-full border border-[#354644] px-3 py-1 text-xs text-[#dca149]">Java + Spring Boot</span>
+          <h2 className="mt-5 text-2xl font-semibold tracking-tight">One task. A little more confidence.</h2>
+          <p className="mt-3 text-sm leading-relaxed text-[#97a6a3]">Example exercise: read a JSON catalogue, then add and delete books through your own API.</p>
+          <div className="my-7 overflow-hidden rounded-xl border border-[#354644] bg-[#0b1110]">
+            <div className="flex items-center gap-1.5 border-b border-[#23302e] px-4 py-3"><span className="size-2 rounded-full bg-[#354644]" /><span className="size-2 rounded-full bg-[#354644]" /><span className="size-2 rounded-full bg-[#dca149]" /><span className="ml-auto font-mono text-[10px] text-[#97a6a3]">YOUR IDE</span></div>
+            <div className="p-5 font-mono text-xs leading-8">{["GET     /books", "POST    /books", "DELETE  /books/{id}"].map(route => <p key={route} className="whitespace-pre"><span className="text-[#dca149]">{route.slice(0, 8)}</span>{route.slice(8)}</p>)}</div>
           </div>
-        </section>
-
-        {/* ------------------------------------------------------- the central idea */}
-        <section className="border-t border-border py-14">
-          <div className="grid gap-8 lg:grid-cols-[1fr_1.3fr] lg:gap-14">
-            <div className="flex flex-col gap-3">
-              <span className="font-mono text-[10px] tracking-wider text-text-faint uppercase">
-                The idea
-              </span>
-              <h2 className="text-2xl font-semibold tracking-tight text-text">
-                An exam is a mode, not the product.
-              </h2>
-            </div>
-
-            <div className="flex flex-col gap-4 text-[15px] leading-relaxed text-text-muted">
-              <p>
-                Most study apps are quiz apps with features bolted on. PATIPP is built the other
-                way round: one preparation engine, with an exam as one way of running a session
-                alongside practice, review and interviews.
-              </p>
-              <p>
-                You work inside a{" "}
-                <strong className="font-medium text-text">preparation space</strong> — a semester,
-                an interview, a certification — each with its own material, history and progress.
-                A space is configuration, not a different app, which is why the same adaptive
-                selection and the same readiness score work for all of them.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* ------------------------------------------------------------- capabilities */}
-        <section className="border-t border-border py-14">
-          <h2 className="mb-8 text-2xl font-semibold tracking-tight text-text">
-            What it actually does
-          </h2>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            {CAPABILITIES.map((capability) => (
-              <Card key={capability.title} className="flex flex-col gap-2 p-5">
-                <span
-                  aria-hidden="true"
-                  className={cn("size-1.5 rounded-full", capability.tone)}
-                />
-                <h3 className="text-[15px] font-semibold text-text">{capability.title}</h3>
-                <p className="text-[13px] leading-relaxed text-text-muted">{capability.body}</p>
-              </Card>
-            ))}
-          </div>
-        </section>
-
-        {/* --------------------------------------------------------------- principles */}
-        <section className="border-t border-border py-14">
-          <div className="grid gap-8 lg:grid-cols-[1fr_1.3fr] lg:gap-14">
-            <div className="flex flex-col gap-3">
-              <span className="font-mono text-[10px] tracking-wider text-text-faint uppercase">
-                How it behaves
-              </span>
-              <h2 className="text-2xl font-semibold tracking-tight text-text">
-                Honest by design.
-              </h2>
-            </div>
-
-            <ul className="flex flex-col gap-5">
-              {PRINCIPLES.map((principle) => (
-                <li key={principle.title} className="flex flex-col gap-1">
-                  <h3 className="text-[15px] font-medium text-text">{principle.title}</h3>
-                  <p className="text-[13px] leading-relaxed text-text-muted">{principle.body}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        {/* -------------------------------------------------------------- closing cta */}
-        <section className="border-t border-border py-16">
-          <Card className="flex flex-col items-start gap-4 p-8">
-            <h2 className="text-2xl font-semibold tracking-tight text-text">
-              Start with one space.
-            </h2>
-            <p className="max-w-xl text-[15px] leading-relaxed text-text-muted">
-              Add a subject, import or write some questions, and answer a dozen. That is enough
-              for the engine to stop guessing and start adapting — and it will tell you plainly
-              when it gets there.
-            </p>
-            <Link
-              href="/register"
-              className="mt-1 inline-flex h-11 items-center rounded-md bg-accent px-5 text-sm font-medium text-accent-fg transition-colors hover:bg-accent-hover"
-            >
-              Create an account
-            </Link>
-          </Card>
-        </section>
-      </main>
-
-      <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-6 text-xs text-text-faint sm:px-6">
-          <span className="font-mono tracking-[0.18em] uppercase">PATIPP</span>
-          <span>Personalized Adaptive Test &amp; Interview Preparation Platform</span>
-          <Link
-            href="/privacy"
-            className="ml-auto text-text-muted transition-colors hover:text-text"
-          >
-            Privacy
-          </Link>
-          <Link href="/login" className="text-text-muted transition-colors hover:text-text">
-            Sign in
-          </Link>
+          <div className="grid grid-cols-3 gap-3 border-t border-[#354644] pt-5">{["Try it first", "Check it locally", "Explain it back"].map((step, index) => <div key={step}><p className="eyebrow mb-2 text-[#dca149]">0{index + 1}</p><p className="text-xs">{step}</p></div>)}</div>
         </div>
-      </footer>
-    </div>
-  );
+      </section>
+      <section className="grid gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-3">{[
+        ["A clear next step", "Spend less time deciding what to study."], ["Help, when you need it", "Reveal a hint without skipping the attempt."], ["Evidence you can revisit", "See assisted practice become independent work."],
+      ].map(([title, detail]) => <div key={title} className="bg-surface p-6"><h2 className="text-sm font-semibold text-text">{title}</h2><p className="mt-2 text-sm text-text-muted">{detail}</p></div>)}</section>
+      <section id="the-loop" className="scroll-mt-8 py-16 sm:py-24">
+        <div className="mb-9 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="eyebrow mb-3 text-accent">The practice loop</p><h2 className="display-title text-3xl text-text sm:text-4xl">Understanding comes from doing.</h2></div><p className="max-w-sm text-sm leading-relaxed text-text-muted">For coding, exams, or interview preparation. Keep your material and progress together in a preparation space.</p></div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{[
+          ["01", "Find your gap", "Your answers help identify weak areas and topics you haven’t assessed."],
+          ["02", "Make an attempt", "Write code in your IDE or answer a practice question. Give yourself a first try."],
+          ["03", "Get unstuck", "Use progressive hints, check the expected behaviour, and record the help you used."],
+          ["04", "Come back stronger", "Review what’s due and rebuild a task with less help. Keep the evidence of that progress."],
+        ].map(([number, title, detail]) => <article key={number} className="chapter-block studio-card p-6"><span className="eyebrow text-accent">{number}</span><h3 className="mb-3 mt-8 text-lg font-semibold tracking-tight text-text">{title}</h3><p className="text-sm leading-relaxed text-text-muted">{detail}</p></article>)}</div>
+      </section>
+      <section className="ink-panel grid gap-8 p-7 sm:p-10 lg:grid-cols-[1.4fr_1fr]">
+        <div><p className="eyebrow text-[#dca149]">Built for real life</p><h2 className="display-title mb-4 mt-4 text-3xl sm:text-4xl">Your next good attempt<br />doesn’t need a perfect day.</h2><p className="max-w-xl text-sm leading-relaxed text-[#97a6a3]">The Java and Spring Boot guide has 30 focused exercises. Try a 10–30 minute core on a busy day, or spend longer on an extension. Return to your saved progress when you can.</p></div>
+        <div className="flex flex-col items-start justify-center gap-4 border-t border-[#354644] pt-7 lg:border-l lg:border-t-0 lg:pl-9 lg:pt-0"><Glyph kind="repeat" className="size-8 text-[#dca149]" /><p className="text-lg font-medium">From “I needed a hint”<br />to “I built this myself.”</p><Link href="/register" className="gold-button">Begin with one exercise <Glyph /></Link></div>
+      </section>
+      <p className="mt-5 text-xs leading-relaxed text-text-muted">Coding checks and independence are self-reported after working in your IDE. PATIPP doesn’t execute your code or promise mastery in 30 days.</p>
+    </main>
+    <footer className="border-t border-border"><div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-7 text-xs text-text-muted sm:px-8"><span>Personalized Adaptive Test &amp; Interview Preparation Platform</span><Link href="/privacy" className="hover:text-text">Privacy policy ↗</Link></div></footer>
+  </div>;
 }
-
-/**
- * Written as what the feature does for the reader, not as a feature list. Each one names the
- * specific behaviour rather than the category, because "spaced repetition" means nothing to
- * someone who has not met it and "decides when to show it again" means something immediately.
- */
-const CAPABILITIES = [
-  {
-    title: "It finds your weak areas and serves them",
-    tone: "bg-danger",
-    body:
-      "An ability estimate per topic, updated after every answer, and a difficulty rating per "
-      + "question that updates alongside it. Questions are picked to sit at roughly a 78% chance "
-      + "of success — hard enough to be worth doing, not so hard you stop.",
-  },
-  {
-    title: "It decides when to show something again",
-    tone: "bg-flag",
-    body:
-      "Every answer schedules the next sighting of that question, timed for just before you "
-      + "would have forgotten it. Each grade button shows the interval it would set, so you can "
-      + "see what your answer costs before you give it.",
-  },
-  {
-    title: "Mock exams that stay comparable",
-    tone: "bg-accent",
-    body:
-      "Timed, answered in any order, marked only at the end, and weighted towards the subjects "
-      + "that carry the most marks. Deliberately not adaptive — a mock that got easier when you "
-      + "struggled could not be compared with the one you sat a fortnight ago.",
-  },
-  {
-    title: "A readiness score that explains itself",
-    tone: "bg-success",
-    body:
-      "Six components — coverage, accuracy, depth, retention, consistency and mock performance — "
-      + "each shown with the weight applied to it, plus the single most valuable thing you could "
-      + "do next and roughly what it is worth.",
-  },
-];
-
-const PRINCIPLES = [
-  {
-    title: "It will not call you weak at something on two answers",
-    body:
-      "A topic with fewer than five attempts is reported as unassessed, never as a weakness. A "
-      + "study plan built on noise is worse than no plan, because the first time it is obviously "
-      + "wrong you stop believing the rest of it.",
-  },
-  {
-    title: "Readiness is not your average quiz score",
-    body:
-      "An average rises when you answer easy questions about things you already know. Readiness "
-      + "is scaled by how much evidence exists, so after twelve questions it says it is still "
-      + "calibrating rather than claiming you are 88% ready.",
-  },
-  {
-    title: "Guardrails, not just difficulty",
-    body:
-      "No single topic takes over a session, a winnable question arrives at least every six, and "
-      + "after a bad run it eases off and works back up. A system that always pushes you to the "
-      + "edge of failure is one you stop opening.",
-  },
-  {
-    title: "Your questions stay yours",
-    body:
-      "Import from CSV or JSON, export the same shape back out, with subjects written by name "
-      + "rather than by id. Nothing you write is trapped here.",
-  },
-];

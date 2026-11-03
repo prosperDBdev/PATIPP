@@ -94,6 +94,23 @@ html.dark {
   color-scheme: dark;
 }
 
+/* Existing green-grey and brass palette, with a clearer visual hierarchy. */
+.ink-panel { position: relative; overflow: hidden; border-radius: 1.5rem; background: #101c19; color: #e3eae8; isolation: isolate; }
+.ink-panel::before { content: ""; position: absolute; inset: 0; z-index: -1; opacity: .3; background-image: linear-gradient(#97a6a314 1px, transparent 1px), linear-gradient(90deg, #97a6a314 1px, transparent 1px); background-size: 40px 40px; mask-image: linear-gradient(120deg, transparent, #000); }
+.eyebrow { font-family: var(--font-mono-stack), monospace; font-size: .65rem; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; }
+.display-title { font-weight: 600; letter-spacing: -.055em; line-height: 1.07; text-wrap: balance; }
+.gold-button { display: inline-flex; align-items: center; justify-content: center; gap: .75rem; border-radius: .75rem; background: #dca149; color: #14100a; padding: .85rem 1.25rem; font-size: .875rem; font-weight: 600; transition: background .15s; }
+.gold-button:hover { background: #e8b366; }
+.studio-card { box-shadow: 0 4px 24px #0f171608; }
+.studio-card:hover { border-color: var(--border-strong); }
+.app-sidebar { width: 212px; flex-shrink: 0; }
+.chapter-block { border-radius: 1rem; border: 1px solid var(--border); background: var(--surface); }
+@media (prefers-reduced-motion: no-preference) {
+  .studio-enter { animation: studio-in .45s ease-out both; }
+  @keyframes studio-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+}
+@media (max-width: 640px) { .ink-panel { border-radius: 1.15rem; } }
+
 body {
   background-color: var(--bg);
   color: var(--text);

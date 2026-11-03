@@ -16,7 +16,6 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
  */
 
 const GIS_SRC = "https://accounts.google.com/gsi/client";
-const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
 /** Google's widget takes a pixel width and clamps at 400. */
 const MIN_WIDTH = 200;
@@ -79,12 +78,24 @@ function loadGoogleIdentityServices(): Promise<void> {
     const existing = document.querySelector<HTMLScriptElement>(`script[src="${GIS_SRC}"]`);
     const script = existing ?? document.createElement("script");
 
-    script.addEventListener("load", () => resolve());
-    script.addEventListener("error", () =>
-      // Ad blockers and strict DNS filtering both block this, and it is a normal enough
-      // outcome to deserve a real message rather than a button that silently never appears.
-      reject(new Error("Google's sign-in script could not be loaded.")),
-    );
+    const cleanup = () => {
+      clearTimeout(timeout);
+      script.removeEventListener("load", loaded);
+      script.removeEventListener("error", failed);
+    };
+    const failed = () => {
+      cleanup();
+      script.remove();
+      reject(new Error("Google's sign-in script could not be loaded."));
+    };
+    const loaded = () => {
+      if (!window.google?.accounts?.id) { failed(); return; }
+      cleanup();
+      resolve();
+    };
+    const timeout = setTimeout(failed, 10000);
+    script.addEventListener("load", loaded);
+    script.addEventListener("error", failed);
 
     if (!existing) {
       script.src = GIS_SRC;
@@ -135,6 +146,29 @@ export function GoogleSignInButton({
   const target = useRef<HTMLDivElement>(null);
   const [unavailable, setUnavailable] = useState(false);
   const [width, setWidth] = useState(0);
+  const [provider, setProvider] = useState<{ clientId: string | null; status: "loading" | "ready" | "disabled" | "error" }>({ clientId: null, status: "loading" });
+
+  useEffect(() => {
+    let cancelled = false;
+    // Runtime configuration avoids rebuilding the frontend whenever Google is enabled.
+    // Fetch directly: this public request must not trigger a token-refresh/sign-in loop.
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8081";
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    fetch(`${base}/api/v1/auth/providers`, { credentials: "omit", cache: "no-store", signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Provider settings unavailable");
+        return response.json() as Promise<{ googleEnabled: boolean; googleClientId?: string }>;
+      })
+      .then((settings) => {
+        if (!cancelled) setProvider(settings.googleEnabled && settings.googleClientId
+          ? { clientId: settings.googleClientId, status: "ready" }
+          : { clientId: null, status: "disabled" });
+      }).catch(() => {
+        if (!cancelled) setProvider({ clientId: null, status: "error" });
+      }).finally(() => clearTimeout(timeout));
+    return () => { cancelled = true; clearTimeout(timeout); controller.abort(); };
+  }, []);
 
   // `false` on the server: the document has no class list there, and guessing dark would
   // make the first client paint disagree with the markup.
@@ -171,7 +205,7 @@ export function GoogleSignInButton({
   }, []);
 
   useEffect(() => {
-    if (!CLIENT_ID || !width) return;
+    if (!provider.clientId || !width) return;
 
     let cancelled = false;
 
@@ -180,7 +214,7 @@ export function GoogleSignInButton({
         if (cancelled || !target.current || !window.google) return;
 
         window.google.accounts.id.initialize({
-          client_id: CLIENT_ID,
+          client_id: provider.clientId!,
           callback: (response) => {
             if (!response.credential) {
               handlers.current.onError("Google did not return a sign-in token.");
@@ -212,20 +246,15 @@ export function GoogleSignInButton({
     return () => {
       cancelled = true;
     };
-  }, [width, dark, text]);
+  }, [width, dark, text, provider.clientId]);
 
-  // Nothing configured, so nothing to offer. A dead button would be worse than none, and
-  // this is the normal state for a local checkout without Google set up.
-  if (!CLIENT_ID) return null;
-
-  if (unavailable) {
-    return (
-      <p className="text-center text-[13px] leading-relaxed text-text-faint">
-        Google sign-in could not load — an ad blocker or network filter usually causes this.
-        You can still sign in with an email and password.
-      </p>
-    );
-  }
-
-  return <div ref={target} className="flex min-h-[44px] justify-center" />;
+  // Keep email sign-in available with a clear provider status when Google is disabled.
+  const ready = provider.status === "ready" && !unavailable;
+  return <div className="flex flex-col gap-2">
+    <div ref={target} className={ready ? "flex min-h-[44px] justify-center" : "hidden"} />
+    {!ready && <div role="status" className="rounded-xl border border-border bg-surface-2/50 px-4 py-3 text-center text-sm text-text-muted">
+      {provider.status === "loading" ? "Checking Google sign-in…" : "Google sign-in is unavailable right now."}
+      {provider.status !== "loading" && <span className="mt-1 block text-xs">You can continue with email below.</span>}
+    </div>}
+  </div>;
 }

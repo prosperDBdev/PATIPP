@@ -8,6 +8,7 @@ import { api } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/auth-context";
 import { practiceStats, type ChallengeGuide } from "@/lib/api/challenge";
 import type { SessionResponse } from "@/lib/api/types";
+import { RebuildPanel } from "@/components/learning/rebuild-panel";
 
 export default function ChallengePage() {
   const { spaceId } = useParams<{ spaceId: string }>();
@@ -53,11 +54,11 @@ export default function ChallengePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-2">
-        <Link href={`/spaces/${spaceId}`} className="text-sm text-text-muted hover:text-text">&larr; Preparation space</Link>
-        <p className="font-mono text-xs text-accent uppercase">Your 30-day challenge</p>
-        <h1 className="text-2xl font-semibold text-text">Build with Java and Spring Boot</h1>
-        <p className="max-w-2xl text-sm text-text-muted">
+      <header className="ink-panel flex flex-col gap-3 p-6 sm:p-9">
+        <Link href={`/spaces/${spaceId}`} className="text-sm text-[#b2c2bc] hover:text-white">&larr; Preparation space</Link>
+        <p className="eyebrow text-[#dca149]">Your 30-day challenge · at your pace</p>
+        <h1 className="display-title max-w-xl text-4xl sm:text-5xl">Build with Java<br />and Spring Boot.</h1>
+        <p className="max-w-2xl text-sm leading-relaxed text-[#b2c2bc]">
           Write in your IDE, check the behaviour, then explain your decisions. On a busy day,
           log a small attempt and return to finish. Missed days never erase your work.
         </p>
@@ -75,6 +76,8 @@ export default function ChallengePage() {
       </p>
       {error && <Alert>{error}</Alert>}
 
+      <RebuildPanel guide={guide} onSelect={setSelectedDay} />
+
       {guide.inProgress && (
         <Card className="flex flex-wrap items-center justify-between gap-3 p-4">
           <p className="text-sm text-text">You have an unfinished session. Resume it before starting another.</p>
@@ -86,13 +89,13 @@ export default function ChallengePage() {
       )}
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
-        <Card className="flex flex-col gap-5 p-5">
+        <Card id="exercise-brief" className="flex scroll-mt-24 flex-col gap-6 p-5 sm:p-8">
           <div className="flex flex-wrap gap-2">
             <Badge tone="accent">Day {day.day}</Badge><Badge>{day.subject}</Badge>
             {progress?.completed && <Badge>Core completed</Badge>}
             {progress?.independent && <Badge>Independent</Badge>}
           </div>
-          <h2 className="text-xl font-semibold text-text">{day.title}</h2>
+          <h2 className="text-3xl font-semibold tracking-tight text-text">{day.title}</h2>
           <section className="flex flex-col gap-2">
             <h3 className="text-sm font-semibold text-text">10–30 minute core</h3>
             <p className="text-sm whitespace-pre-wrap text-text-muted">{day.core}</p>

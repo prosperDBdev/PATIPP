@@ -122,7 +122,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       ref={ref}
       aria-invalid={invalid || undefined}
       className={cn(
-        "h-10 w-full rounded-md border bg-surface px-3 text-sm text-text",
+        "h-11 w-full rounded-xl border bg-surface px-3 text-sm text-text",
         "placeholder:text-text-faint transition-colors",
         invalid ? "border-danger" : "border-border hover:border-border-strong",
         className,
@@ -151,9 +151,9 @@ export const Textarea = forwardRef<
 
 /* ------------------------------------------------------------------ Card */
 
-export function Card({ className, children }: { className?: string; children: React.ReactNode }) {
+export function Card({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("rounded-lg border border-border bg-surface", className)}>{children}</div>
+    <div {...props} className={cn("rounded-2xl border border-border bg-surface shadow-[0_2px_8px_#00000003]", className)}>{children}</div>
   );
 }
 

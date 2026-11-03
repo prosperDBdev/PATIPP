@@ -5,6 +5,7 @@ import com.patipp.auth.api.AuthDtos.GoogleSignInRequest;
 import com.patipp.auth.api.AuthDtos.LoginRequest;
 import com.patipp.auth.api.AuthDtos.RegisterRequest;
 import com.patipp.auth.internal.AuthService;
+import com.patipp.auth.internal.GoogleAuthProperties;
 import com.patipp.auth.internal.RefreshCookies;
 import com.patipp.common.security.CurrentUser;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,12 +26,23 @@ public class AuthController {
     private final AuthService authService;
     private final RefreshCookies refreshCookies;
     private final CurrentUser currentUser;
+    private final GoogleAuthProperties google;
 
-    public AuthController(AuthService authService, RefreshCookies refreshCookies, CurrentUser currentUser) {
+    public AuthController(AuthService authService, RefreshCookies refreshCookies, CurrentUser currentUser,
+                          GoogleAuthProperties google) {
         this.authService = authService;
         this.refreshCookies = refreshCookies;
         this.currentUser = currentUser;
+        this.google = google;
     }
+
+    /** The OAuth client id is public. Never expose any server credentials here. */
+    @GetMapping("/providers")
+    public ProviderConfiguration providers() {
+        return new ProviderConfiguration(google.isConfigured(), google.isConfigured() ? google.clientId() : null);
+    }
+
+    public record ProviderConfiguration(boolean googleEnabled, String googleClientId) {}
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request,

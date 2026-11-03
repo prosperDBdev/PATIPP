@@ -53,6 +53,9 @@ services:
     healthCheckPath: /actuator/health
 
     envVars:
+      # Optional public Google Web client ID; empty keeps email sign-in available.
+      - key: PATIPP_GOOGLE_CLIENT_ID
+        sync: false
       # Render injects PORT itself; application.yml honours it.
       - key: PATIPP_CORS_ORIGINS
         value: https://patipp.ebitimi.dev

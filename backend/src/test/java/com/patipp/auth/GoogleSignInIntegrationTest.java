@@ -36,6 +36,16 @@ import org.springframework.test.web.servlet.MvcResult;
  */
 class GoogleSignInIntegrationTest extends IntegrationTest {
 
+    @Test
+    void publicProviderSettingsExposeOnlyThePublicClientId() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/auth/providers"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.googleEnabled").value(true))
+                .andExpect(jsonPath("$.googleClientId").value("test-client.apps.googleusercontent.com"))
+                .andExpect(jsonPath("$.accessToken").doesNotExist())
+                .andExpect(jsonPath("$.clientSecret").doesNotExist());
+    }
+
     @MockitoBean(name = "googleIdTokenDecoder")
     private JwtDecoder googleIdTokenDecoder;
 

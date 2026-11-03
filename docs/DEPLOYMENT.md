@@ -207,7 +207,13 @@ renders the button.
 | Where | Variable | Value |
 |---|---|---|
 | Render | `PATIPP_GOOGLE_CLIENT_ID` | the client id |
-| Vercel | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | the same client id |
+
+The frontend reads the public client ID from `GET /api/v1/auth/providers` at runtime.
+No Google client ID is required in Vercel's build variables. After changing the Render
+setting, redeploy the backend; a frontend rebuild is unnecessary. The public response
+contains only `googleEnabled` and `googleClientId`, never a client secret or session token.
+If Google is disabled or its script cannot load, the auth screens show a clear fallback
+and keep email sign-in available.
 
 In the Google Cloud console, under **Credentials → your OAuth client**:
 

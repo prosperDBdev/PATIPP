@@ -40,6 +40,30 @@ export interface ChallengeGuide {
   inProgress: SessionListEntry | null;
 }
 
+/** Evidence comes only from completed attempts in chronological order. */
+export function rebuildExperience(guide: ChallengeGuide) {
+  const history = [...guide.activity].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+  const assisted = new Map<number, ChallengeActivity>();
+  const receipts = new Map<number, { day: number; assistedAt: string; rebuiltAt: string }>();
+  for (const attempt of history) {
+    if (!attempt.completed) continue;
+    if (attempt.assistance === "HINTS" || attempt.assistance === "SOLUTION") {
+      if (!assisted.has(attempt.day)) assisted.set(attempt.day, attempt);
+    } else if (attempt.assistance === "INDEPENDENT") {
+      const previous = assisted.get(attempt.day);
+      if (previous && Date.parse(previous.at) < Date.parse(attempt.at)) {
+        receipts.set(attempt.day, { day: attempt.day, assistedAt: previous.at, rebuiltAt: attempt.at });
+      }
+    }
+  }
+  const target = guide.progress.find((entry) => entry.completed && !entry.independent);
+  return {
+    target: guide.days.find((day) => day.day === target?.day) ?? null,
+    bookmark: history.findLast((entry) => entry.reflection.trim()) ?? null,
+    receipts: [...receipts.values()],
+  };
+}
+
 /** Profile timezone, not UTC: a late evening practice belongs to the learner's day. */
 export function practiceDate(instant: string | Date, timezone: string): string {
   const parts = new Intl.DateTimeFormat("en-US", {

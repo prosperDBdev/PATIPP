@@ -70,6 +70,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/logout").permitAll()
                         // Preflight carries no credentials by design and must not 401.
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/auth/providers").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint((request, response, exception) ->

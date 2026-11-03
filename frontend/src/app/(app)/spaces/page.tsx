@@ -35,19 +35,20 @@ export default function SpacesPage() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="studio-enter flex flex-col gap-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-text">
+          <p className="eyebrow mb-2 text-accent">Your practice studio</p>
+          <h1 className="display-title text-3xl text-text sm:text-4xl">
             {greeting()}, {user?.displayName.split(" ")[0]}
           </h1>
           <p className="text-sm text-text-muted">
-            Each space is a self-contained world with its own material and its own progress.
+            One small attempt today. A little more confidence tomorrow.
           </p>
         </div>
         <Link
           href="/spaces/new"
-          className="inline-flex h-10 items-center rounded-md bg-accent px-4 text-sm font-medium text-accent-fg shadow-sm transition-colors hover:bg-accent-hover"
+          className="inline-flex h-11 items-center rounded-xl border border-border bg-surface px-4 text-sm font-medium text-text transition-colors hover:border-accent"
         >
           New space
         </Link>
@@ -56,6 +57,8 @@ export default function SpacesPage() {
       {error && <Alert>{error}</Alert>}
 
       {spaces !== null && <ChallengeInvite spaceId={spaces.find((space) => space.config.challengeKey === "java-spring-30-v1")?.id} />}
+
+      {spaces && spaces.length > 0 && <div className="flex items-end justify-between border-b border-border pb-4"><div><p className="eyebrow mb-2 text-text-faint">Make room for your goals</p><h2 className="text-xl font-semibold tracking-tight text-text">Your preparation spaces</h2></div><span className="font-mono text-xs text-text-muted">{spaces.length} {spaces.length === 1 ? "space" : "spaces"}</span></div>}
 
       {spaces === null && !error ? (
         <div className="grid place-items-center py-20">
@@ -90,7 +93,7 @@ export default function SpacesPage() {
 function SpaceCard({ space }: { space: Space }) {
   return (
     <Link href={`/spaces/${space.id}`} className="block h-full">
-      <Card className="flex h-full flex-col gap-3 p-5 transition-colors hover:border-border-strong">
+      <Card className="studio-card flex h-full min-h-48 flex-col gap-4 p-6 transition-colors hover:border-border-strong">
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-base leading-snug font-semibold text-text">{space.name}</h2>
           {space.status !== "ACTIVE" && <Badge>{space.status}</Badge>}
